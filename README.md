@@ -73,3 +73,9 @@ judgment only.
 
 Requires git and python3. node is optional; when present, verification
 also syntax-checks the manual's script.
+
+---
+
+Built by [Doug Stanford](https://dougstanford.com) ·
+[dougstanford.com](https://dougstanford.com) ·
+[LinkedIn](https://www.linkedin.com/in/dougstanford/)

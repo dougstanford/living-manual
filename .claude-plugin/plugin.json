@@ -3,6 +3,7 @@
   "version": "0.2.1",
   "description": "Generate and maintain a branded, interactive user's manual from any codebase: clickable headings file notes that become developer tickets (optionally synced to Jira via the Atlassian MCP), roadmap previews show planned changes, and a glossary explains concepts on first use. Installs a push-time guard so the manual always reflects the released app.",
   "author": {
-    "name": "Doug Stanford"
+    "name": "Doug Stanford",
+    "url": "https://dougstanford.com"
   }
 }
