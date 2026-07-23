@@ -1,0 +1,16 @@
+{
+  "product": "living-manual",
+  "tagline": "A user's manual that stays true to the code.",
+  "tagline_pill": "One file · Interactive · Never stale",
+  "manual_path": "docs/USER_MANUAL.html",
+  "tickets_dir": "docs/tickets",
+  "ticket_skill": "/living-manual:ticket",
+  "user_facing_paths": ["skills/", "scripts/", "templates/", "reference/"],
+  "brand": {
+    "note": "No brand assets in the repo as of 2026-07-23; scaffold's neutral slate/indigo defaults are in use. A later brand pass replaces this block."
+  },
+  "jira": {
+    "enabled": false,
+    "reason": "No Atlassian MCP tools were available at setup (2026-07-23). To enable: install the Atlassian MCP, then re-run /living-manual:manual setup for the Jira step."
+  }
+}

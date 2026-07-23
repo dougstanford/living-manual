@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>living-manual — User's Manual</title>
+<!-- manual-base: 8af4d2c -->
+<!--
+  Maintained by the living-manual plugin. Do not hand-edit the script's
+  data blocks; run scripts/sync-index.py with a JSON payload instead.
+  Update procedure: reference/maintenance.md in the plugin.
+  Prose rules: reference/writing-style.md in the plugin.
+-->
+<style>
+  :root {
+    --surface: #fafaf7;
+    --ink: #26282b;
+    --deep: #22303a;
+    --accent: #2545d3;
+    --warn: #c4553a;
+    --caution: #d8c95e;
+    --line: color-mix(in srgb, var(--ink) 22%, transparent);
+    --line-soft: color-mix(in srgb, var(--ink) 12%, transparent);
+    --muted: color-mix(in srgb, var(--ink) 62%, transparent);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--surface); color: var(--ink);
+    font-family: system-ui, "Segoe UI", sans-serif;
+    font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  .hero {
+    position: relative; color: #fff; padding: 80px 48px 64px;
+    background: linear-gradient(135deg, #22303a 0%, #3a5266 100%); overflow: hidden;
+  }
+  .hero-inner { max-width: 1020px; margin: 0 auto; }
+  .hero .lockup { display: flex; align-items: center; gap: 12px;
+    font-weight: 600; font-size: 1.3rem; margin-bottom: 48px; }
+  .hero h1 { font-weight: 200; font-size: clamp(2.2rem, 5vw, 3.6rem);
+    line-height: 1.12; max-width: 16ch; }
+  .hero .tagpill { display: inline-block; margin-top: 24px;
+    border: 1px solid rgba(255,255,255,0.75); border-radius: 999px;
+    padding: 6px 18px; font-size: 0.82rem; }
+  .hero .asof { margin-top: 30px; font-size: 0.8rem; opacity: 0.75; }
+  .frame { max-width: 1020px; margin: 0 auto; padding: 0 48px; }
+  .layout { display: flex; gap: 56px; align-items: flex-start; padding-top: 56px; }
+  nav.toc { position: sticky; top: 28px; width: 218px; flex-shrink: 0;
+    font-size: 0.84rem; border: 1px solid var(--line); border-radius: 16px;
+    padding: 18px 20px; max-height: calc(100vh - 56px); overflow-y: auto; }
+  nav.toc .toc-title { font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); margin-bottom: 10px; }
+  nav.toc a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
+  nav.toc a:hover { color: var(--accent); }
+  nav.toc a.sub { padding-left: 14px; color: var(--muted); font-size: 0.8rem; }
+  main { flex: 1; min-width: 0; padding-bottom: 96px; }
+  section { margin-bottom: 64px; }
+  h2 { font-weight: 300; font-size: 1.9rem; margin-bottom: 18px; scroll-margin-top: 24px; }
+  h3 { font-weight: 600; font-size: 1.08rem; margin: 30px 0 10px; scroll-margin-top: 24px; }
+  p { margin-bottom: 12px; max-width: 68ch; }
+  ul, ol { margin: 0 0 14px 22px; max-width: 66ch; }
+  li { margin-bottom: 6px; }
+  .lead { font-size: 1.1rem; max-width: 62ch; }
+  .muted { color: var(--muted); }
+  .small { font-size: 0.85rem; }
+  .pill { display: inline-block; border: 1px solid var(--ink);
+    border-radius: 999px; padding: 1px 12px; font-size: 0.78rem; white-space: nowrap; }
+  .pill.accent { border-color: var(--accent); color: var(--accent); }
+  .pill.warn { border-color: var(--warn); color: var(--warn); }
+  kbd { font-family: inherit; font-size: 0.8rem; border: 1px solid var(--line);
+    border-bottom-width: 2px; border-radius: 6px; padding: 1px 7px;
+    background: rgba(255,255,255,0.5); white-space: nowrap; }
+  .card { border: 1px solid var(--line); border-radius: 16px;
+    padding: 20px 24px; margin: 18px 0; max-width: 72ch; }
+  .callout { border: 1px solid var(--line); border-left: 3px solid var(--warn);
+    border-radius: 12px; padding: 14px 20px; margin: 18px 0; max-width: 72ch;
+    font-size: 0.94rem; }
+  .callout.tip { border-left-color: var(--accent); }
+  table { border-collapse: collapse; margin: 16px 0 20px; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 8px 16px 8px 0;
+    border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); font-weight: 600; }
+  /* Mock app panels: for illustrating app state inline (excluded from
+     glossary annotation). */
+  .mock { background: var(--deep); color: var(--surface); border-radius: 16px;
+    padding: 18px 20px; margin: 18px 0; max-width: 72ch; font-size: 0.88rem;
+    line-height: 1.5; }
+  .mock .m-card { background: color-mix(in srgb, var(--surface) 7%, var(--deep));
+    border: 1px solid color-mix(in srgb, var(--surface) 14%, transparent);
+    border-radius: 14px; padding: 14px 16px; }
+  .mock .m-card + .m-card { margin-top: 10px; }
+  .mock .m-muted { color: color-mix(in srgb, var(--surface) 62%, var(--deep)); }
+  .mock .m-row { display: flex; align-items: center; gap: 14px; }
+  .mock .m-pill { display: inline-block; border-radius: 999px; padding: 1px 11px;
+    font-size: 0.74rem; border: 1px solid; white-space: nowrap; }
+  .mock .m-pill.accent { border-color: var(--accent); color: var(--accent); }
+  .mock .m-pill.warn { border-color: var(--warn); color: var(--warn); }
+  .mock .m-pill.caution { border-color: var(--caution); color: var(--caution); }
+  .mock .m-caption { margin-top: 10px; font-size: 0.72rem;
+    color: color-mix(in srgb, var(--surface) 62%, var(--deep));
+    text-transform: uppercase; letter-spacing: 0.06em; }
+  .caption { font-size: 0.8rem; color: var(--muted); max-width: 68ch;
+    margin: -8px 0 16px; }
+
+  .release { margin-bottom: 30px; max-width: 72ch; }
+  .release .date { font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); }
+  footer { border-top: 1px solid var(--line-soft); padding: 32px 48px 48px;
+    font-size: 0.82rem; color: var(--muted); }
+
+  main h2, main h3 { cursor: pointer; }
+  main h2::after, main h3::after {
+    content: "✎ make a note"; font-size: 0.68rem; font-weight: 400;
+    letter-spacing: 0.05em; color: var(--muted); border: 1px solid var(--line);
+    border-radius: 999px; padding: 2px 10px; margin-left: 12px;
+    vertical-align: middle; opacity: 0; transition: opacity 0.25s ease;
+    white-space: nowrap; }
+  main h2:hover::after, main h3:hover::after { opacity: 1; }
+
+  .preview-btn { display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; margin: 0 2px; vertical-align: middle;
+    position: relative; top: -1px; border: 1px solid var(--accent);
+    border-radius: 999px; background: transparent; color: var(--accent);
+    cursor: pointer; transition: background 0.25s ease, color 0.25s ease; padding: 0; }
+  .preview-btn:hover { background: var(--accent); color: var(--surface); }
+  .preview-btn svg { width: 9px; height: 9px; display: block; margin-left: 1px; }
+  h2 .preview-btn, h3 .preview-btn { width: 22px; height: 22px; }
+
+  .term { text-decoration: underline dotted color-mix(in srgb, var(--ink) 38%, transparent);
+    text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: help; }
+  .term-tip { position: fixed; z-index: 60; max-width: 340px; background: var(--deep);
+    color: var(--surface); border-radius: 12px; padding: 11px 15px;
+    font-size: 0.82rem; line-height: 1.55; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    opacity: 0; visibility: hidden; transition: opacity 0.15s ease, visibility 0.15s ease; }
+  .term-tip.visible { opacity: 1; visibility: visible; }
+  .term-tip b { display: block; margin-bottom: 3px; font-size: 0.72rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--caution); }
+
+  .overlay { position: fixed; inset: 0; z-index: 50;
+    background: color-mix(in srgb, var(--deep) 55%, transparent);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 11vh 24px 24px; overflow-y: auto; }
+  .overlay[hidden] { display: none; }
+  .modal { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 18px; width: 560px; max-width: 100%; padding: 26px 30px 24px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.3); }
+  .modal-label { font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); margin-bottom: 6px; }
+  .modal h3 { margin: 0 0 14px; font-weight: 600; font-size: 1.12rem; }
+  .modal .modal-src { margin-top: 18px; padding-top: 12px;
+    border-top: 1px solid var(--line-soft); font-size: 0.78rem; color: var(--muted); }
+  .rev-notice { border: 1px solid var(--line); border-left: 3px solid var(--warn);
+    border-radius: 10px; padding: 10px 14px; font-size: 0.84rem; margin-bottom: 14px; }
+  .scope-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-bottom: 14px; }
+  .scope-label { width: 100%; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); }
+  .scope-chip { border: 1px solid var(--line); background: transparent;
+    color: var(--muted); border-radius: 999px; padding: 4px 14px;
+    font-size: 0.8rem; font-family: inherit; cursor: pointer;
+    transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease; }
+  .scope-chip.roadmap::before { content: "▶ "; font-size: 0.6rem; vertical-align: 1px; }
+  .scope-chip.on { border-color: var(--accent); color: var(--accent); }
+  .scope-chip.on.roadmap { background: var(--accent); color: var(--surface); }
+  .rev-queue { margin-bottom: 14px; }
+  .queue-item { border: 1px solid var(--line); border-radius: 10px;
+    padding: 7px 12px; margin-top: 8px; font-size: 0.84rem; }
+  .queue-item summary { cursor: pointer; }
+  .queue-item summary .q-meta { color: var(--muted); }
+  .queue-item .queue-body { padding: 8px 2px 4px; }
+  .queue-item .queue-body p { font-size: 0.84rem; margin-bottom: 10px; max-width: none; }
+  .queue-all { margin-top: 8px; }
+  .queue-all > summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); }
+  .type-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .type-pill { border: 1px solid var(--line); background: transparent;
+    color: var(--muted); border-radius: 999px; padding: 4px 16px;
+    font-size: 0.82rem; font-family: inherit; cursor: pointer;
+    transition: border-color 0.25s ease, color 0.25s ease; }
+  .type-pill.on { border-color: var(--accent); color: var(--accent); }
+  .modal input[type="text"], .modal textarea { width: 100%; border: 1px solid var(--line);
+    border-radius: 10px; background: rgba(255,255,255,0.5); color: var(--ink);
+    font-family: inherit; font-size: 0.92rem; padding: 8px 12px; margin-bottom: 12px; }
+  .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--accent); }
+  .modal textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+  .btn { border-radius: 999px; padding: 6px 20px; font-size: 0.88rem;
+    font-family: inherit; cursor: pointer; border: 1px solid var(--line);
+    background: transparent; color: var(--ink);
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease; }
+  .btn:hover { border-color: var(--ink); }
+  .btn.primary { border-color: var(--accent); background: var(--accent); color: var(--surface); }
+  .btn.primary:hover { background: transparent; color: var(--accent); }
+  .rev-after { margin-top: 16px; }
+  .rev-after p { font-size: 0.88rem; margin-bottom: 8px; }
+  .rev-after pre { font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem;
+    line-height: 1.5; background: color-mix(in srgb, var(--ink) 6%, transparent);
+    border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px 14px;
+    max-height: 220px; overflow: auto; white-space: pre-wrap; user-select: text; }
+  #prev-body p, #prev-body ul { font-size: 0.92rem; }
+  @media (max-width: 880px) {
+    .layout { flex-direction: column; gap: 24px; }
+    nav.toc { position: static; width: 100%; max-height: none; }
+    .frame, .hero { padding-left: 24px; padding-right: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="lockup"><span>living-manual</span></div>
+    <h1>A user's manual that stays true to the code.</h1>
+    <span class="tagpill">One file · Interactive · Never stale</span>
+    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">July 23, 2026</span></div>
+  </div>
+</header>
+
+<div class="frame">
+<div class="layout">
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#the-manual">One file that stays true</a>
+  <a href="#notes">Notes become tickets</a>
+  <a class="sub" href="#make-a-note">Making a note</a>
+  <a class="sub" href="#queue-check">The queue check</a>
+  <a href="#previews">Roadmap previews</a>
+  <a href="#glossary">The concept glossary</a>
+  <a href="#ticket-skill">The ticket skill</a>
+  <a class="sub" href="#completeness-gate">The completeness gate</a>
+  <a href="#flows">Setup and updates</a>
+  <a class="sub" href="#first-run">First run</a>
+  <a class="sub" href="#update-flow">Every run after</a>
+  <a href="#guard">The staleness guard</a>
+  <a href="#reference">Reference</a>
+  <a href="#whats-new">What's new</a>
+</nav>
+
+<main>
+  <!-- The interactive affordances, explained once. Keep .manual-meta on
+       any prose about the manual itself so the glossary skips it. -->
+  <div class="callout tip manual-meta">
+    <p><b>This manual is interactive.</b> Hover any heading and click
+    <span class="pill">✎ make a note</span> to file an idea, feedback, or a
+    bug against that section. A ▶ icon marks a feature with roadmapped
+    changes; click it to preview the planned state. Terms with a dotted
+    underline show a short definition on hover, once, before the manual
+    explains them in full.</p>
+    <p class="small" style="margin-bottom:0">Notes copy as a payload for a
+    Claude Code session, which writes the developer ticket. Nothing leaves
+    this file until you paste.</p>
+  </div>
+
+  <section id="the-manual">
+    <h2>One file that stays true.</h2>
+    <p class="lead">living-manual is a Claude Code plugin. Point it at a repo
+    and it writes a branded, interactive user's manual, then holds that manual
+    to the code as releases ship.</p>
+    <p>The manual is one self-contained HTML file. No build step, no server,
+    no external assets: it opens in any browser and travels with the repo.
+    This copy lives at <code>docs/USER_MANUAL.html</code> and documents the
+    plugin itself, built by the plugin.</p>
+    <p>Three parts keep it honest. A base marker records the commit the manual
+    last matched. A pre-push guard blocks releases that would leave the manual
+    behind. And an update flow reads only what changed since the marker and
+    revises only the sections those changes touched.</p>
+    <p>Reading it is also writing it. Headings take notes that become
+    developer tickets. Features with planned changes carry roadmap previews,
+    so feedback lands on the plan instead of the past. A queue check shows
+    what's already filed, so duplicates become additions. The rest of this
+    manual walks each of those surfaces.</p>
+  </section>
+
+  <section id="notes">
+    <h2>Notes become tickets.</h2>
+    <p>Every heading here is a feedback surface. The manual meets you at the
+    moment of reaction, then carries that reaction into the development loop
+    with its context intact.</p>
+
+    <h3 id="make-a-note">Making a note.</h3>
+    <p>Hover any heading and click <span class="pill">✎ make a note</span>.
+    Pick a type: an idea for something new, feedback on how a feature behaves,
+    or a bug. Write one line on what should change, and as much detail as you
+    have. The placeholder text tells you what a useful report of that type
+    contains.</p>
+    <p><span class="pill accent">Copy for Claude Code</span> builds a
+    structured payload: your note plus the section, its anchor, the manual
+    version, and instructions for the model. Paste it into a Claude Code
+    session in this repo and the ticket gets written. Nothing is sent
+    anywhere; the manual only copies text to your clipboard.</p>
+
+    <h3 id="queue-check">The queue check.</h3>
+    <p>The note modal lists the tickets already queued for the section you are
+    annotating, with the rest of the queue one click deeper. Recognize your
+    request in the list, mark it as yours, and the payload files your note as
+    an addition: the existing ticket updates in place, its requirements absorb
+    the new information, and no twin is created.</p>
+    <div class="mock">
+      <div class="m-card">
+        <div class="m-row"><b>TICKET-0004</b>
+          <span class="m-pill accent">idea</span>
+          <span class="m-muted">needs answers</span></div>
+        <div>Let the queue filter by ticket type.</div>
+        <div style="margin-top:8px"><span class="m-pill caution">✓ Filing as an addition to this ticket</span></div>
+      </div>
+      <div class="m-caption">Example: the queue check mid-note, after the reader recognized their request</div>
+    </div>
+
+    <h3 id="after-paste">After you paste.</h3>
+    <p>The session grounds the note first: it reads this manual's section, the
+    code behind it, and the project's planning docs, then writes a ticket with
+    user stories, functional requirements, and acceptance criteria. A
+    completeness gate decides whether the ticket is ready to build or needs
+    answers first; a thin note is never padded into false precision.</p>
+    <p>Tickets land in <code>docs/tickets/</code>, and the queue index in this
+    file updates so the next reader's queue check sees them.</p>
+  </section>
+
+  <section id="previews">
+    <h2>Roadmap previews.</h2>
+    <p>A feature with planned changes is a moving target, and feedback on its
+    current shape is often feedback on something already being replaced.
+    Previews fix the aim.</p>
+    <p>A <button type="button" class="preview-btn" data-preview="demo-preview" data-demo="1" aria-label="Open the demonstration preview"><svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M1 0l8 5-8 5z" fill="currentColor"/></svg></button>
+    icon sits wherever a plan exists. Click it (the one in this sentence
+    works) to see the planned state, its status, and the roadmap source it
+    comes from.</p>
+    <p>The scope rule follows. A note on a previewed item files against the
+    plan, not the current behavior; the note modal says so and scopes the
+    payload accordingly. An icon inside a heading locks that whole section to
+    its plan. An icon inline in a sentence offers its item as an optional
+    target.</p>
+    <p class="muted small">This repo has no roadmapped work today, so the icon
+    above opens a demonstration and doesn't rescope notes on this section.</p>
+  </section>
+
+  <section id="glossary">
+    <h2>The concept glossary.</h2>
+    <p>Product-novel terms carry a dotted underline and a hover definition the
+    first time they appear. You have met several already in this manual.</p>
+    <p>The discipline: one alert per concept, on its first instance only, and
+    only when that instance falls before the passage that defines the concept
+    in full. Once the manual has explained a term, the reminders stop. A
+    document that keeps footnoting what you already read is noise.</p>
+    <p>Each entry records where its definition lives, so when prose moves
+    during an update, the alert boundary moves with it.</p>
+  </section>
+
+  <section id="ticket-skill">
+    <h2>The ticket skill.</h2>
+    <p><code>/living-manual:ticket</code> turns a pasted note, or a free-form
+    report, into a developer ticket in <code>docs/tickets/</code>. One ticket
+    per submission, unless it clearly contains independent requests.</p>
+
+    <h3 id="grounded">Grounded before written.</h3>
+    <p>Every claim about current behavior must be verifiable in code or docs;
+    the skill reads the named section and the code behind it before writing a
+    word. Classification is honest: designed-but-frustrating behavior is filed
+    as feedback naming the governing decision, not as a bug, and a mislabeled
+    submission is reclassified with a line saying so.</p>
+
+    <h3 id="completeness-gate">The completeness gate.</h3>
+    <p>A ticket is marked <span class="pill accent">ready</span> only when
+    every functional requirement is unambiguous and testable, and the
+    acceptance criteria cover all of them. Anything resting on a guess flips
+    it to <span class="pill warn">needs answers</span>, with open questions
+    that carry their own resolution: each names the requirement it blocks,
+    proposes a default, and says what changes if the default is wrong. Answer
+    them all and the ticket flips to ready.</p>
+
+    <h3 id="ticket-anatomy">What a ticket contains.</h3>
+    <ul>
+      <li>A summary, and the submission verbatim as the origin record.</li>
+      <li>Current behavior (or planned behavior, for plan-revision tickets)
+        with file references.</li>
+      <li>User stories; every requirement traces to one.</li>
+      <li>Numbered functional requirements, each testable.</li>
+      <li>Given/When/Then acceptance criteria covering every requirement.</li>
+      <li>Open questions, when the gate demands them.</li>
+    </ul>
+
+    <h3 id="jira-sync">Jira.</h3>
+    <p>With the Atlassian MCP configured, each ticket also becomes an issue in
+    the mapped Jira project, and additions update the same issue rather than
+    creating twins. A Jira failure never blocks the local ticket.</p>
+    <p class="muted small">This repo has Jira sync disabled: no Atlassian MCP
+    was available at setup. Install the MCP and re-run setup to enable it.</p>
+  </section>
+
+  <section id="flows">
+    <h2>Setup and updates.</h2>
+
+    <h3 id="first-run">First run.</h3>
+    <p>Install the plugin (<code>claude --plugin-dir /path/to/living-manual</code>,
+    or add the repo as a marketplace) and run
+    <code>/living-manual:manual</code> in your repo. Setup walks six steps,
+    each landing on disk, so an interrupted run resumes where it stopped:</p>
+    <ol>
+      <li>Orientation: the codebase is inventoried and the feature list
+        confirmed with you before a word is written.</li>
+      <li>Brand: palette, type, and voice are read from your brand assets.
+        Without any, a neutral palette stands in and is noted for a later
+        pass.</li>
+      <li>Jira: optional, and only offered when the Atlassian MCP is
+        present.</li>
+      <li>Config: <code>.living-manual.json</code> at the repo root records
+        all of it.</li>
+      <li>Wiring: the pre-push guard installs, CLAUDE.md gains the update
+        instruction, and the tickets directory is created.</li>
+      <li>Build: the shell is scaffolded, the prose written, and the result
+        verified before it's reported done.</li>
+    </ol>
+
+    <h3 id="update-flow">Every run after.</h3>
+    <p><code>/living-manual:manual update</code> diffs reality against the
+    manual: it lists the user-facing commits since the base marker, revises
+    only the sections those changes touch, appends a dated entry to What's
+    new, and re-stamps the marker. A manual already matching the code says so
+    and stops.</p>
+    <p>Shipped roadmap items lose their previews; the content moves into the
+    section and What's new. New concepts enter the glossary with their
+    defining passage recorded.</p>
+
+    <h3 id="config-file">The config file.</h3>
+    <p><code>.living-manual.json</code> holds the product identity, paths,
+    brand, and Jira settings. The <code>user_facing_paths</code> list decides
+    which commits count against freshness: changes elsewhere (CI, tests,
+    internal tooling) never block a push. The full key list is in the
+    reference below.</p>
+  </section>
+
+  <section id="guard">
+    <h2>The staleness guard.</h2>
+    <p>The manual records the commit it last matched: the base marker,
+    stamped in a comment near the top of this file and read by the scripts.
+    The manual is stale when user-facing commits postdate that marker.</p>
+    <p>Enforcement is two-layered. CLAUDE.md instructs every session in the
+    repo to run the update flow before any push, so freshness is part of the
+    normal workflow. The pre-push hook is the backstop: a push with
+    user-facing commits past the marker is blocked, with a message naming the
+    fix.</p>
+    <div class="callout">
+      <b>The escape hatch costs the next reader.</b>
+      <code>git push --no-verify</code> bypasses the guard once. The push
+      succeeds, and the next dev opens a manual describing an app that no
+      longer exists. Fix the manual instead; the update flow only revises
+      what changed.
+    </div>
+    <p class="small muted">The guard reads <code>user_facing_paths</code> from
+    the config, so documentation-only and tooling-only pushes pass
+    untouched.</p>
+  </section>
+
+  <section id="reference">
+    <h2>Reference.</h2>
+
+    <h3 id="config-keys">Config keys.</h3>
+    <table>
+      <tr><th>Key</th><th>Meaning</th></tr>
+      <tr><td><code>product</code>, <code>tagline</code>, <code>tagline_pill</code></td>
+        <td>Identity shown in the manual's hero.</td></tr>
+      <tr><td><code>manual_path</code></td>
+        <td>Where the manual lives. Default <code>docs/USER_MANUAL.html</code>.</td></tr>
+      <tr><td><code>tickets_dir</code></td>
+        <td>The ticket queue. Default <code>docs/tickets</code>.</td></tr>
+      <tr><td><code>ticket_skill</code></td>
+        <td>The command the note payload invokes.</td></tr>
+      <tr><td><code>user_facing_paths</code></td>
+        <td>Path prefixes whose commits make the manual stale.</td></tr>
+      <tr><td><code>brand</code></td>
+        <td>ink, surface, deep, accent, warn, caution, font stack, hero
+        gradient, logo data URI. Missing keys fall back to a neutral
+        palette.</td></tr>
+      <tr><td><code>jira</code></td>
+        <td>enabled, project key, and the note-type to issue-type mapping.</td></tr>
+    </table>
+
+    <h3 id="scripts">Scripts.</h3>
+    <p>The scripts do the mechanical work so model time goes to content and
+    judgment. All run from the plugin; nothing needs installing.</p>
+    <table>
+      <tr><th>Script</th><th>Does</th></tr>
+      <tr><td><code>state.sh</code></td>
+        <td>One JSON line: configured or not, manual base, HEAD, wiring.</td></tr>
+      <tr><td><code>inventory.sh</code></td>
+        <td>Codebase orientation for setup: framework signals, surfaces,
+        docs, brand candidates.</td></tr>
+      <tr><td><code>stale.sh</code></td>
+        <td><code>CURRENT</code>, or the commits and user-facing files since
+        the base marker.</td></tr>
+      <tr><td><code>install-hook.sh</code></td>
+        <td>Installs the pre-push guard.</td></tr>
+      <tr><td><code>scaffold.py</code></td>
+        <td>Instantiates the manual shell from the brand config.</td></tr>
+      <tr><td><code>sync-index.py</code></td>
+        <td>Rewrites the manual's data blocks from a JSON payload.</td></tr>
+      <tr><td><code>tickets-index.py</code></td>
+        <td>Rebuilds the queue index from the ticket files, so the index
+        can't drift.</td></tr>
+      <tr><td><code>next-ticket.sh</code></td>
+        <td>The next free ticket number.</td></tr>
+      <tr><td><code>verify.py</code></td>
+        <td>Static integrity checks; prints OK or findings.</td></tr>
+    </table>
+
+    <h3 id="statuses">Ticket statuses.</h3>
+    <table>
+      <tr><th>Status</th><th>Meaning</th></tr>
+      <tr><td><span class="pill accent">ready</span></td>
+        <td>Complete: requirements testable, criteria cover them, no
+        guesses.</td></tr>
+      <tr><td><span class="pill warn">needs answers</span></td>
+        <td>Open questions block completeness; answering them all flips the
+        ticket to ready.</td></tr>
+      <tr><td><span class="pill">shipped</span></td>
+        <td>Landed in a release. Dropped from the queue index, kept as the
+        record.</td></tr>
+      <tr><td><span class="pill">declined</span></td>
+        <td>Closed without building. Kept as the record.</td></tr>
+    </table>
+
+    <p class="small muted">Requires git and python3. With node present,
+    verification also syntax-checks the manual's script.</p>
+  </section>
+
+  <section id="whats-new">
+    <h2>What's new.</h2>
+    <p class="muted small">Newest first. Each entry lands with its release.</p>
+    <div class="release">
+      <div class="date">v0.2.0 · July 23, 2026</div>
+      <p>First working release. Setup and update flows; the interactive
+      manual shell with notes, roadmap previews, the concept glossary, and
+      the queue check; the ticket skill with its completeness gate and
+      optional Jira sync; the pre-push staleness guard; and the script set
+      that keeps mechanical work out of model hands.</p>
+    </div>
+    <div class="release">
+      <div class="date">v0.1 · July 23, 2026</div>
+      <p>Project skeleton and README.</p>
+    </div>
+  </section>
+</main>
+</div>
+</div>
+
+<footer>
+  <div class="frame">living-manual · This manual travels with the app — docs/USER_MANUAL.html</div>
+</footer>
+
+<div class="overlay" id="rev-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rev-context">
+    <div class="modal-label">Make a note</div>
+    <h3 id="rev-context">…</h3>
+    <div class="rev-notice" id="rev-notice" hidden>
+      This has <b>roadmapped changes</b>. Today's behavior is already being
+      replaced, so notes here apply to the planned work, not the current
+      feature. Describe what the <em>future</em> state should do differently.
+    </div>
+    <div class="scope-row" id="rev-scope" hidden>
+      <span class="scope-label">This note applies to</span>
+    </div>
+    <div class="rev-queue" id="rev-queue" hidden></div>
+    <div class="type-row" id="rev-types">
+      <button type="button" class="type-pill on" data-type="idea">Idea</button>
+      <button type="button" class="type-pill" data-type="feedback">Feedback</button>
+      <button type="button" class="type-pill" data-type="bug">Bug</button>
+    </div>
+    <input type="text" id="rev-summary" placeholder="One line: what should change?">
+    <textarea id="rev-details" placeholder="Describe it. What would this let you do that you can't today?"></textarea>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="rev-cancel">Cancel</button>
+      <button type="button" class="btn" id="rev-copy-again" hidden>Copy again</button>
+      <button type="button" class="btn primary" id="rev-copy">Copy for Claude Code</button>
+    </div>
+    <div class="rev-after" id="rev-after" hidden>
+      <p><b>Copied.</b> Paste it into your Claude Code session. Claude reads the code behind this section and writes the ticket into <code>docs/tickets/</code> with user stories, requirements, and acceptance criteria, or the open questions that would complete them.</p>
+      <pre id="rev-payload"></pre>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="prev-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prev-title">
+    <div class="modal-label">Roadmap preview — how this changes</div>
+    <h3 id="prev-title">…</h3>
+    <div id="prev-status" style="margin: -8px 0 14px"></div>
+    <div id="prev-body"></div>
+    <div class="modal-src" id="prev-src"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button type="button" class="btn" id="prev-close">Close</button>
+      <button type="button" class="btn primary" id="prev-revise">Make a note on this plan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var MANUAL_VERSION = "July 23, 2026";
+  var TICKET_SKILL = "/living-manual:ticket";
+  var TICKETS_DIR = "docs/tickets";
+  var MANUAL_PATH = "docs/USER_MANUAL.html";
+
+  /* ---- data blocks: owned by scripts/sync-index.py ---- */
+  /*@TICKETS*/
+  var TICKETS = [];
+  /*@/TICKETS*/
+  /*@PREVIEWS*/
+  var PREVIEWS = {
+  "demo-preview": {
+    "title": "Demonstration: how a preview reads.",
+    "status": "Planned",
+    "source": "This manual's previews section; a demonstration, not a real roadmap item.",
+    "body": "<p>In a live manual this modal holds the planned future state of the feature you clicked from, written from the project's roadmap or planning docs. The pill above carries the plan's status; the source line below names where the plan lives.</p><p>The button underneath files a note against the plan itself. This repo has no planned work yet, so this item exists so you can try the affordance.</p>"
+  }
+};
+  /*@/PREVIEWS*/
+  /*@GLOSSARY*/
+  var GLOSSARY = [
+    { id: "base-marker", label: "Base marker", re: /base marker/gi,
+      s: "The commit this manual last matched, stamped in the file. User-facing commits after it make the manual stale and block a push." },
+    { id: "roadmap-preview", label: "Roadmap preview", re: /roadmap previews?/gi,
+      s: "The planned future state of a feature, drawn from the project's roadmap and opened from a ▶ icon. Notes on a previewed item file against the plan, not today's behavior." },
+    { id: "queue-check", label: "Queue check", re: /queue check/gi,
+      s: "The note modal's list of tickets already queued for the section at hand. Recognizing your request there files your note as an addition instead of a duplicate." },
+    { id: "addition", label: "Addition", re: /additions?/gi,
+      s: "A note that extends a ticket already in the queue. The existing ticket updates in place; no twin is created." },
+    { id: "completeness-gate", label: "Completeness gate", re: /completeness gate/gi,
+      s: "A ticket is ready only when every requirement is testable and covered by acceptance criteria. Anything resting on a guess becomes an open question with a proposed default." }
+  ];
+  /*@/GLOSSARY*/
+  /*@DEFINED*/
+  var DEFINED_IN = {
+  "base-marker": [
+    "sec:guard"
+  ],
+  "roadmap-preview": [
+    "sec:previews"
+  ],
+  "queue-check": [
+    "h3:queue-check"
+  ],
+  "addition": [
+    "h3:queue-check"
+  ],
+  "completeness-gate": [
+    "h3:completeness-gate"
+  ]
+};
+  /*@/DEFINED*/
+
+  function wireOverlay(overlay, onClose) {
+    var began = false;
+    overlay.addEventListener("mousedown", function (e) { began = e.target === overlay; });
+    overlay.addEventListener("mouseup", function (e) {
+      if (began && e.target === overlay) onClose();
+      began = false;
+    });
+  }
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeRev(); closePrev(); }
+  });
+
+  /* ================= Notes modal ================= */
+  var revOverlay = document.getElementById("rev-overlay");
+  var revContext = document.getElementById("rev-context");
+  var revSummary = document.getElementById("rev-summary");
+  var revDetails = document.getElementById("rev-details");
+  var revAfter = document.getElementById("rev-after");
+  var revPayload = document.getElementById("rev-payload");
+  var revNotice = document.getElementById("rev-notice");
+  var revScope = document.getElementById("rev-scope");
+  var revQueue = document.getElementById("rev-queue");
+  var revType = "idea";
+  var revSection = { title: "", anchor: "" };
+  var revAnchors = [];
+  var revRelated = null;
+  var revTarget = null;
+
+  var PLACEHOLDERS = {
+    idea: "Describe it. What would this let you do that you can't today?",
+    feedback: "What works badly, and what would better look like?",
+    bug: "What did you do, what did you expect, and what happened instead?"
+  };
+  document.getElementById("rev-types").addEventListener("click", function (e) {
+    var pill = e.target.closest(".type-pill");
+    if (!pill) return;
+    revType = pill.dataset.type;
+    this.querySelectorAll(".type-pill").forEach(function (p) {
+      p.classList.toggle("on", p === pill);
+    });
+    revDetails.placeholder = PLACEHOLDERS[revType];
+  });
+
+  function setTarget(id) {
+    revTarget = id;
+    revNotice.hidden = id == null;
+    revScope.querySelectorAll(".scope-chip").forEach(function (c) {
+      c.classList.toggle("on", (c.dataset.target || null) === id);
+    });
+    var base = revSection.title.replace(/\.\s*$/, "");
+    if (id) {
+      var ptitle = PREVIEWS[id].title.replace(/\.\s*$/, "");
+      revContext.textContent =
+        base === ptitle ? "Roadmapped work — " + ptitle : base + " — roadmapped: " + ptitle;
+    } else {
+      revContext.textContent = base + (revSection.anchor ? " — #" + revSection.anchor : "");
+    }
+    renderQueue();
+  }
+
+  function setRelated(id) {
+    revRelated = id;
+    revQueue.querySelectorAll(".scope-chip").forEach(function (c) {
+      var mine = c.dataset.ticket === id;
+      c.classList.toggle("on", mine);
+      c.textContent = mine ? "✓ Filing as an addition to this ticket" : "My note adds to this ticket";
+    });
+  }
+
+  function ticketItem(t) {
+    var d = document.createElement("details");
+    d.className = "queue-item";
+    var s = document.createElement("summary");
+    var b = document.createElement("b");
+    b.textContent = t.id;
+    var meta = document.createElement("span");
+    meta.className = "q-meta";
+    meta.textContent = " · " + t.type + " · " +
+      (t.status === "needs-answers" ? "needs answers" : t.status) + " — ";
+    s.appendChild(b); s.appendChild(meta);
+    s.appendChild(document.createTextNode(t.title));
+    d.appendChild(s);
+    var body = document.createElement("div");
+    body.className = "queue-body";
+    var p = document.createElement("p");
+    p.textContent = t.summary;
+    body.appendChild(p);
+    var chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "scope-chip";
+    chip.dataset.ticket = t.id;
+    chip.textContent = "My note adds to this ticket";
+    chip.addEventListener("click", function () {
+      setRelated(revRelated === t.id ? null : t.id);
+    });
+    body.appendChild(chip);
+    d.appendChild(body);
+    return d;
+  }
+
+  function renderQueue() {
+    revQueue.textContent = "";
+    var stillRelated = revRelated;
+    if (TICKETS.length === 0) { revQueue.hidden = true; revRelated = null; return; }
+    var matches = TICKETS.filter(function (t) {
+      if (revTarget && t.roadmap === revTarget) return true;
+      return (t.anchors || []).some(function (a) { return revAnchors.indexOf(a) !== -1; });
+    });
+    var rest = TICKETS.filter(function (t) { return matches.indexOf(t) === -1; });
+    var label = document.createElement("span");
+    label.className = "scope-label";
+    label.textContent = matches.length
+      ? "Already in the queue. Is your note one of these?"
+      : "Nothing is queued for this area yet.";
+    revQueue.appendChild(label);
+    matches.forEach(function (t) { revQueue.appendChild(ticketItem(t)); });
+    if (rest.length) {
+      var all = document.createElement("details");
+      all.className = "queue-all";
+      var s = document.createElement("summary");
+      s.textContent = "Everything queued (" + rest.length + (matches.length ? " more" : "") + ")";
+      all.appendChild(s);
+      rest.forEach(function (t) { all.appendChild(ticketItem(t)); });
+      revQueue.appendChild(all);
+    }
+    revQueue.hidden = false;
+    revRelated = null;
+    if (stillRelated) setRelated(stillRelated);
+  }
+
+  var revCopyBtn = document.getElementById("rev-copy");
+  var revCopyAgain = document.getElementById("rev-copy-again");
+  var revCopied = false;
+
+  function openRev(title, anchor, locked, scoped, anchors) {
+    revSection = { title: title, anchor: anchor };
+    revAnchors = anchors || (anchor ? [anchor] : []);
+    revRelated = null;
+    var isLocked = locked.length > 0;
+    var chips = [];
+    if (!isLocked) chips.push({ id: null, label: "Current behavior" });
+    locked.concat(scoped).forEach(function (id) {
+      chips.push({ id: id, label: PREVIEWS[id].title.replace(/\.\s*$/, "") });
+    });
+    revScope.querySelectorAll(".scope-chip").forEach(function (c) { c.remove(); });
+    chips.forEach(function (ch) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "scope-chip" + (ch.id ? " roadmap" : "");
+      if (ch.id) b.dataset.target = ch.id;
+      b.textContent = ch.label;
+      b.addEventListener("click", function () { setTarget(ch.id); });
+      revScope.appendChild(b);
+    });
+    revScope.hidden = !isLocked && chips.length <= 1;
+    setTarget(isLocked ? locked[0] : null);
+    revAfter.hidden = true;
+    revCopied = false;
+    revCopyBtn.textContent = "Copy for Claude Code";
+    revCopyAgain.hidden = true;
+    revOverlay.hidden = false;
+    revSummary.focus();
+  }
+  function closeRev() { if (!revOverlay.hidden) revOverlay.hidden = true; }
+  wireOverlay(revOverlay, closeRev);
+  document.getElementById("rev-cancel").addEventListener("click", closeRev);
+
+  function plainText(html) {
+    var d = document.createElement("div");
+    d.innerHTML = html;
+    return d.textContent.replace(/\s+/g, " ").trim();
+  }
+
+  function buildPayload() {
+    var lines = [
+      TICKET_SKILL, "",
+      "<submission>",
+      "source: " + document.title + " (" + MANUAL_PATH + ") — version " + MANUAL_VERSION,
+      "section: " + revSection.title + (revSection.anchor ? " (#" + revSection.anchor + ")" : "")
+    ];
+    if (revTarget) {
+      var p = PREVIEWS[revTarget];
+      lines.push(
+        "target: roadmapped work — NOT current behavior",
+        "roadmap-item: " + p.title + " [" + revTarget + "] · " + p.status,
+        "roadmap-source: " + p.source,
+        "planned-state: " + plainText(p.body)
+      );
+    } else {
+      lines.push("target: current behavior");
+    }
+    if (revRelated) {
+      lines.push("relates-to: " + revRelated + " — the user reviewed the queued tickets and identified this note as an addition to that ticket");
+    }
+    lines.push(
+      "type: " + revType,
+      "summary: " + (revSummary.value.trim() || "(none given)"),
+      "details:",
+      (revDetails.value.trim() || "(none given)"),
+      "submitted: " + new Date().toISOString(),
+      "</submission>",
+      ""
+    );
+    if (revRelated) {
+      lines.push(
+        "This note ADDS TO the existing queued ticket " + revRelated + " in " + TICKETS_DIR + "/.",
+        "Do not create a new ticket. Update that ticket in place, fold the new",
+        "information into its stories, requirements, criteria, and open questions,",
+        "append the submission to its Origin, re-verify completeness, and sync the",
+        "TICKETS index in " + MANUAL_PATH + "."
+      );
+    } else if (revTarget) {
+      lines.push(
+        "This submission revises PLANNED work, not shipped behavior. Write a",
+        "plan-revision ticket: read the named roadmap source, state the planned",
+        "behavior it amends, and express user stories, functional requirements,",
+        "and acceptance criteria as deltas to that plan. Surface any conflict",
+        "with the plan's intent. If a verifiably complete ticket can't be",
+        "produced, include the open questions that would resolve every unknown,",
+        "each with a proposed default."
+      );
+    } else {
+      lines.push(
+        "Interpret this submission into an actionable developer ticket. Read the",
+        "manual section and the code behind it, then write",
+        TICKETS_DIR + "/TICKET-<next-number>-<slug>.md with: a summary, the",
+        "submission verbatim, user stories, numbered testable functional",
+        "requirements, acceptance criteria covering every requirement, and, if",
+        "any requirement can't be verifiably pinned down, an Open Questions",
+        "section whose answers would resolve every unknown, each with a proposed",
+        "default. Mark the ticket ready or needs-answers accordingly."
+      );
+    }
+    return lines.join("\n");
+  }
+
+  function doCopy() {
+    var payload = buildPayload();
+    revPayload.textContent = payload;
+    revAfter.hidden = false;
+    function fallback() {
+      var range = document.createRange();
+      range.selectNodeContents(revPayload);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      try { document.execCommand("copy"); } catch (e) { /* stays selectable */ }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).catch(fallback);
+    } else { fallback(); }
+  }
+  revCopyBtn.addEventListener("click", function () {
+    if (!revCopied) {
+      doCopy();
+      revCopied = true;
+      revCopyBtn.textContent = "Done";
+      revCopyAgain.hidden = false;
+    } else { closeRev(); }
+  });
+  revCopyAgain.addEventListener("click", doCopy);
+
+  /* ================= Roadmap previews ================= */
+  var prevOverlay = document.getElementById("prev-overlay");
+  var prevTitle = document.getElementById("prev-title");
+  var prevStatus = document.getElementById("prev-status");
+  var prevBody = document.getElementById("prev-body");
+  var prevSrc = document.getElementById("prev-src");
+  var currentPreview = null;
+
+  function openPrev(id) {
+    var p = PREVIEWS[id];
+    if (!p) return;
+    currentPreview = id;
+    prevTitle.textContent = p.title;
+    prevStatus.innerHTML = "<span class=\"pill " +
+      (p.status === "In progress" ? "warn" : "accent") + "\">" + p.status + "</span>";
+    prevBody.innerHTML = p.body;
+    prevSrc.textContent = "Source: " + p.source;
+    prevOverlay.hidden = false;
+  }
+  function closePrev() { if (!prevOverlay.hidden) prevOverlay.hidden = true; }
+  wireOverlay(prevOverlay, closePrev);
+  document.getElementById("prev-close").addEventListener("click", closePrev);
+  document.querySelectorAll(".preview-btn").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openPrev(btn.dataset.preview);
+    });
+  });
+  document.getElementById("prev-revise").addEventListener("click", function () {
+    var id = currentPreview;
+    closePrev();
+    if (id) openRev(PREVIEWS[id].title, "", [id], [], []);
+  });
+
+  /* ---- header ↔ roadmap scope: an icon inside a header locks that
+     header to the plan; an inline icon offers its item as a target. ---- */
+  var headerScopes = new Map();
+  function scopeFor(h) {
+    var s = headerScopes.get(h);
+    if (!s) { s = { locked: [], scoped: [] }; headerScopes.set(h, s); }
+    return s;
+  }
+  document.querySelectorAll("main section").forEach(function (section) {
+    var current = section.querySelector("h2");
+    section.querySelectorAll("h2, h3, .preview-btn").forEach(function (el) {
+      if (el.matches("h2, h3")) { current = el; return; }
+      if (el.dataset.demo) return;
+      var host = el.closest("h2, h3");
+      if (host) scopeFor(host).locked.push(el.dataset.preview);
+      else if (current) scopeFor(current).scoped.push(el.dataset.preview);
+    });
+  });
+  document.querySelectorAll("main h2, main h3").forEach(function (h) {
+    h.addEventListener("click", function (e) {
+      if (e.target.closest(".preview-btn")) return;
+      var section = h.closest("section");
+      var anchor = h.id || (section && section.id) || "";
+      var title = h.childNodes[0] ? h.childNodes[0].textContent.trim() : h.textContent.trim();
+      if (h.tagName === "H3" && section) {
+        var h2 = section.querySelector("h2");
+        if (h2) title = h2.childNodes[0].textContent.trim().replace(/\.$/, "") + " › " + title;
+      }
+      var scope = headerScopes.get(h) || { locked: [], scoped: [] };
+      var anchors = [h.id, section && section.id].filter(Boolean);
+      openRev(title, anchor, scope.locked, scope.scoped, anchors);
+    });
+  });
+
+  /* ================= Concept glossary =================
+     At most one alert per concept, on its first instance, and only when
+     that instance falls before the concept's defining passage. Once the
+     definition has been read, no reminders. */
+  var TERMS = {};
+  GLOSSARY.forEach(function (t) { TERMS[t.id] = t; });
+  var TERM_EXCLUDE = "pre, code, kbd, svg, button, input, textarea, select, a, h1, h2, h3, .pill, .preview-btn, .mock, .term, .manual-meta";
+  var termRoot = document.querySelector("main");
+  var h3BySlug = {};
+  termRoot.querySelectorAll("section h3").forEach(function (h) {
+    if (h.id && !(h.id in h3BySlug)) h3BySlug[h.id] = h;
+    var slug = (h.childNodes[0] ? h.childNodes[0].textContent : h.textContent)
+      .trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    if (slug && !(slug in h3BySlug)) h3BySlug[slug] = h;
+  });
+  function definitionBoundary(id) {
+    var best = null;
+    (DEFINED_IN[id] || []).forEach(function (key) {
+      var el = key.indexOf("sec:") === 0
+        ? document.getElementById(key.slice(4))
+        : h3BySlug[key.slice(3)];
+      if (el && (!best || (el.compareDocumentPosition(best) & Node.DOCUMENT_POSITION_FOLLOWING))) {
+        best = el;
+      }
+    });
+    return best;
+  }
+  GLOSSARY.forEach(function (t) {
+    var boundary = definitionBoundary(t.id);
+    var walker = document.createTreeWalker(termRoot, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        if (!n.nodeValue || !/\S/.test(n.nodeValue)) return NodeFilter.FILTER_REJECT;
+        if (n.parentElement && n.parentElement.closest(TERM_EXCLUDE)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var node;
+    while ((node = walker.nextNode())) {
+      var text = node.nodeValue;
+      t.re.lastIndex = 0;
+      var m = t.re.exec(text);
+      if (!m) continue;
+      if (boundary && !(boundary.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING)) {
+        break;
+      }
+      var span = document.createElement("span");
+      span.className = "term";
+      span.dataset.term = t.id;
+      span.textContent = m[0];
+      var tail = document.createTextNode(text.slice(m.index + m[0].length));
+      node.nodeValue = text.slice(0, m.index);
+      var parent = node.parentNode;
+      parent.insertBefore(tail, node.nextSibling);
+      parent.insertBefore(span, tail);
+      break;
+    }
+  });
+
+  /* Hover alert: centered over the word, alive inside its bounding box,
+     quick fade after three uninterrupted seconds outside. */
+  var tip = document.createElement("div");
+  tip.className = "term-tip";
+  document.body.appendChild(tip);
+  var tipSpan = null, overTerm = false, overTip = false, tipTimer = null;
+  function positionTip(span) {
+    var r = span.getBoundingClientRect();
+    var tw = tip.offsetWidth, th = tip.offsetHeight;
+    var left = Math.max(8, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 8));
+    var top = r.top - th - 8;
+    if (top < 8) top = r.bottom + 8;
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+  }
+  function showTip(span) {
+    clearTimeout(tipTimer);
+    tipSpan = span;
+    var t = TERMS[span.dataset.term];
+    tip.textContent = "";
+    var b = document.createElement("b");
+    b.textContent = t.label;
+    tip.appendChild(b);
+    tip.appendChild(document.createTextNode(t.s));
+    tip.classList.add("visible");
+    positionTip(span);
+  }
+  function hideTipSoon() {
+    clearTimeout(tipTimer);
+    tipTimer = setTimeout(function () {
+      if (!overTerm && !overTip) {
+        tip.classList.remove("visible");
+        tipSpan = null;
+      }
+    }, 3000);
+  }
+  termRoot.querySelectorAll(".term").forEach(function (span) {
+    span.addEventListener("mouseenter", function () { overTerm = true; showTip(span); });
+    span.addEventListener("mouseleave", function () { overTerm = false; hideTipSoon(); });
+  });
+  tip.addEventListener("mouseenter", function () { overTip = true; clearTimeout(tipTimer); });
+  tip.addEventListener("mouseleave", function () { overTip = false; hideTipSoon(); });
+  window.addEventListener("scroll", function () {
+    if (tipSpan && tip.classList.contains("visible")) positionTip(tipSpan);
+  }, true);
+  window.addEventListener("resize", function () {
+    if (tipSpan && tip.classList.contains("visible")) positionTip(tipSpan);
+  });
+})();
+</script>
+
+</body>
+</html>
