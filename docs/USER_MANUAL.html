@@ -76,6 +76,10 @@
     border-radius: 12px; padding: 14px 20px; margin: 18px 0; max-width: 72ch;
     font-size: 0.94rem; }
   .callout.tip { border-left-color: var(--accent); }
+  main pre.cmd { font-family: ui-monospace, Menlo, monospace; font-size: 0.8rem;
+    line-height: 1.7; background: color-mix(in srgb, var(--ink) 6%, transparent);
+    border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px 16px;
+    margin: 14px 0 16px; max-width: 68ch; overflow-x: auto; }
   table { border-collapse: collapse; margin: 16px 0 20px; font-size: 0.92rem; }
   th, td { text-align: left; padding: 8px 16px 8px 0;
     border-bottom: 1px solid var(--line-soft); vertical-align: top; }
@@ -222,6 +226,7 @@
 
 <nav class="toc">
   <div class="toc-title">Contents</div>
+  <a href="#get-the-plugin">Get the plugin</a>
   <a href="#the-manual">One file that stays true</a>
   <a href="#notes">Notes become tickets</a>
   <a class="sub" href="#make-a-note">Making a note</a>
@@ -252,6 +257,20 @@
     Claude Code session, which writes the developer ticket. Nothing leaves
     this file until you paste.</p>
   </div>
+
+  <section id="get-the-plugin">
+    <h2>Get the plugin.</h2>
+    <p>living-manual runs inside Claude Code. Clone the repo, then point a
+    session at it:</p>
+    <pre class="cmd">git clone https://github.com/dougstanford/living-manual.git
+claude --plugin-dir /path/to/living-manual</pre>
+    <p>In any repo you want documented, run
+    <code>/living-manual:manual</code> and answer the setup questions. You
+    get a page like this one: your product, your brand, your code. The rest
+    of this manual explains what that page does.</p>
+    <p class="small muted">Requires git and python3. Jira sync needs the
+    Atlassian MCP.</p>
+  </section>
 
   <section id="the-manual">
     <h2>One file that stays true.</h2>
