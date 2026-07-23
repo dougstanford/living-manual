@@ -1,0 +1,13 @@
+{
+  "name": "living-manual",
+  "owner": {
+    "name": "Doug Stanford"
+  },
+  "plugins": [
+    {
+      "name": "living-manual",
+      "source": "./",
+      "description": "Branded, interactive, self-maintaining user's manuals with a note-to-ticket pipeline and optional Jira sync."
+    }
+  ]
+}

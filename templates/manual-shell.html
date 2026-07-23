@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{PRODUCT}} — User's Manual</title>
+<!-- manual-base: {{BASE_SHA}} -->
+<!--
+  Maintained by the living-manual plugin. Do not hand-edit the script's
+  data blocks; run scripts/sync-index.py with a JSON payload instead.
+  Update procedure: reference/maintenance.md in the plugin.
+  Prose rules: reference/writing-style.md in the plugin.
+-->
+<style>
+  :root {
+    --surface: {{SURFACE}};
+    --ink: {{INK}};
+    --deep: {{DEEP}};
+    --accent: {{ACCENT}};
+    --warn: {{WARN}};
+    --caution: {{CAUTION}};
+    --line: color-mix(in srgb, var(--ink) 22%, transparent);
+    --line-soft: color-mix(in srgb, var(--ink) 12%, transparent);
+    --muted: color-mix(in srgb, var(--ink) 62%, transparent);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--surface); color: var(--ink);
+    font-family: {{FONT_STACK}};
+    font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  .hero {
+    position: relative; color: #fff; padding: 80px 48px 64px;
+    background: {{HERO_GRADIENT}}; overflow: hidden;
+  }
+  .hero-inner { max-width: 1020px; margin: 0 auto; }
+  .hero .lockup { display: flex; align-items: center; gap: 12px;
+    font-weight: 600; font-size: 1.3rem; margin-bottom: 48px; }
+  .hero h1 { font-weight: 200; font-size: clamp(2.2rem, 5vw, 3.6rem);
+    line-height: 1.12; max-width: 16ch; }
+  .hero .tagpill { display: inline-block; margin-top: 24px;
+    border: 1px solid rgba(255,255,255,0.75); border-radius: 999px;
+    padding: 6px 18px; font-size: 0.82rem; }
+  .hero .asof { margin-top: 30px; font-size: 0.8rem; opacity: 0.75; }
+  .frame { max-width: 1020px; margin: 0 auto; padding: 0 48px; }
+  .layout { display: flex; gap: 56px; align-items: flex-start; padding-top: 56px; }
+  nav.toc { position: sticky; top: 28px; width: 218px; flex-shrink: 0;
+    font-size: 0.84rem; border: 1px solid var(--line); border-radius: 16px;
+    padding: 18px 20px; max-height: calc(100vh - 56px); overflow-y: auto; }
+  nav.toc .toc-title { font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); margin-bottom: 10px; }
+  nav.toc a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
+  nav.toc a:hover { color: var(--accent); }
+  nav.toc a.sub { padding-left: 14px; color: var(--muted); font-size: 0.8rem; }
+  main { flex: 1; min-width: 0; padding-bottom: 96px; }
+  section { margin-bottom: 64px; }
+  h2 { font-weight: 300; font-size: 1.9rem; margin-bottom: 18px; scroll-margin-top: 24px; }
+  h3 { font-weight: 600; font-size: 1.08rem; margin: 30px 0 10px; scroll-margin-top: 24px; }
+  p { margin-bottom: 12px; max-width: 68ch; }
+  ul, ol { margin: 0 0 14px 22px; max-width: 66ch; }
+  li { margin-bottom: 6px; }
+  .lead { font-size: 1.1rem; max-width: 62ch; }
+  .muted { color: var(--muted); }
+  .small { font-size: 0.85rem; }
+  .pill { display: inline-block; border: 1px solid var(--ink);
+    border-radius: 999px; padding: 1px 12px; font-size: 0.78rem; white-space: nowrap; }
+  .pill.accent { border-color: var(--accent); color: var(--accent); }
+  .pill.warn { border-color: var(--warn); color: var(--warn); }
+  kbd { font-family: inherit; font-size: 0.8rem; border: 1px solid var(--line);
+    border-bottom-width: 2px; border-radius: 6px; padding: 1px 7px;
+    background: rgba(255,255,255,0.5); white-space: nowrap; }
+  .card { border: 1px solid var(--line); border-radius: 16px;
+    padding: 20px 24px; margin: 18px 0; max-width: 72ch; }
+  .callout { border: 1px solid var(--line); border-left: 3px solid var(--warn);
+    border-radius: 12px; padding: 14px 20px; margin: 18px 0; max-width: 72ch;
+    font-size: 0.94rem; }
+  .callout.tip { border-left-color: var(--accent); }
+  table { border-collapse: collapse; margin: 16px 0 20px; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 8px 16px 8px 0;
+    border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); font-weight: 600; }
+  /* Mock app panels: for illustrating app state inline (excluded from
+     glossary annotation). */
+  .mock { background: var(--deep); color: var(--surface); border-radius: 16px;
+    padding: 18px 20px; margin: 18px 0; max-width: 72ch; font-size: 0.88rem;
+    line-height: 1.5; }
+  .mock .m-card { background: color-mix(in srgb, var(--surface) 7%, var(--deep));
+    border: 1px solid color-mix(in srgb, var(--surface) 14%, transparent);
+    border-radius: 14px; padding: 14px 16px; }
+  .mock .m-card + .m-card { margin-top: 10px; }
+  .mock .m-muted { color: color-mix(in srgb, var(--surface) 62%, var(--deep)); }
+  .mock .m-row { display: flex; align-items: center; gap: 14px; }
+  .mock .m-pill { display: inline-block; border-radius: 999px; padding: 1px 11px;
+    font-size: 0.74rem; border: 1px solid; white-space: nowrap; }
+  .mock .m-pill.accent { border-color: var(--accent); color: var(--accent); }
+  .mock .m-pill.warn { border-color: var(--warn); color: var(--warn); }
+  .mock .m-pill.caution { border-color: var(--caution); color: var(--caution); }
+  .mock .m-caption { margin-top: 10px; font-size: 0.72rem;
+    color: color-mix(in srgb, var(--surface) 62%, var(--deep));
+    text-transform: uppercase; letter-spacing: 0.06em; }
+  .caption { font-size: 0.8rem; color: var(--muted); max-width: 68ch;
+    margin: -8px 0 16px; }
+
+  .release { margin-bottom: 30px; max-width: 72ch; }
+  .release .date { font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); }
+  footer { border-top: 1px solid var(--line-soft); padding: 32px 48px 48px;
+    font-size: 0.82rem; color: var(--muted); }
+
+  main h2, main h3 { cursor: pointer; }
+  main h2::after, main h3::after {
+    content: "✎ make a note"; font-size: 0.68rem; font-weight: 400;
+    letter-spacing: 0.05em; color: var(--muted); border: 1px solid var(--line);
+    border-radius: 999px; padding: 2px 10px; margin-left: 12px;
+    vertical-align: middle; opacity: 0; transition: opacity 0.25s ease;
+    white-space: nowrap; }
+  main h2:hover::after, main h3:hover::after { opacity: 1; }
+
+  .preview-btn { display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; margin: 0 2px; vertical-align: middle;
+    position: relative; top: -1px; border: 1px solid var(--accent);
+    border-radius: 999px; background: transparent; color: var(--accent);
+    cursor: pointer; transition: background 0.25s ease, color 0.25s ease; padding: 0; }
+  .preview-btn:hover { background: var(--accent); color: var(--surface); }
+  .preview-btn svg { width: 9px; height: 9px; display: block; margin-left: 1px; }
+  h2 .preview-btn, h3 .preview-btn { width: 22px; height: 22px; }
+
+  .term { text-decoration: underline dotted color-mix(in srgb, var(--ink) 38%, transparent);
+    text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: help; }
+  .term-tip { position: fixed; z-index: 60; max-width: 340px; background: var(--deep);
+    color: var(--surface); border-radius: 12px; padding: 11px 15px;
+    font-size: 0.82rem; line-height: 1.55; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    opacity: 0; visibility: hidden; transition: opacity 0.15s ease, visibility 0.15s ease; }
+  .term-tip.visible { opacity: 1; visibility: visible; }
+  .term-tip b { display: block; margin-bottom: 3px; font-size: 0.72rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--caution); }
+
+  .overlay { position: fixed; inset: 0; z-index: 50;
+    background: color-mix(in srgb, var(--deep) 55%, transparent);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 11vh 24px 24px; overflow-y: auto; }
+  .overlay[hidden] { display: none; }
+  .modal { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 18px; width: 560px; max-width: 100%; padding: 26px 30px 24px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.3); }
+  .modal-label { font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); margin-bottom: 6px; }
+  .modal h3 { margin: 0 0 14px; font-weight: 600; font-size: 1.12rem; }
+  .modal .modal-src { margin-top: 18px; padding-top: 12px;
+    border-top: 1px solid var(--line-soft); font-size: 0.78rem; color: var(--muted); }
+  .rev-notice { border: 1px solid var(--line); border-left: 3px solid var(--warn);
+    border-radius: 10px; padding: 10px 14px; font-size: 0.84rem; margin-bottom: 14px; }
+  .scope-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-bottom: 14px; }
+  .scope-label { width: 100%; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); }
+  .scope-chip { border: 1px solid var(--line); background: transparent;
+    color: var(--muted); border-radius: 999px; padding: 4px 14px;
+    font-size: 0.8rem; font-family: inherit; cursor: pointer;
+    transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease; }
+  .scope-chip.roadmap::before { content: "▶ "; font-size: 0.6rem; vertical-align: 1px; }
+  .scope-chip.on { border-color: var(--accent); color: var(--accent); }
+  .scope-chip.on.roadmap { background: var(--accent); color: var(--surface); }
+  .rev-queue { margin-bottom: 14px; }
+  .queue-item { border: 1px solid var(--line); border-radius: 10px;
+    padding: 7px 12px; margin-top: 8px; font-size: 0.84rem; }
+  .queue-item summary { cursor: pointer; }
+  .queue-item summary .q-meta { color: var(--muted); }
+  .queue-item .queue-body { padding: 8px 2px 4px; }
+  .queue-item .queue-body p { font-size: 0.84rem; margin-bottom: 10px; max-width: none; }
+  .queue-all { margin-top: 8px; }
+  .queue-all > summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); }
+  .type-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .type-pill { border: 1px solid var(--line); background: transparent;
+    color: var(--muted); border-radius: 999px; padding: 4px 16px;
+    font-size: 0.82rem; font-family: inherit; cursor: pointer;
+    transition: border-color 0.25s ease, color 0.25s ease; }
+  .type-pill.on { border-color: var(--accent); color: var(--accent); }
+  .modal input[type="text"], .modal textarea { width: 100%; border: 1px solid var(--line);
+    border-radius: 10px; background: rgba(255,255,255,0.5); color: var(--ink);
+    font-family: inherit; font-size: 0.92rem; padding: 8px 12px; margin-bottom: 12px; }
+  .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--accent); }
+  .modal textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+  .btn { border-radius: 999px; padding: 6px 20px; font-size: 0.88rem;
+    font-family: inherit; cursor: pointer; border: 1px solid var(--line);
+    background: transparent; color: var(--ink);
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease; }
+  .btn:hover { border-color: var(--ink); }
+  .btn.primary { border-color: var(--accent); background: var(--accent); color: var(--surface); }
+  .btn.primary:hover { background: transparent; color: var(--accent); }
+  .rev-after { margin-top: 16px; }
+  .rev-after p { font-size: 0.88rem; margin-bottom: 8px; }
+  .rev-after pre { font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem;
+    line-height: 1.5; background: color-mix(in srgb, var(--ink) 6%, transparent);
+    border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px 14px;
+    max-height: 220px; overflow: auto; white-space: pre-wrap; user-select: text; }
+  #prev-body p, #prev-body ul { font-size: 0.92rem; }
+  @media (max-width: 880px) {
+    .layout { flex-direction: column; gap: 24px; }
+    nav.toc { position: static; width: 100%; max-height: none; }
+    .frame, .hero { padding-left: 24px; padding-right: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="lockup">{{LOGO_TAG}}<span>{{PRODUCT}}</span></div>
+    <h1>{{TAGLINE}}</h1>
+    <span class="tagpill">{{TAGLINE_PILL}}</span>
+    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">(unset)</span></div>
+  </div>
+</header>
+
+<div class="frame">
+<div class="layout">
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <!-- SLOT: TOC — one <a href="#id"> per section, .sub for subsections -->
+</nav>
+
+<main>
+  <!-- The interactive affordances, explained once. Keep .manual-meta on
+       any prose about the manual itself so the glossary skips it. -->
+  <!-- SLOT: INTRO_CALLOUT -->
+
+  <!-- SLOT: SECTIONS — <section id="..."> blocks. Novel-concept alerts,
+       preview icons (.preview-btn with data-preview), and note targets
+       are wired automatically from the data blocks below. -->
+
+  <section id="whats-new">
+    <h2>What's new.</h2>
+    <p class="muted small">Newest first. Each entry lands with its release.</p>
+    <!-- SLOT: WHATS_NEW — .release blocks, newest first -->
+  </section>
+</main>
+</div>
+</div>
+
+<footer>
+  <div class="frame">{{PRODUCT}} · This manual travels with the app — {{MANUAL_PATH}}</div>
+</footer>
+
+<div class="overlay" id="rev-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rev-context">
+    <div class="modal-label">Make a note</div>
+    <h3 id="rev-context">…</h3>
+    <div class="rev-notice" id="rev-notice" hidden>
+      This has <b>roadmapped changes</b>. Today's behavior is already being
+      replaced, so notes here apply to the planned work, not the current
+      feature. Describe what the <em>future</em> state should do differently.
+    </div>
+    <div class="scope-row" id="rev-scope" hidden>
+      <span class="scope-label">This note applies to</span>
+    </div>
+    <div class="rev-queue" id="rev-queue" hidden></div>
+    <div class="type-row" id="rev-types">
+      <button type="button" class="type-pill on" data-type="idea">Idea</button>
+      <button type="button" class="type-pill" data-type="feedback">Feedback</button>
+      <button type="button" class="type-pill" data-type="bug">Bug</button>
+    </div>
+    <input type="text" id="rev-summary" placeholder="One line: what should change?">
+    <textarea id="rev-details" placeholder="Describe it. What would this let you do that you can't today?"></textarea>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="rev-cancel">Cancel</button>
+      <button type="button" class="btn" id="rev-copy-again" hidden>Copy again</button>
+      <button type="button" class="btn primary" id="rev-copy">Copy for Claude Code</button>
+    </div>
+    <div class="rev-after" id="rev-after" hidden>
+      <p><b>Copied.</b> Paste it into your Claude Code session. Claude reads the code behind this section and writes the ticket into <code>{{TICKETS_DIR}}/</code> with user stories, requirements, and acceptance criteria, or the open questions that would complete them.</p>
+      <pre id="rev-payload"></pre>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="prev-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prev-title">
+    <div class="modal-label">Roadmap preview — how this changes</div>
+    <h3 id="prev-title">…</h3>
+    <div id="prev-status" style="margin: -8px 0 14px"></div>
+    <div id="prev-body"></div>
+    <div class="modal-src" id="prev-src"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button type="button" class="btn" id="prev-close">Close</button>
+      <button type="button" class="btn primary" id="prev-revise">Make a note on this plan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var MANUAL_VERSION = "(unset)";
+  var TICKET_SKILL = "{{TICKET_SKILL}}";
+  var TICKETS_DIR = "{{TICKETS_DIR}}";
+  var MANUAL_PATH = "{{MANUAL_PATH}}";
+
+  /* ---- data blocks: owned by scripts/sync-index.py ---- */
+  /*@TICKETS*/
+  var TICKETS = [];
+  /*@/TICKETS*/
+  /*@PREVIEWS*/
+  var PREVIEWS = {};
+  /*@/PREVIEWS*/
+  /*@GLOSSARY*/
+  var GLOSSARY = [];
+  /*@/GLOSSARY*/
+  /*@DEFINED*/
+  var DEFINED_IN = {};
+  /*@/DEFINED*/
+
+  function wireOverlay(overlay, onClose) {
+    var began = false;
+    overlay.addEventListener("mousedown", function (e) { began = e.target === overlay; });
+    overlay.addEventListener("mouseup", function (e) {
+      if (began && e.target === overlay) onClose();
+      began = false;
+    });
+  }
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeRev(); closePrev(); }
+  });
+
+  /* ================= Notes modal ================= */
+  var revOverlay = document.getElementById("rev-overlay");
+  var revContext = document.getElementById("rev-context");
+  var revSummary = document.getElementById("rev-summary");
+  var revDetails = document.getElementById("rev-details");
+  var revAfter = document.getElementById("rev-after");
+  var revPayload = document.getElementById("rev-payload");
+  var revNotice = document.getElementById("rev-notice");
+  var revScope = document.getElementById("rev-scope");
+  var revQueue = document.getElementById("rev-queue");
+  var revType = "idea";
+  var revSection = { title: "", anchor: "" };
+  var revAnchors = [];
+  var revRelated = null;
+  var revTarget = null;
+
+  var PLACEHOLDERS = {
+    idea: "Describe it. What would this let you do that you can't today?",
+    feedback: "What works badly, and what would better look like?",
+    bug: "What did you do, what did you expect, and what happened instead?"
+  };
+  document.getElementById("rev-types").addEventListener("click", function (e) {
+    var pill = e.target.closest(".type-pill");
+    if (!pill) return;
+    revType = pill.dataset.type;
+    this.querySelectorAll(".type-pill").forEach(function (p) {
+      p.classList.toggle("on", p === pill);
+    });
+    revDetails.placeholder = PLACEHOLDERS[revType];
+  });
+
+  function setTarget(id) {
+    revTarget = id;
+    revNotice.hidden = id == null;
+    revScope.querySelectorAll(".scope-chip").forEach(function (c) {
+      c.classList.toggle("on", (c.dataset.target || null) === id);
+    });
+    var base = revSection.title.replace(/\.\s*$/, "");
+    if (id) {
+      var ptitle = PREVIEWS[id].title.replace(/\.\s*$/, "");
+      revContext.textContent =
+        base === ptitle ? "Roadmapped work — " + ptitle : base + " — roadmapped: " + ptitle;
+    } else {
+      revContext.textContent = base + (revSection.anchor ? " — #" + revSection.anchor : "");
+    }
+    renderQueue();
+  }
+
+  function setRelated(id) {
+    revRelated = id;
+    revQueue.querySelectorAll(".scope-chip").forEach(function (c) {
+      var mine = c.dataset.ticket === id;
+      c.classList.toggle("on", mine);
+      c.textContent = mine ? "✓ Filing as an addition to this ticket" : "My note adds to this ticket";
+    });
+  }
+
+  function ticketItem(t) {
+    var d = document.createElement("details");
+    d.className = "queue-item";
+    var s = document.createElement("summary");
+    var b = document.createElement("b");
+    b.textContent = t.id;
+    var meta = document.createElement("span");
+    meta.className = "q-meta";
+    meta.textContent = " · " + t.type + " · " +
+      (t.status === "needs-answers" ? "needs answers" : t.status) + " — ";
+    s.appendChild(b); s.appendChild(meta);
+    s.appendChild(document.createTextNode(t.title));
+    d.appendChild(s);
+    var body = document.createElement("div");
+    body.className = "queue-body";
+    var p = document.createElement("p");
+    p.textContent = t.summary;
+    body.appendChild(p);
+    var chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "scope-chip";
+    chip.dataset.ticket = t.id;
+    chip.textContent = "My note adds to this ticket";
+    chip.addEventListener("click", function () {
+      setRelated(revRelated === t.id ? null : t.id);
+    });
+    body.appendChild(chip);
+    d.appendChild(body);
+    return d;
+  }
+
+  function renderQueue() {
+    revQueue.textContent = "";
+    var stillRelated = revRelated;
+    if (TICKETS.length === 0) { revQueue.hidden = true; revRelated = null; return; }
+    var matches = TICKETS.filter(function (t) {
+      if (revTarget && t.roadmap === revTarget) return true;
+      return (t.anchors || []).some(function (a) { return revAnchors.indexOf(a) !== -1; });
+    });
+    var rest = TICKETS.filter(function (t) { return matches.indexOf(t) === -1; });
+    var label = document.createElement("span");
+    label.className = "scope-label";
+    label.textContent = matches.length
+      ? "Already in the queue. Is your note one of these?"
+      : "Nothing is queued for this area yet.";
+    revQueue.appendChild(label);
+    matches.forEach(function (t) { revQueue.appendChild(ticketItem(t)); });
+    if (rest.length) {
+      var all = document.createElement("details");
+      all.className = "queue-all";
+      var s = document.createElement("summary");
+      s.textContent = "Everything queued (" + rest.length + (matches.length ? " more" : "") + ")";
+      all.appendChild(s);
+      rest.forEach(function (t) { all.appendChild(ticketItem(t)); });
+      revQueue.appendChild(all);
+    }
+    revQueue.hidden = false;
+    revRelated = null;
+    if (stillRelated) setRelated(stillRelated);
+  }
+
+  var revCopyBtn = document.getElementById("rev-copy");
+  var revCopyAgain = document.getElementById("rev-copy-again");
+  var revCopied = false;
+
+  function openRev(title, anchor, locked, scoped, anchors) {
+    revSection = { title: title, anchor: anchor };
+    revAnchors = anchors || (anchor ? [anchor] : []);
+    revRelated = null;
+    var isLocked = locked.length > 0;
+    var chips = [];
+    if (!isLocked) chips.push({ id: null, label: "Current behavior" });
+    locked.concat(scoped).forEach(function (id) {
+      chips.push({ id: id, label: PREVIEWS[id].title.replace(/\.\s*$/, "") });
+    });
+    revScope.querySelectorAll(".scope-chip").forEach(function (c) { c.remove(); });
+    chips.forEach(function (ch) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "scope-chip" + (ch.id ? " roadmap" : "");
+      if (ch.id) b.dataset.target = ch.id;
+      b.textContent = ch.label;
+      b.addEventListener("click", function () { setTarget(ch.id); });
+      revScope.appendChild(b);
+    });
+    revScope.hidden = !isLocked && chips.length <= 1;
+    setTarget(isLocked ? locked[0] : null);
+    revAfter.hidden = true;
+    revCopied = false;
+    revCopyBtn.textContent = "Copy for Claude Code";
+    revCopyAgain.hidden = true;
+    revOverlay.hidden = false;
+    revSummary.focus();
+  }
+  function closeRev() { if (!revOverlay.hidden) revOverlay.hidden = true; }
+  wireOverlay(revOverlay, closeRev);
+  document.getElementById("rev-cancel").addEventListener("click", closeRev);
+
+  function plainText(html) {
+    var d = document.createElement("div");
+    d.innerHTML = html;
+    return d.textContent.replace(/\s+/g, " ").trim();
+  }
+
+  function buildPayload() {
+    var lines = [
+      TICKET_SKILL, "",
+      "<submission>",
+      "source: " + document.title + " (" + MANUAL_PATH + ") — version " + MANUAL_VERSION,
+      "section: " + revSection.title + (revSection.anchor ? " (#" + revSection.anchor + ")" : "")
+    ];
+    if (revTarget) {
+      var p = PREVIEWS[revTarget];
+      lines.push(
+        "target: roadmapped work — NOT current behavior",
+        "roadmap-item: " + p.title + " [" + revTarget + "] · " + p.status,
+        "roadmap-source: " + p.source,
+        "planned-state: " + plainText(p.body)
+      );
+    } else {
+      lines.push("target: current behavior");
+    }
+    if (revRelated) {
+      lines.push("relates-to: " + revRelated + " — the user reviewed the queued tickets and identified this note as an addition to that ticket");
+    }
+    lines.push(
+      "type: " + revType,
+      "summary: " + (revSummary.value.trim() || "(none given)"),
+      "details:",
+      (revDetails.value.trim() || "(none given)"),
+      "submitted: " + new Date().toISOString(),
+      "</submission>",
+      ""
+    );
+    if (revRelated) {
+      lines.push(
+        "This note ADDS TO the existing queued ticket " + revRelated + " in " + TICKETS_DIR + "/.",
+        "Do not create a new ticket. Update that ticket in place, fold the new",
+        "information into its stories, requirements, criteria, and open questions,",
+        "append the submission to its Origin, re-verify completeness, and sync the",
+        "TICKETS index in " + MANUAL_PATH + "."
+      );
+    } else if (revTarget) {
+      lines.push(
+        "This submission revises PLANNED work, not shipped behavior. Write a",
+        "plan-revision ticket: read the named roadmap source, state the planned",
+        "behavior it amends, and express user stories, functional requirements,",
+        "and acceptance criteria as deltas to that plan. Surface any conflict",
+        "with the plan's intent. If a verifiably complete ticket can't be",
+        "produced, include the open questions that would resolve every unknown,",
+        "each with a proposed default."
+      );
+    } else {
+      lines.push(
+        "Interpret this submission into an actionable developer ticket. Read the",
+        "manual section and the code behind it, then write",
+        TICKETS_DIR + "/TICKET-<next-number>-<slug>.md with: a summary, the",
+        "submission verbatim, user stories, numbered testable functional",
+        "requirements, acceptance criteria covering every requirement, and, if",
+        "any requirement can't be verifiably pinned down, an Open Questions",
+        "section whose answers would resolve every unknown, each with a proposed",
+        "default. Mark the ticket ready or needs-answers accordingly."
+      );
+    }
+    return lines.join("\n");
+  }
+
+  function doCopy() {
+    var payload = buildPayload();
+    revPayload.textContent = payload;
+    revAfter.hidden = false;
+    function fallback() {
+      var range = document.createRange();
+      range.selectNodeContents(revPayload);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      try { document.execCommand("copy"); } catch (e) { /* stays selectable */ }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).catch(fallback);
+    } else { fallback(); }
+  }
+  revCopyBtn.addEventListener("click", function () {
+    if (!revCopied) {
+      doCopy();
+      revCopied = true;
+      revCopyBtn.textContent = "Done";
+      revCopyAgain.hidden = false;
+    } else { closeRev(); }
+  });
+  revCopyAgain.addEventListener("click", doCopy);
+
+  /* ================= Roadmap previews ================= */
+  var prevOverlay = document.getElementById("prev-overlay");
+  var prevTitle = document.getElementById("prev-title");
+  var prevStatus = document.getElementById("prev-status");
+  var prevBody = document.getElementById("prev-body");
+  var prevSrc = document.getElementById("prev-src");
+  var currentPreview = null;
+
+  function openPrev(id) {
+    var p = PREVIEWS[id];
+    if (!p) return;
+    currentPreview = id;
+    prevTitle.textContent = p.title;
+    prevStatus.innerHTML = "<span class=\"pill " +
+      (p.status === "In progress" ? "warn" : "accent") + "\">" + p.status + "</span>";
+    prevBody.innerHTML = p.body;
+    prevSrc.textContent = "Source: " + p.source;
+    prevOverlay.hidden = false;
+  }
+  function closePrev() { if (!prevOverlay.hidden) prevOverlay.hidden = true; }
+  wireOverlay(prevOverlay, closePrev);
+  document.getElementById("prev-close").addEventListener("click", closePrev);
+  document.querySelectorAll(".preview-btn").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openPrev(btn.dataset.preview);
+    });
+  });
+  document.getElementById("prev-revise").addEventListener("click", function () {
+    var id = currentPreview;
+    closePrev();
+    if (id) openRev(PREVIEWS[id].title, "", [id], [], []);
+  });
+
+  /* ---- header ↔ roadmap scope: an icon inside a header locks that
+     header to the plan; an inline icon offers its item as a target. ---- */
+  var headerScopes = new Map();
+  function scopeFor(h) {
+    var s = headerScopes.get(h);
+    if (!s) { s = { locked: [], scoped: [] }; headerScopes.set(h, s); }
+    return s;
+  }
+  document.querySelectorAll("main section").forEach(function (section) {
+    var current = section.querySelector("h2");
+    section.querySelectorAll("h2, h3, .preview-btn").forEach(function (el) {
+      if (el.matches("h2, h3")) { current = el; return; }
+      if (el.dataset.demo) return;
+      var host = el.closest("h2, h3");
+      if (host) scopeFor(host).locked.push(el.dataset.preview);
+      else if (current) scopeFor(current).scoped.push(el.dataset.preview);
+    });
+  });
+  document.querySelectorAll("main h2, main h3").forEach(function (h) {
+    h.addEventListener("click", function (e) {
+      if (e.target.closest(".preview-btn")) return;
+      var section = h.closest("section");
+      var anchor = h.id || (section && section.id) || "";
+      var title = h.childNodes[0] ? h.childNodes[0].textContent.trim() : h.textContent.trim();
+      if (h.tagName === "H3" && section) {
+        var h2 = section.querySelector("h2");
+        if (h2) title = h2.childNodes[0].textContent.trim().replace(/\.$/, "") + " › " + title;
+      }
+      var scope = headerScopes.get(h) || { locked: [], scoped: [] };
+      var anchors = [h.id, section && section.id].filter(Boolean);
+      openRev(title, anchor, scope.locked, scope.scoped, anchors);
+    });
+  });
+
+  /* ================= Concept glossary =================
+     At most one alert per concept, on its first instance, and only when
+     that instance falls before the concept's defining passage. Once the
+     definition has been read, no reminders. */
+  var TERMS = {};
+  GLOSSARY.forEach(function (t) { TERMS[t.id] = t; });
+  var TERM_EXCLUDE = "pre, code, kbd, svg, button, input, textarea, select, a, h1, h2, h3, .pill, .preview-btn, .mock, .term, .manual-meta";
+  var termRoot = document.querySelector("main");
+  var h3BySlug = {};
+  termRoot.querySelectorAll("section h3").forEach(function (h) {
+    if (h.id && !(h.id in h3BySlug)) h3BySlug[h.id] = h;
+    var slug = (h.childNodes[0] ? h.childNodes[0].textContent : h.textContent)
+      .trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    if (slug && !(slug in h3BySlug)) h3BySlug[slug] = h;
+  });
+  function definitionBoundary(id) {
+    var best = null;
+    (DEFINED_IN[id] || []).forEach(function (key) {
+      var el = key.indexOf("sec:") === 0
+        ? document.getElementById(key.slice(4))
+        : h3BySlug[key.slice(3)];
+      if (el && (!best || (el.compareDocumentPosition(best) & Node.DOCUMENT_POSITION_FOLLOWING))) {
+        best = el;
+      }
+    });
+    return best;
+  }
+  GLOSSARY.forEach(function (t) {
+    var boundary = definitionBoundary(t.id);
+    var walker = document.createTreeWalker(termRoot, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        if (!n.nodeValue || !/\S/.test(n.nodeValue)) return NodeFilter.FILTER_REJECT;
+        if (n.parentElement && n.parentElement.closest(TERM_EXCLUDE)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var node;
+    while ((node = walker.nextNode())) {
+      var text = node.nodeValue;
+      t.re.lastIndex = 0;
+      var m = t.re.exec(text);
+      if (!m) continue;
+      if (boundary && !(boundary.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING)) {
+        break;
+      }
+      var span = document.createElement("span");
+      span.className = "term";
+      span.dataset.term = t.id;
+      span.textContent = m[0];
+      var tail = document.createTextNode(text.slice(m.index + m[0].length));
+      node.nodeValue = text.slice(0, m.index);
+      var parent = node.parentNode;
+      parent.insertBefore(tail, node.nextSibling);
+      parent.insertBefore(span, tail);
+      break;
+    }
+  });
+
+  /* Hover alert: centered over the word, alive inside its bounding box,
+     quick fade after three uninterrupted seconds outside. */
+  var tip = document.createElement("div");
+  tip.className = "term-tip";
+  document.body.appendChild(tip);
+  var tipSpan = null, overTerm = false, overTip = false, tipTimer = null;
+  function positionTip(span) {
+    var r = span.getBoundingClientRect();
+    var tw = tip.offsetWidth, th = tip.offsetHeight;
+    var left = Math.max(8, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 8));
+    var top = r.top - th - 8;
+    if (top < 8) top = r.bottom + 8;
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+  }
+  function showTip(span) {
+    clearTimeout(tipTimer);
+    tipSpan = span;
+    var t = TERMS[span.dataset.term];
+    tip.textContent = "";
+    var b = document.createElement("b");
+    b.textContent = t.label;
+    tip.appendChild(b);
+    tip.appendChild(document.createTextNode(t.s));
+    tip.classList.add("visible");
+    positionTip(span);
+  }
+  function hideTipSoon() {
+    clearTimeout(tipTimer);
+    tipTimer = setTimeout(function () {
+      if (!overTerm && !overTip) {
+        tip.classList.remove("visible");
+        tipSpan = null;
+      }
+    }, 3000);
+  }
+  termRoot.querySelectorAll(".term").forEach(function (span) {
+    span.addEventListener("mouseenter", function () { overTerm = true; showTip(span); });
+    span.addEventListener("mouseleave", function () { overTerm = false; hideTipSoon(); });
+  });
+  tip.addEventListener("mouseenter", function () { overTip = true; clearTimeout(tipTimer); });
+  tip.addEventListener("mouseleave", function () { overTip = false; hideTipSoon(); });
+  window.addEventListener("scroll", function () {
+    if (tipSpan && tip.classList.contains("visible")) positionTip(tipSpan);
+  }, true);
+  window.addEventListener("resize", function () {
+    if (tipSpan && tip.classList.contains("visible")) positionTip(tipSpan);
+  });
+})();
+</script>
+
+</body>
+</html>
