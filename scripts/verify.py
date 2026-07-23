@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """verify.py MANUAL — static integrity checks for a living manual.
 
-Checks: base marker present, data markers intact, script parses (when
-node is available), no duplicate element ids, every preview icon names
-a PREVIEWS entry, PREVIEWS/TICKETS/DEFINED_IN blocks well-formed, every
-DEFINED_IN key has a glossary entry. Exit 0 clean; exit 1 with findings.
+Checks: base marker present and resolving to a commit in the containing
+repo, data markers intact, script parses (when node is available), no
+duplicate element ids, every preview icon names a PREVIEWS entry,
+PREVIEWS/TICKETS/DEFINED_IN blocks well-formed, every DEFINED_IN key
+has a glossary entry. Exit 0 clean; exit 1 with findings.
 """
 import json, os, re, shutil, subprocess, sys, tempfile
 
@@ -30,8 +31,24 @@ def main():
     src = open(sys.argv[1]).read()
     f = []
 
-    if not re.search(r"manual-base: [0-9a-f]{6,}", src[:4000]):
+    base = re.search(r"manual-base: ([0-9a-f]{6,})", src[:4000])
+    if not base:
         f.append("no manual-base marker in the first 4000 bytes")
+    elif shutil.which("git"):
+        # The marker is a sha frozen in the file; amending or rebasing
+        # after stamping orphans it and the guard breaks silently.
+        repo_dir = os.path.dirname(os.path.abspath(sys.argv[1]))
+        in_repo = subprocess.run(
+            ["git", "-C", repo_dir, "rev-parse", "--is-inside-work-tree"],
+            capture_output=True)
+        if in_repo.returncode == 0:
+            r = subprocess.run(
+                ["git", "-C", repo_dir, "cat-file", "-e",
+                 base.group(1) + "^{commit}"], capture_output=True)
+            if r.returncode != 0:
+                f.append("manual-base %s does not resolve to a commit in "
+                         "this repo (history rewritten after stamping?)"
+                         % base.group(1))
 
     ids = re.findall(r'\bid="([^"]+)"', src)
     dupes = sorted({i for i in ids if ids.count(i) > 1})

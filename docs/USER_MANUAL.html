@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 2a646e9 -->
+<!-- manual-base: b3a0557 -->
 <!--
   Maintained by the living-manual plugin. Do not hand-edit the script's
   data blocks; run scripts/sync-index.py with a JSON payload instead.
@@ -268,8 +268,8 @@ claude --plugin-dir /path/to/living-manual</pre>
     <code>/living-manual:manual</code> and answer the setup questions. You
     get a page like this one: your product, your brand, your code. The rest
     of this manual explains what that page does.</p>
-    <p class="small muted">Requires git and python3. Jira sync needs the
-    Atlassian MCP.</p>
+    <p class="small muted">Requires git and python3. Tracker sync needs the
+    Atlassian MCP (Jira) or the gh CLI (GitHub Issues).</p>
   </section>
 
   <section id="the-manual">
@@ -400,12 +400,17 @@ claude --plugin-dir /path/to/living-manual</pre>
       <li>Open questions, when the gate demands them.</li>
     </ul>
 
-    <h3 id="jira-sync">Jira.</h3>
-    <p>With the Atlassian MCP configured, each ticket also becomes an issue in
-    the mapped Jira project, and additions update the same issue rather than
-    creating twins. A Jira failure never blocks the local ticket.</p>
-    <p class="muted small">This repo has Jira sync disabled: no Atlassian MCP
-    was available at setup. Install the MCP and re-run setup to enable it.</p>
+    <h3 id="tracker-sync">The issue tracker.</h3>
+    <p>With a tracker configured, each ticket also becomes an issue in Jira or
+    GitHub Issues. The ticket file records the issue reference in its
+    <code>issue:</code> field, and additions update that same issue rather
+    than creating twins. A tracker failure never blocks the local ticket: the
+    file is the record, and the report names the retry path.</p>
+    <p>Sync never invents taxonomy. A label or issue type named in the config
+    but since deleted at the tracker is reported, not recreated.</p>
+    <p class="muted small">This repo has no tracker configured. Re-run setup
+    for the tracker step to link Jira (Atlassian MCP) or GitHub Issues (gh
+    CLI).</p>
   </section>
 
   <section id="flows">
@@ -424,8 +429,11 @@ claude --plugin-dir /path/to/living-manual</pre>
       <li>Brand: palette, type, and voice are read from your brand assets.
         Without any, a neutral palette stands in and is noted for a later
         pass.</li>
-      <li>Jira: optional, and only offered when the Atlassian MCP is
-        present.</li>
+      <li>Tracker: optional. Setup detects the usable providers (Jira via
+        the Atlassian MCP, GitHub Issues via the gh CLI), prints your
+        project's existing labels, milestones, and issue types, and
+        proposes a mapping built from them. Nothing new is created without
+        your confirmation.</li>
       <li>Config: <code>.living-manual.json</code> at the repo root records
         all of it.</li>
       <li>Wiring: the pre-push guard installs, CLAUDE.md gains the update
@@ -446,7 +454,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 
     <h3 id="config-file">The config file.</h3>
     <p><code>.living-manual.json</code> holds the product identity, paths,
-    brand, and Jira settings. The <code>user_facing_paths</code> list decides
+    brand, and tracker settings. The <code>user_facing_paths</code> list decides
     which commits count against freshness: changes elsewhere (CI, tests,
     internal tooling) never block a push. The full key list is in the
     reference below.</p>
@@ -469,6 +477,11 @@ claude --plugin-dir /path/to/living-manual</pre>
       longer exists. Fix the manual instead; the update flow only revises
       what changed.
     </div>
+    <p>The marker is a sha frozen in this file, so it can outlive its commit.
+    Amending or rebasing after an update run orphans the marker: the commit it
+    names stops existing while the manual still points there. An orphaned
+    marker counts as stale rather than current, and verification flags it,
+    since the usual cause is a history rewrite after stamping.</p>
     <p class="small muted">The guard reads <code>user_facing_paths</code> from
     the config, so documentation-only and tooling-only pushes pass
     untouched.</p>
@@ -494,8 +507,10 @@ claude --plugin-dir /path/to/living-manual</pre>
         <td>ink, surface, deep, accent, warn, caution, font stack, hero
         gradient, logo data URI. Missing keys fall back to a neutral
         palette.</td></tr>
-      <tr><td><code>jira</code></td>
-        <td>enabled, project key, and the note-type to issue-type mapping.</td></tr>
+      <tr><td><code>tracker</code></td>
+        <td>Provider (jira, github, or none) and that provider's block:
+        project key or repo, plus the note-type mapping onto existing issue
+        types or labels. A legacy <code>jira</code> block still reads.</td></tr>
     </table>
 
     <h3 id="scripts">Scripts.</h3>
@@ -523,7 +538,8 @@ claude --plugin-dir /path/to/living-manual</pre>
       <tr><td><code>next-ticket.sh</code></td>
         <td>The next free ticket number.</td></tr>
       <tr><td><code>verify.py</code></td>
-        <td>Static integrity checks; prints OK or findings.</td></tr>
+        <td>Static integrity checks, including that the base marker resolves
+        to a commit in the repo; prints OK or findings.</td></tr>
     </table>
 
     <h3 id="statuses">Ticket statuses.</h3>
@@ -549,6 +565,18 @@ claude --plugin-dir /path/to/living-manual</pre>
   <section id="whats-new">
     <h2>What's new.</h2>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
+    <div class="release">
+      <div class="date">July 23, 2026</div>
+      <p>Tickets now sync to GitHub Issues as well as Jira, behind one
+      tracker contract. Setup detects which trackers the session can reach,
+      prints your project's existing labels, milestones, and issue types,
+      and proposes a mapping built from them; nothing new is created without
+      your confirmation. Ticket files record the issue reference in an
+      <code>issue:</code> field, and a config label since deleted at the
+      tracker is reported at sync time, never recreated.</p>
+      <p>Verification now flags a base marker orphaned by a history rewrite,
+      instead of leaving the staleness guard silently broken.</p>
+    </div>
     <div class="release">
       <div class="date">v0.2.1 · July 23, 2026</div>
       <p>Setup questions now show their subject before asking. The feature

@@ -1,6 +1,6 @@
 ---
 name: manual
-description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional Jira link, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", or when the pre-push guard reports the manual is stale.
+description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", or when the pre-push guard reports the manual is stale.
 ---
 
 # The living manual
@@ -24,7 +24,8 @@ loaded from.
 
 Every question you ask during setup must be answerable from what is on
 the user's screen. Print the thing you are asking about (the feature
-map, the palette and its proposed roles, the Jira project list) in your
+map, the palette and its proposed roles, the tracker's projects,
+labels, and milestones) in your
 reply first, then ask. Answer choices never reference content the user
 has not been shown.
 
@@ -66,17 +67,28 @@ in the config so a later brand pass knows. A logo file becomes a data
 URI (downscale to ~96px first: `sips -Z 96 in.png --out small.png`,
 then base64) so the manual stays self-contained.
 
-**3. Jira link (optional).**
-Check whether Atlassian MCP tools are available (ToolSearch for
-"atlassian jira"). If absent: record `"jira": {"enabled": false}` and
-tell the user how to enable later (install the Atlassian MCP, re-run
-setup). If present: print the visible projects (key and name), then ask
-which one receives tickets, verify the user has create-issue permission on it (fetch
-project permissions; never create a test issue without asking), and
-record project key + issue-type mapping
-(`bug → Bug, idea → Story, feedback → Task`, adjusted to what the
-project actually has). Write access missing: record disabled with the
-reason, in the user's terms.
+**3. Issue tracker link (optional).**
+Read `$LM/reference/trackers.md` first; it defines the supported
+providers, the config schema, and the inspect-propose-commit
+discipline this step follows. Run each provider's detect step (Jira:
+Atlassian MCP via ToolSearch; GitHub Issues: `gh` authenticated and
+the repo resolves). None usable: record
+`"tracker": {"provider": "none"}` with the reason and the enable path.
+Otherwise ask which provider receives tickets, offering only the
+usable ones plus "none".
+
+Then, for the chosen provider: run its inspect step and print what the
+project already has (Jira: issue types, components; GitHub: labels,
+milestones) before proposing anything. Propose a mapping of ticket
+types (`bug`, `idea`, `feedback`) onto that existing taxonomy, plus
+any optional routing (component, milestone, extra labels) drawn from
+the same lists. Never assume the defaults in trackers.md fit; suggest
+creating a new label or type only when nothing existing does, marked
+as "would be created", and create it only on explicit confirmation.
+Verify write permission the provider's way; never create a test issue
+to probe. Record the confirmed mapping in the `tracker` block. Write
+access missing: record `"provider": "none"` with the reason, in the
+user's terms.
 
 **4. Write the config.**
 `.living-manual.json` at repo root:
@@ -93,8 +105,10 @@ reason, in the user's terms.
   "brand": { "ink": "...", "surface": "...", "deep": "...", "accent": "...",
              "warn": "...", "caution": "...", "font_stack": "...",
              "hero_gradient_css": "...", "logo_data_uri": "..." },
-  "jira": { "enabled": true, "project_key": "ABC",
-            "issue_types": { "bug": "Bug", "idea": "Story", "feedback": "Task" } }
+  "tracker": { "provider": "github",
+               "github": { "repo": "acme/app",
+                           "labels": { "bug": "bug", "idea": "enhancement",
+                                       "feedback": "feedback" } } }
 }
 ```
 
