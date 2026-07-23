@@ -22,6 +22,12 @@ what changed.
 `$LM/skills/manual/SKILL.md`, so resolve it from the path this skill
 loaded from.
 
+Every question you ask during setup must be answerable from what is on
+the user's screen. Print the thing you are asking about (the feature
+map, the palette and its proposed roles, the Jira project list) in your
+reply first, then ask. Answer choices never reference content the user
+has not been shown.
+
 ## Every invocation starts the same way
 
 ```
@@ -38,18 +44,23 @@ disk, so an interrupted setup resumes cleanly (state.sh shows what
 exists).
 
 **1. Orient to the codebase.**
-Run `sh $LM/scripts/inventory.sh <repo-root>`. From its output plus the README and any
-changelog/roadmap docs, list the user-facing surfaces and shipped
-features. Read the main UI entry point and each surface component; the
-manual documents what users experience, so ground every section in the
-code that renders it. Ask the user to confirm the feature list before
-writing; a wrong map here costs the whole document.
+Run `sh $LM/scripts/inventory.sh <repo-root>`. From its output plus the
+README and any changelog/roadmap docs, build the feature map:
+user-facing surfaces and the shipped features on each. Read the main UI
+entry point and each surface component; the manual documents what users
+experience, so ground every section in the code that renders it.
+**Print the full map in your reply** (a plain nested list: surface →
+features), then ask the user to confirm or correct it — missing
+features, wrong groupings, things that aren't user-facing. A wrong map
+here costs the whole document.
 
 **2. Locate brand.**
 inventory.sh lists brand-candidate directories. Read what's there:
 style guides, palettes, logo files, design docs. Extract: palette (with
-semantic roles), typography, shape language, voice. Confirm with the
-user via AskUserQuestion when roles are ambiguous. No brand assets:
+semantic roles), typography, shape language, voice. Print the extracted
+palette with each hex value and its proposed role before asking the
+user to confirm; when roles are ambiguous, the question names the
+specific colors in its options. No brand assets:
 offer the neutral default palette (scaffold.py's fallback) and note it
 in the config so a later brand pass knows. A logo file becomes a data
 URI (downscale to ~96px first: `sips -Z 96 in.png --out small.png`,
@@ -59,8 +70,8 @@ then base64) so the manual stays self-contained.
 Check whether Atlassian MCP tools are available (ToolSearch for
 "atlassian jira"). If absent: record `"jira": {"enabled": false}` and
 tell the user how to enable later (install the Atlassian MCP, re-run
-setup). If present: list visible projects, ask which project receives
-tickets, verify the user has create-issue permission on it (fetch
+setup). If present: print the visible projects (key and name), then ask
+which one receives tickets, verify the user has create-issue permission on it (fetch
 project permissions; never create a test issue without asking), and
 record project key + issue-type mapping
 (`bug → Bug, idea → Story, feedback → Task`, adjusted to what the
