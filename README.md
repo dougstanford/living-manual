@@ -18,6 +18,11 @@ The manual is one self-contained HTML file:
 - **A queue check** in the note modal shows already-submitted tickets
   so duplicates become additions instead of twins.
 
+**See it demonstrate itself:** [docs/USER_MANUAL.html](docs/USER_MANUAL.html)
+is this plugin's own manual, built and maintained by the plugin. Open it
+in a browser: the clickable headings, roadmap previews, glossary, and
+queue check are all live, and its What's new tracks this repo's releases.
+
 ## Install
 
 Add this repo as a marketplace and install, or point a session at it
