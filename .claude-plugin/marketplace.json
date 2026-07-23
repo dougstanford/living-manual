@@ -7,7 +7,7 @@
     {
       "name": "living-manual",
       "source": "./",
-      "description": "Branded, interactive, self-maintaining user's manuals with a note-to-ticket pipeline and optional Jira sync."
+      "description": "Branded, interactive, self-maintaining user's manuals with a note-to-ticket pipeline and optional Jira or GitHub Issues sync."
     }
   ]
 }

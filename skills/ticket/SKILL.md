@@ -1,6 +1,6 @@
 ---
 name: ticket
-description: Turn a note from the living manual (idea, feedback, or bug in a <submission> block, or a free-form report) into an actionable developer ticket with user stories, functional requirements, and acceptance criteria, plus open questions when completeness can't be verified. Syncs the manual's queue index and, when configured, creates or updates the matching Jira issue via the Atlassian MCP.
+description: Turn a note from the living manual (idea, feedback, or bug in a <submission> block, or a free-form report) into an actionable developer ticket with user stories, functional requirements, and acceptance criteria, plus open questions when completeness can't be verified. Syncs the manual's queue index and, when a tracker is configured, creates or updates the matching issue (Jira via the Atlassian MCP, or GitHub Issues via the gh CLI).
 ---
 
 # Note → ticket
@@ -11,7 +11,7 @@ relates-to / roadmap fields), or a free-form report. One ticket per
 submission unless it clearly contains independent requests.
 
 Config: `.living-manual.json` at repo root supplies `tickets_dir`,
-`manual_path`, and `jira`. Prose follows the plugin's
+`manual_path`, and `tracker`. Prose follows the plugin's
 `reference/writing-style.md`. `$LM` below is the plugin root; this
 file lives at `$LM/skills/ticket/SKILL.md`.
 
@@ -52,7 +52,7 @@ ticket against that item, stated in the summary.
    status: ready | needs-answers   (later: shipped | declined)
    section: <manual section + anchor>
    created: <YYYY-MM-DD>
-   jira: <ISSUE-KEY, when synced>
+   issue: <tracker ref, when synced: ABC-123 or owner/name#42>
    ---
    ## Summary
    ## Origin            (submission verbatim, fenced)
@@ -78,21 +78,27 @@ ticket against that item, stated in the summary.
    or status change. A resolved ticket gets `status: shipped` or
    `status: declined`; the file stays as the record and the index drops
    it automatically.
-8. Jira, when `jira.enabled`:
-   - Confirm Atlassian MCP tools are available (ToolSearch). Missing:
-     note it, skip, local ticket stands.
-   - Create the issue in `jira.project_key` with the mapped issue type.
-     Summary = ticket title. Description = the ticket body (stories,
-     FRs, criteria, open questions), converted to the format the MCP
-     create tool accepts.
-   - Write the returned key into the ticket frontmatter (`jira:`) and
+8. Tracker sync, when `tracker.provider` is not `none` (a legacy
+   top-level `jira` block with `enabled: true` reads as provider
+   `jira`):
+   - Read `$LM/reference/trackers.md` for the provider's operations.
+   - Run its detect step first. Unavailable: note it, skip, local
+     ticket stands.
+   - Create the issue per the provider section: title from the ticket
+     title, body from the ticket (stories, FRs, criteria, open
+     questions) in the format the provider accepts, type or label
+     mapping and any routing (component, milestone, extra labels) from
+     config. Config taxonomy missing at the tracker (a label deleted
+     since setup, say): create nothing; sync without it and report the
+     mismatch.
+   - Write the returned ref into the ticket frontmatter (`issue:`) and
      mention it in your report.
    - Additions and status changes update the same issue (comment with
      the new submission, edit the description) rather than creating a
      twin.
-   - A Jira write failure never blocks the local ticket. Report the
+   - A tracker write failure never blocks the local ticket. Report the
      failure and the retry path.
-9. Report: ticket path, status, Jira key if any, and open questions
+9. Report: ticket path, status, tracker ref if any, and open questions
    inline so the user can answer immediately. Answers update the same
    ticket in place: fold into FRs and criteria, clear resolved
    questions, flip status, re-sync index and Jira.
@@ -102,8 +108,8 @@ ticket against that item, stated in the summary.
 The user reviewed the queue and identified their note as an addition.
 Do not create a new ticket. Update the named one in place: append the
 submission to Origin, fold the new information through every section,
-re-verify completeness, re-sync the index, and update the Jira issue if
-linked. A note that contradicts the ticket it claims to extend gets
+re-verify completeness, re-sync the index, and update the tracker
+issue if linked. A note that contradicts the ticket it claims to extend gets
 surfaced for a decision, not silently forked.
 
 ## Rules
@@ -111,4 +117,5 @@ surfaced for a decision, not silently forked.
 - User-facing vocabulary in stories and criteria; the manual's glossary
   is the reference for terms.
 - This skill writes tickets. It never changes app code.
-- Never modify Jira issues the plugin didn't create, except to comment.
+- Never modify tracker issues the plugin didn't create, except to
+  comment.

@@ -1,7 +1,7 @@
 # Writing style
 
 Binding for all generated prose: manual sections, glossary summaries,
-preview bodies, ticket text, "What's new" entries, and Jira issue
+preview bodies, ticket text, "What's new" entries, and tracker issue
 descriptions. The product's own brand voice layers on top of these
 rules; it never overrides them.
 
