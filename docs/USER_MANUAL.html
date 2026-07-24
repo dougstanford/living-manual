@@ -640,7 +640,10 @@ claude --plugin-dir /path/to/living-manual</pre>
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
 
-  /* ---- data blocks: owned by scripts/sync-index.py ---- */
+  /* ---- data blocks: owned by scripts/sync-index.py ----
+     sync-index.py anchors on the LAST marker pair, so writing a marker
+     token in prose elsewhere is safe; still, keep the literal tokens out
+     of prose to keep intent obvious. ---- */
   /*@TICKETS*/
   var TICKETS = [];
   /*@/TICKETS*/
