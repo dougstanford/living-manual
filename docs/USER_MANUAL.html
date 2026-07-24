@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 2a646e9 -->
+<!-- manual-base: 11c7eed -->
 <!--
   Maintained by the living-manual plugin. Do not hand-edit the script's
   data blocks; run scripts/sync-index.py with a JSON payload instead.
@@ -217,7 +217,7 @@
     <div class="lockup"><span>living-manual</span></div>
     <h1>A user's manual that stays true to the code.</h1>
     <span class="tagpill">One file · Interactive · Never stale</span>
-    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">July 23, 2026 (v0.2.1)</span></div>
+    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">July 23, 2026 (v0.2.2)</span></div>
   </div>
 </header>
 
@@ -550,6 +550,14 @@ claude --plugin-dir /path/to/living-manual</pre>
     <h2>What's new.</h2>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
     <div class="release">
+      <div class="date">v0.2.2 · July 23, 2026</div>
+      <p>Reliability: the index sync now anchors on the real data block
+      even when the marker token appears in prose, so a maintenance
+      comment describing the mechanism can never cause the sync to
+      overwrite the document. The note modal also clears its fields after
+      a note is filed and copied.</p>
+    </div>
+    <div class="release">
       <div class="date">v0.2.1 · July 23, 2026</div>
       <p>Setup questions now show their subject before asking. The feature
       map, the palette with proposed roles, and the Jira project list are
@@ -627,7 +635,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 <script>
 (function () {
   "use strict";
-  var MANUAL_VERSION = "July 23, 2026 (v0.2.1)";
+  var MANUAL_VERSION = "July 23, 2026 (v0.2.2)";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -814,10 +822,21 @@ claude --plugin-dir /path/to/living-manual</pre>
   var revCopyAgain = document.getElementById("rev-copy-again");
   var revCopied = false;
 
+  function resetForm() {
+    revSummary.value = "";
+    revDetails.value = "";
+    revType = "idea";
+    revDetails.placeholder = PLACEHOLDERS.idea;
+    document.querySelectorAll("#rev-types .type-pill").forEach(function (p) {
+      p.classList.toggle("on", p.dataset.type === "idea");
+    });
+  }
+
   function openRev(title, anchor, locked, scoped, anchors) {
     revSection = { title: title, anchor: anchor };
     revAnchors = anchors || (anchor ? [anchor] : []);
     revRelated = null;
+    resetForm();
     var isLocked = locked.length > 0;
     var chips = [];
     if (!isLocked) chips.push({ id: null, label: "Current behavior" });
@@ -938,7 +957,7 @@ claude --plugin-dir /path/to/living-manual</pre>
       revCopied = true;
       revCopyBtn.textContent = "Done";
       revCopyAgain.hidden = false;
-    } else { closeRev(); }
+    } else { resetForm(); closeRev(); }
   });
   revCopyAgain.addEventListener("click", doCopy);
 

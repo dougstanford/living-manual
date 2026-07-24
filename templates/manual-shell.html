@@ -449,10 +449,24 @@
   var revCopyAgain = document.getElementById("rev-copy-again");
   var revCopied = false;
 
+  /* Blank the entry fields: empty summary and details, type back to
+     Idea. Runs on a fresh open and after Done, so a filed note never
+     bleeds into the next one. */
+  function resetForm() {
+    revSummary.value = "";
+    revDetails.value = "";
+    revType = "idea";
+    revDetails.placeholder = PLACEHOLDERS.idea;
+    document.querySelectorAll("#rev-types .type-pill").forEach(function (p) {
+      p.classList.toggle("on", p.dataset.type === "idea");
+    });
+  }
+
   function openRev(title, anchor, locked, scoped, anchors) {
     revSection = { title: title, anchor: anchor };
     revAnchors = anchors || (anchor ? [anchor] : []);
     revRelated = null;
+    resetForm();
     var isLocked = locked.length > 0;
     var chips = [];
     if (!isLocked) chips.push({ id: null, label: "Current behavior" });
@@ -573,7 +587,7 @@
       revCopied = true;
       revCopyBtn.textContent = "Done";
       revCopyAgain.hidden = false;
-    } else { closeRev(); }
+    } else { resetForm(); closeRev(); }
   });
   revCopyAgain.addEventListener("click", doCopy);
 

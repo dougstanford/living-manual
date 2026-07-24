@@ -33,10 +33,20 @@ def glossary_js(entries):
     return "[\n" + ",\n".join(out) + "\n  ]"
 
 def replace_block(src, name, body):
-    pat = re.compile(r"(/\*@%s\*/)(.*?)(/\*@/%s\*/)" % (name, name), re.S)
-    if not pat.search(src):
-        sys.exit(f"marker /*@{name}*/ not found")
-    return pat.sub(lambda m: m.group(1) + body + m.group(3), src, count=1)
+    # Anchor on the LAST opening marker before the (unique) closing
+    # marker. The token can appear earlier in prose — a maintenance
+    # comment describing this mechanism — and a naive .*? from the first
+    # occurrence would swallow the whole document between it and the real
+    # closing marker. rindex is immune: the closing form "/*@/NAME*/"
+    # never contains the opening form "/*@NAME*/" as a substring.
+    open_m, close_m = f"/*@{name}*/", f"/*@/{name}*/"
+    ci = src.rfind(close_m)
+    if ci == -1:
+        sys.exit(f"closing marker /*@/{name}*/ not found")
+    oi = src.rfind(open_m, 0, ci)
+    if oi == -1:
+        sys.exit(f"opening marker /*@{name}*/ not found before its close")
+    return src[:oi + len(open_m)] + body + src[ci:]
 
 def main():
     manual, payload_path = sys.argv[1], sys.argv[2]
