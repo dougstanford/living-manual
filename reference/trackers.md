@@ -48,7 +48,13 @@ fix. A legacy config with a top-level `"jira"` block reads as
 | create | One new issue from a ticket file. |
 | update | Edit the issue the plugin created, in place. |
 | comment | Append to an issue without touching its body. |
+| list | Open issues, for reconciling the queue against the tracker. |
 | ref | The string stored in ticket frontmatter (`issue:`). |
+
+`list` is the only operation a script performs unattended
+(`tickets-index.py`, to fold issues with no ticket file into the queue),
+so a provider whose access needs a model session supports it only during
+one. The rest run inside the ticket skill.
 
 ## Setup discipline: inspect, propose, commit
 
@@ -82,6 +88,10 @@ above fit.
   set.
 - update: the MCP edit tool, same issue key.
 - comment: the MCP comment tool.
+- list: the MCP search tool, open issues in `project_key`. MCP tools
+  need a model session, so `tickets-index.py` cannot run this; it
+  reports that Jira reconciliation belongs to the ticket skill and
+  indexes the local files alone.
 - ref: the issue key, `ABC-123`.
 
 ## GitHub Issues (gh CLI)
@@ -97,6 +107,10 @@ above fit.
   `--milestone` when configured.
 - update: `gh issue edit`.
 - comment: `gh issue comment`.
+- list: `gh issue list --state open --json
+  number,title,body,labels,url`. Scriptable, so `tickets-index.py`
+  runs it directly; any failure degrades to the local files with a
+  warning.
 - ref: `owner/name#42`.
 
 ## Shared rules

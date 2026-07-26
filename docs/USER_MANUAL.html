@@ -319,6 +319,19 @@ claude --plugin-dir /path/to/living-manual</pre>
     request in the list, mark it as yours, and the payload files your note as
     an addition: the existing ticket updates in place, its requirements absorb
     the new information, and no twin is created.</p>
+    <p>The queue is not only what's on disk. An issue can exist at the tracker
+    with no ticket file behind it: filed straight in the web UI, or written on
+    a branch that never merged. The index asks the configured tracker for its
+    open issues and folds in any the local files don't reference, marked
+    <em>at the tracker, no local ticket yet</em>. Filing against one of those
+    tells the session to write the missing ticket file first, then update that
+    same issue, so recognizing a duplicate repairs the gap instead of widening
+    it.</p>
+    <p class="small muted">GitHub Issues is read through the gh CLI. Jira
+    answers only to the Atlassian MCP, which a script can't call, so a Jira
+    queue is reconciled by the ticket skill during a session rather than at
+    index time. Either way an unreachable tracker degrades to the local files
+    with a warning, never a failed rebuild.</p>
     <div class="mock">
       <div class="m-card">
         <div class="m-row"><b>TICKET-0004</b>
@@ -536,8 +549,10 @@ claude --plugin-dir /path/to/living-manual</pre>
       <tr><td><code>sync-index.py</code></td>
         <td>Rewrites the manual's data blocks from a JSON payload.</td></tr>
       <tr><td><code>tickets-index.py</code></td>
-        <td>Rebuilds the queue index from the ticket files, so the index
-        can't drift.</td></tr>
+        <td>Rebuilds the queue index from the ticket files, then folds in
+        open tracker issues no ticket file references, so the queue can't
+        drift from either. <code>--no-tracker</code> skips the
+        query.</td></tr>
       <tr><td><code>next-ticket.sh</code></td>
         <td>The next free ticket number.</td></tr>
       <tr><td><code>verify.py</code></td>
@@ -568,6 +583,14 @@ claude --plugin-dir /path/to/living-manual</pre>
   <section id="whats-new">
     <h2>What's new.</h2>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
+    <div class="release">
+      <div class="date">v0.2.5 · July 26, 2026</div>
+      <p>The queue check now sees the tracker, not just the ticket folder.
+      An issue open at the tracker with no ticket file behind it appears in
+      the queue marked as such, so the modal can no longer tell you nothing
+      is filed while the tracker holds two open issues. Filing against one
+      writes the missing ticket file and updates that same issue.</p>
+    </div>
     <div class="release">
       <div class="date">v0.2.4 · July 26, 2026</div>
       <p>Tickets now sync to GitHub Issues as well as Jira, behind one
@@ -799,6 +822,13 @@ claude --plugin-dir /path/to/living-manual</pre>
     });
   }
 
+  function ticketById(id) {
+    for (var i = 0; i < TICKETS.length; i++) {
+      if (TICKETS[i].id === id) return TICKETS[i];
+    }
+    return null;
+  }
+
   function ticketItem(t) {
     var d = document.createElement("details");
     d.className = "queue-item";
@@ -808,7 +838,8 @@ claude --plugin-dir /path/to/living-manual</pre>
     var meta = document.createElement("span");
     meta.className = "q-meta";
     meta.textContent = " · " + t.type + " · " +
-      (t.status === "needs-answers" ? "needs answers" : t.status) + " — ";
+      (t.status === "needs-answers" ? "needs answers" : t.status) +
+      (t.origin === "tracker" ? " · at the tracker, no local ticket yet" : "") + " — ";
     s.appendChild(b); s.appendChild(meta);
     s.appendChild(document.createTextNode(t.title));
     d.appendChild(s);
@@ -934,6 +965,11 @@ claude --plugin-dir /path/to/living-manual</pre>
     }
     if (revRelated) {
       lines.push("relates-to: " + revRelated + " — the user reviewed the queued tickets and identified this note as an addition to that ticket");
+      var relT = ticketById(revRelated);
+      if (relT && relT.origin === "tracker") {
+        lines.push("relates-to-origin: open at the tracker with no ticket file" +
+                   (relT.url ? " — " + relT.url : ""));
+      }
     }
     lines.push(
       "type: " + revType,
@@ -944,7 +980,15 @@ claude --plugin-dir /path/to/living-manual</pre>
       "</submission>",
       ""
     );
-    if (revRelated) {
+    if (revRelated && (ticketById(revRelated) || {}).origin === "tracker") {
+      lines.push(
+        "This note ADDS TO " + revRelated + ", which is open at the tracker but has",
+        "no ticket file in " + TICKETS_DIR + "/. Read the tracker issue, write its",
+        "ticket file first so the record exists locally, fold this submission into",
+        "that file, then update the same tracker issue to match. Do not open a",
+        "second issue, and do not create a separate ticket for this note."
+      );
+    } else if (revRelated) {
       lines.push(
         "This note ADDS TO the existing queued ticket " + revRelated + " in " + TICKETS_DIR + "/.",
         "Do not create a new ticket. Update that ticket in place, fold the new",

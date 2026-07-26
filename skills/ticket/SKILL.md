@@ -74,8 +74,14 @@ ticket against that item, stated in the summary.
 7. Sync the manual's queue index in one command:
    `python3 $LM/scripts/tickets-index.py <tickets_dir> <manual_path>`.
    It rebuilds the TICKETS block from the ticket files' frontmatter and
-   Summary sections, so the index can't drift. Run it after every write
-   or status change. A resolved ticket gets `status: shipped` or
+   Summary sections, then folds in open tracker issues no ticket file
+   references, so the queue can't drift from either. Run it after every
+   write or status change. It reports any issue it folded in: those are
+   tracker issues missing their local record, and writing that record is
+   this skill's job. On Jira the script cannot run `list` (MCP needs a
+   session), so do that reconciliation here: list open issues in the
+   project, and for any with no matching `issue:` frontmatter, tell the
+   user rather than silently leaving the queue short. A resolved ticket gets `status: shipped` or
    `status: declined`; the file stays as the record and the index drops
    it automatically.
 8. Tracker sync, when `tracker.provider` is not `none` (a legacy

@@ -388,6 +388,13 @@
     });
   }
 
+  function ticketById(id) {
+    for (var i = 0; i < TICKETS.length; i++) {
+      if (TICKETS[i].id === id) return TICKETS[i];
+    }
+    return null;
+  }
+
   function ticketItem(t) {
     var d = document.createElement("details");
     d.className = "queue-item";
@@ -397,7 +404,8 @@
     var meta = document.createElement("span");
     meta.className = "q-meta";
     meta.textContent = " · " + t.type + " · " +
-      (t.status === "needs-answers" ? "needs answers" : t.status) + " — ";
+      (t.status === "needs-answers" ? "needs answers" : t.status) +
+      (t.origin === "tracker" ? " · at the tracker, no local ticket yet" : "") + " — ";
     s.appendChild(b); s.appendChild(meta);
     s.appendChild(document.createTextNode(t.title));
     d.appendChild(s);
@@ -526,6 +534,11 @@
     }
     if (revRelated) {
       lines.push("relates-to: " + revRelated + " — the user reviewed the queued tickets and identified this note as an addition to that ticket");
+      var relT = ticketById(revRelated);
+      if (relT && relT.origin === "tracker") {
+        lines.push("relates-to-origin: open at the tracker with no ticket file" +
+                   (relT.url ? " — " + relT.url : ""));
+      }
     }
     lines.push(
       "type: " + revType,
@@ -536,7 +549,15 @@
       "</submission>",
       ""
     );
-    if (revRelated) {
+    if (revRelated && (ticketById(revRelated) || {}).origin === "tracker") {
+      lines.push(
+        "This note ADDS TO " + revRelated + ", which is open at the tracker but has",
+        "no ticket file in " + TICKETS_DIR + "/. Read the tracker issue, write its",
+        "ticket file first so the record exists locally, fold this submission into",
+        "that file, then update the same tracker issue to match. Do not open a",
+        "second issue, and do not create a separate ticket for this note."
+      );
+    } else if (revRelated) {
       lines.push(
         "This note ADDS TO the existing queued ticket " + revRelated + " in " + TICKETS_DIR + "/.",
         "Do not create a new ticket. Update that ticket in place, fold the new",
