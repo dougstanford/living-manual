@@ -9,8 +9,8 @@
   "brand": {
     "note": "No brand assets in the repo as of 2026-07-23; scaffold's neutral slate/indigo defaults are in use. A later brand pass replaces this block."
   },
-  "jira": {
-    "enabled": false,
-    "reason": "No Atlassian MCP tools were available at setup (2026-07-23). To enable: install the Atlassian MCP, then re-run /living-manual:manual setup for the Jira step."
+  "tracker": {
+    "provider": "none",
+    "reason": "No Atlassian MCP tools were available at setup (2026-07-23), and no tracker has been chosen since GitHub Issues support landed. To enable: re-run /living-manual:manual setup for the tracker step."
   }
 }

@@ -9,7 +9,8 @@ The manual is one self-contained HTML file:
   becomes a paste-ready payload for a Claude Code session, which writes
   a developer ticket with user stories, functional requirements, and
   acceptance criteria, or the open questions that would complete them.
-  With the Atlassian MCP configured, tickets also land in Jira.
+  With a tracker configured, tickets also land in Jira or GitHub
+  Issues.
 - **Roadmap previews** (▶ icons) show the intended future state of
   features with planned work. Items that are already changing take
   notes against the plan, not the current behavior.
@@ -40,8 +41,10 @@ First run in a repo:
 /living-manual:manual
 ```
 
-walks setup: codebase orientation, brand extraction, optional Jira
-link (requires the Atlassian MCP and create-issue permission), then
+walks setup: codebase orientation, brand extraction, optional issue
+tracker link (Jira via the Atlassian MCP, or GitHub Issues via the gh
+CLI; setup inspects the project's existing labels, milestones, and
+issue types and proposes a mapping before writing anything), then
 writes `.living-manual.json`, installs a pre-push staleness guard,
 wires CLAUDE.md, and builds the manual.
 
@@ -60,12 +63,13 @@ matches the release. Bypass once with `git push --no-verify`.
 
 ```
 skills/manual/    the builder and updater
-skills/ticket/    note → ticket (+ Jira sync)
+skills/ticket/    note → ticket (+ tracker sync)
 scripts/          state, inventory, staleness, hook install, ticket
                   numbering, tickets-index rebuild, data-block sync,
                   scaffolding, static verification
 templates/        the interactive manual shell + CLAUDE.md snippet
-reference/        writing style (binding) + maintenance checklist
+reference/        writing style (binding) + maintenance checklist +
+                  tracker gateway contract
 ```
 
 Scripts do the mechanical work; the model spends tokens on content and
