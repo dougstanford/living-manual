@@ -11,7 +11,9 @@ Payload keys (all optional; present keys replace the whole block):
   glossary  -> var GLOSSARY = [...];   (entries: id,label,pattern,flags,s)
   defined   -> var DEFINED_IN = {...};
   asof      -> the hero "as of" date string
-  base      -> the manual-base commit sha (short)
+  base      -> the manual-base commit sha (short); stamped into both the
+               HTML comment and the MANUAL_BASE payload variable so a note's
+               ticket names the commit the manual reflected
 
 Glossary regexes travel as {"pattern": "...", "flags": "gi"} and are
 emitted as literals.
@@ -74,6 +76,8 @@ def main():
     if "base" in p:
         src = re.sub(r"(manual-base: )[0-9a-f]+",
                      lambda m: m.group(1) + p["base"], src, count=1)
+        src = re.sub(r'(MANUAL_BASE = ")[0-9a-f]+(")',
+                     lambda m: m.group(1) + p["base"] + m.group(2), src, count=1)
     open(manual, "w").write(src)
     print("synced:", ", ".join(k for k in ("tickets","previews","glossary","defined","asof","base") if k in p))
 

@@ -297,6 +297,7 @@
 (function () {
   "use strict";
   var MANUAL_VERSION = "(unset)";
+  var MANUAL_BASE = "{{BASE_SHA}}";
   var TICKET_SKILL = "{{TICKET_SKILL}}";
   var TICKETS_DIR = "{{TICKETS_DIR}}";
   var MANUAL_PATH = "{{MANUAL_PATH}}";
@@ -509,7 +510,7 @@
     var lines = [
       TICKET_SKILL, "",
       "<submission>",
-      "source: " + document.title + " (" + MANUAL_PATH + ") — version " + MANUAL_VERSION,
+      "source: " + document.title + " (" + MANUAL_PATH + ") — version " + MANUAL_VERSION + ", code at commit " + MANUAL_BASE,
       "section: " + revSection.title + (revSection.anchor ? " (#" + revSection.anchor + ")" : "")
     ];
     if (revTarget) {

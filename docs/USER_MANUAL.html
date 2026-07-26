@@ -306,9 +306,12 @@ claude --plugin-dir /path/to/living-manual</pre>
     contains.</p>
     <p><span class="pill accent">Copy for Claude Code</span> builds a
     structured payload: your note plus the section, its anchor, the manual
-    version, and instructions for the model. Paste it into a Claude Code
-    session in this repo and the ticket gets written. Nothing is sent
-    anywhere; the manual only copies text to your clipboard.</p>
+    version, the commit the manual reflects, and instructions for the model.
+    That commit pins the code state, so the ticket gets written against the
+    behavior you were looking at, not whatever the repo has drifted to since.
+    Paste it into a Claude Code session in this repo and the ticket gets
+    written. Nothing is sent anywhere; the manual only copies text to your
+    clipboard.</p>
 
     <h3 id="queue-check">The queue check.</h3>
     <p>The note modal lists the tickets already queued for the section you are
@@ -550,6 +553,13 @@ claude --plugin-dir /path/to/living-manual</pre>
     <h2>What's new.</h2>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
     <div class="release">
+      <div class="date">v0.2.3 · July 26, 2026</div>
+      <p>A note's ticket now names the commit the manual reflected. The
+      copied payload carries that commit alongside the manual version, so
+      the ticket is written against the code you were looking at, even if
+      the repo has moved on since.</p>
+    </div>
+    <div class="release">
       <div class="date">v0.2.2 · July 23, 2026</div>
       <p>Reliability: the index sync now anchors on the real data block
       even when the marker token appears in prose, so a maintenance
@@ -636,6 +646,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 23, 2026 (v0.2.2)";
+  var MANUAL_BASE = "a7194d7";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -879,7 +890,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     var lines = [
       TICKET_SKILL, "",
       "<submission>",
-      "source: " + document.title + " (" + MANUAL_PATH + ") — version " + MANUAL_VERSION,
+      "source: " + document.title + " (" + MANUAL_PATH + ") — version " + MANUAL_VERSION + ", code at commit " + MANUAL_BASE,
       "section: " + revSection.title + (revSection.anchor ? " (#" + revSection.anchor + ")" : "")
     ];
     if (revTarget) {
