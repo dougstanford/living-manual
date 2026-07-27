@@ -3,6 +3,11 @@
 # Idempotent: replaces a previous living-manual hook in place; a foreign
 # pre-push is preserved as pre-push.local and chained. Worktree-safe
 # (paths resolved via git rev-parse, never a hardcoded .git/).
+# Where this plugin lives, resolved before the cd so it survives one.
+# The hook needs it to call tickets-index.py --check, which it cannot
+# inline: that check must be the same command CI runs, not a second
+# implementation that can disagree with it.
+LM_SCRIPTS=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 1
 cd "${1:-.}" || exit 1
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repo"; exit 1; }
 HOOKS=$(git rev-parse --git-path hooks)
@@ -14,10 +19,16 @@ if [ -f "$HOOK" ] && ! grep -q living-manual "$HOOK"; then
   echo "existing pre-push preserved as pre-push.local (chained)"
 fi
 
-cat > "$HOOK" <<'HOOKEOF'
-#!/bin/sh
+printf '#!/bin/sh\nLM_SCRIPTS=%s\n' "'$LM_SCRIPTS'" > "$HOOK"
+cat >> "$HOOK" <<'HOOKEOF'
 # living-manual pre-push guard: the manual must reflect what this push
 # releases. Bypass once with --no-verify; the next dev inherits the gap.
+#
+# Two checks, two different powers. Staleness blocks: it is computed
+# locally, and a broken base marker disables the guard for everyone.
+# Queue drift only warns: proving it needs the tracker, which can be
+# down for reasons the pusher did not cause, and a stale queue leaves
+# the mechanism working. See reference/maintenance.md.
 LOCAL="$(git rev-parse --git-path hooks)/pre-push.local"
 [ -x "$LOCAL" ] && { "$LOCAL" "$@" || exit 1; }
 cd "$(git rev-parse --show-toplevel)" || exit 0
@@ -65,6 +76,36 @@ except Exception:
     print("CURRENT")
 PYEOF
 )
+
+# Advisory half: has the published queue drifted from the tracker? This
+# calls the same command CI calls, so the two can never disagree about
+# what drift is. It can never change the exit code, and it goes quiet
+# when the plugin has moved since install or the tracker cannot be
+# reached. The one network call is bounded by the fetch timeout a normal
+# reconciliation already uses.
+if [ -n "$LM_SCRIPTS" ] && [ -f "$LM_SCRIPTS/tickets-index.py" ]; then
+  PATHS=$(python3 - <<'PYEOF' 2>/dev/null
+import json
+try:
+    c = json.load(open(".living-manual.json"))
+    print(c.get("tickets_dir", "docs/tickets"))
+    print(c.get("manual_path", "docs/USER_MANUAL.html"))
+except Exception:
+    pass
+PYEOF
+)
+  TDIR=$(printf '%s\n' "$PATHS" | sed -n 1p)
+  MPATH=$(printf '%s\n' "$PATHS" | sed -n 2p)
+  if [ -n "$TDIR" ] && [ -d "$TDIR" ] && [ -f "$MPATH" ]; then
+    if DRIFT=$(python3 "$LM_SCRIPTS/tickets-index.py" "$TDIR" "$MPATH" --check 2>/dev/null); then
+      :
+    else
+      echo "living-manual: the manual's queue has drifted from the tracker."
+      printf '%s\n\n' "$DRIFT"
+    fi
+  fi
+fi
+
 case "$OUT" in
   CURRENT|"") exit 0 ;;
   MISSING-MANUAL)

@@ -200,11 +200,15 @@ read the output and carry on. Then:
    content moves into the section and "What's new".
 3. Append one "What's new" release block (newest first, dated,
    user-facing language).
-4. Sync data + stamps in one call:
+4. Rebuild the queue against the tracker:
+   `python3 $LM/scripts/tickets-index.py <tickets_dir> <manual_path>`.
+   Never with `--no-tracker` on a release: the queue a reader files
+   notes against should be true as of the release.
+5. Sync data + stamps in one call:
    `python3 $LM/scripts/sync-index.py <manual_path> payload.json` with
    the changed blocks plus `asof` (today) and `base` (current short
    HEAD).
-5. `python3 $LM/scripts/verify.py <manual_path>` must print OK.
+6. `python3 $LM/scripts/verify.py <manual_path>` must print OK.
    Browser-check only when slots or machinery changed.
 
 The pre-push hook calls this flow by name

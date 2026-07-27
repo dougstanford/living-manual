@@ -17,6 +17,10 @@ checklist form, for review before reporting done.
 6. Tickets index rebuilt (`python3 $LM/scripts/tickets-index.py
    <tickets_dir> <manual_path>`); tickets shipped by this release set
    to `status: shipped` and noted in "What's new" when user visible.
+   Never pass `--no-tracker` here. The queue in a released manual is
+   the one readers file notes against, and it should be true as of the
+   release, not as of whenever the tracker was last consulted. The flag
+   exists for offline work, not for a release.
 7. `asof` and `base` stamped via sync-index.py.
 8. `python3 $LM/scripts/verify.py <manual_path>` prints OK. Browser
    check when machinery or slots changed: headings clickable, one
@@ -56,3 +60,10 @@ Blame is unmeasurable, so it makes a poor rule.
 Applied: an orphaned or re-stamp-only base marker blocks
 (TICKET-0002 D2). Queue drift against the tracker warns
 (TICKET-0003 D1). Both follow from the one rule above.
+
+Warning well is the other half of this. A warning nobody can act on is
+noise, and noise is what teaches people to stop reading. So the drift
+warning names the issues that drifted and the command that fixes them,
+and it stays silent when the tracker could not be reached at all —
+an outage is not drift, and saying so every push would train the
+warning out of usefulness.

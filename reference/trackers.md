@@ -52,9 +52,14 @@ fix. A legacy config with a top-level `"jira"` block reads as
 | ref | The string stored in ticket frontmatter (`issue:`). |
 
 `list` is the only operation a script performs unattended
-(`tickets-index.py`, to fold issues with no ticket file into the queue),
-so a provider whose access needs a model session supports it only during
-one. The rest run inside the ticket skill.
+(`tickets-index.py`, to fold issues with no ticket file into the queue,
+and to answer `--check`), so a provider whose access needs a model
+session supports it only during one. The rest run inside the ticket
+skill.
+
+A provider that cannot answer `list` from a script is not a failure
+state: `--check` reports that it could not compare and exits zero. A
+tracker nobody can reach is never drift.
 
 ## Setup discipline: inspect, propose, commit
 
