@@ -166,7 +166,10 @@
   .scope-chip.on.roadmap { background: var(--accent); color: var(--surface); }
   .rev-queue { margin-bottom: 14px; }
   .queue-stamp { font-size: 0.66rem; color: var(--muted); opacity: 0.8;
-    margin-left: 8px; font-variant-numeric: tabular-nums; }
+    margin-left: 8px; font-variant-numeric: tabular-nums;
+    /* Wrap as a unit: a bare "UTC" alone on the next line reads as
+       debris rather than a timestamp. */
+    white-space: nowrap; }
   .queue-item { border: 1px solid var(--line); border-radius: 10px;
     padding: 7px 12px; margin-top: 8px; font-size: 0.84rem; }
   .queue-item summary { cursor: pointer; }
