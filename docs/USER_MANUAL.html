@@ -721,6 +721,18 @@ claude --plugin-dir /path/to/living-manual</pre>
     "summary": "The manual's queue is a snapshot. `tickets-index.py` folds open tracker issues into the TICKETS block, but the block is static JSON baked into the HTML, and the only things that rebuild it are a ticket-skill run and a manual update run. Neither is triggered by the tracker changing. An issue closed after the last rebuild keeps appearing as queued; an issue filed since does not appear at all. Nothing detects the drift and nothing tells the reader how old the queue is. This is the reconciliation feature's own blind spot: v0.2.5 closed the gap between the queue and the tracker at write time, and left it open over time."
   },
   {
+    "id": "TICKET-0004",
+    "title": "Type mapping bends onto ill-fitting labels instead of creating honest ones",
+    "type": "idea",
+    "status": "needs-answers",
+    "created": "2026-07-26",
+    "anchors": [
+      "tracker-sync"
+    ],
+    "roadmap": null,
+    "summary": "Setup maps each note type onto exactly one existing label or issue type. When a project has nothing that fits a type, the mapping bends: the type gets filed under a label that means something else. Two changes remove the bend. Let setup propose creating a label named for the type when nothing existing fits, and let a type carry a set of labels rather than one, so issues can also pick up the routing labels a project expects. This repo is the live example. Nothing here fits `feedback`, so setup mapped it to `question`, which on GitHub means someone is asking for information. Feedback filed from the manual is not a question, so every feedback note this repo receives will be mislabeled."
+  },
+  {
     "id": "#3",
     "title": "Base marker survives history rewrites by stamping content fingerprints alongside the sha",
     "type": "idea",
