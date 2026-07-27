@@ -1,17 +1,27 @@
 #!/bin/sh
-# stale.sh [repo-root] — what changed since the manual's base commit.
-# Exit 0 with "CURRENT" when nothing user-facing changed; otherwise
-# prints the commit list and the changed user-facing files, which is
-# exactly the input the update flow needs.
+# stale.sh [repo-root] [manual-path] — what changed since the manual's
+# base commit. Prints "CURRENT" when nothing user-facing changed;
+# otherwise prints the commit list and the changed user-facing files,
+# which is exactly the input the update flow needs.
+#
+# Exit contract, so an unattended caller can act on it without parsing:
+#   0  the manual is current
+#   1  the manual needs work: user-facing commits postdate its base, or
+#      the base does not resolve in this clone
+#   2  the check could not run: no config, no manual, no marker
+#
+# manual-path overrides manual_path in the config, for a repo that moved
+# its manual. Omit it and the config decides, as it always has.
 cd "${1:-.}" || exit 1
 CFG=".living-manual.json"
 [ -f "$CFG" ] || { echo "NO-CONFIG"; exit 2; }
+LM_MANUAL="${2:-$LM_MANUAL}"; export LM_MANUAL
 
 python3 - <<'EOF'
-import json, re, subprocess, sys
+import json, os, re, subprocess, sys
 
 cfg = json.load(open(".living-manual.json"))
-manual = cfg.get("manual_path", "docs/USER_MANUAL.html")
+manual = os.environ.get("LM_MANUAL") or cfg.get("manual_path", "docs/USER_MANUAL.html")
 try:
     head = open(manual).read(4000)
 except FileNotFoundError:
@@ -41,4 +51,5 @@ print("== commits touching user-facing paths ==")
 print(commits)
 print("== files ==")
 print(files)
+sys.exit(1)
 EOF

@@ -1,0 +1,41 @@
+name: Living manual guard
+description: >-
+  Fail the check when the user manual is stale against the code it
+  documents, or when its base marker no longer resolves to a commit.
+author: Doug Stanford
+branding:
+  icon: book-open
+  color: purple
+
+inputs:
+  manual-path:
+    description: >-
+      Path to the manual, relative to repo-root. Defaults to manual_path
+      in the repo's .living-manual.json.
+    required: false
+    default: ""
+  tickets-dir:
+    description: >-
+      Path to the ticket directory, relative to repo-root. Defaults to
+      tickets_dir in the repo's .living-manual.json.
+    required: false
+    default: ""
+  repo-root:
+    description: >-
+      The documented repo's root, if it is not the workspace root.
+    required: false
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    # The scripts come from this action's own checkout, so a consumer
+    # workflow needs no second checkout step and no vendored copies to
+    # drift from the plugin. GITHUB_ACTION_PATH is where the runner put
+    # the ref that `uses:` pinned.
+    - name: Check the manual
+      shell: bash
+      env:
+        LM_MANUAL: ${{ inputs.manual-path }}
+        LM_TICKETS: ${{ inputs.tickets-dir }}
+      run: sh "$GITHUB_ACTION_PATH/scripts/ci-check.sh" "${{ inputs.repo-root }}"

@@ -13,7 +13,8 @@ def sh(cmd):
         return ""
 
 state = {"configured": False, "config": None, "manual_exists": False,
-         "hook_installed": False, "manual_base": None, "head": sh("git rev-parse --short HEAD"),
+         "hook_installed": False, "ci_installed": False, "manual_base": None,
+         "head": sh("git rev-parse --short HEAD"),
          "tickets": 0, "claude_md_wired": False}
 
 if os.path.exists(".living-manual.json"):
@@ -31,6 +32,11 @@ if os.path.exists(".living-manual.json"):
         tdir = cfg.get("tickets_dir", "docs/tickets")
         if os.path.isdir(tdir):
             state["tickets"] = len([f for f in os.listdir(tdir) if f.startswith("TICKET-")])
+        # The file on disk, not the config's claim about it: a workflow
+        # deleted since setup should read as absent, not installed.
+        ci = cfg.get("ci") if isinstance(cfg.get("ci"), dict) else {}
+        state["ci_installed"] = os.path.exists(
+            ci.get("workflow") or ".github/workflows/manual-guard.yml")
     except Exception as e:
         state["config_error"] = str(e)
 

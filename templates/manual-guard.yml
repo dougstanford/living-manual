@@ -1,0 +1,34 @@
+name: Manual guard
+
+# Installed by living-manual setup. The pre-push hook guards each
+# developer's clone; this guards the server, where squash merges and
+# "Update branch" clicks rewrite history without passing through a hook.
+#
+# Placeholders setup fills in: {{DEFAULT_BRANCH}}, {{PLUGIN_VERSION}}.
+
+on:
+  pull_request:
+  push:
+    branches: ["{{DEFAULT_BRANCH}}"]
+
+jobs:
+  manual:
+    name: Manual reflects the code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # stale.sh resolves the manual's base commit, which is usually
+          # far behind HEAD. A shallow clone would not have it.
+          fetch-depth: 0
+
+      # Pinned to a release tag, so the checks a green build ran are the
+      # checks you can reproduce. Bump it deliberately.
+      - uses: dougstanford/living-manual@{{PLUGIN_VERSION}}
+        # The action reads .living-manual.json for the manual and ticket
+        # paths. Override them here only if this workflow guards a repo
+        # whose config lives somewhere else:
+        #
+        # with:
+        #   manual-path: docs/USER_MANUAL.html
+        #   tickets-dir: docs/tickets

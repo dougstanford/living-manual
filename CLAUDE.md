@@ -20,3 +20,20 @@ living-manual plugin. It must reflect the app as released.
   tickets by hand.
 - Config lives in `.living-manual.json`. Prose rules live in the
   plugin's `reference/writing-style.md`.
+
+## Releasing
+
+Consumers pin this repo as a GitHub Action
+(`uses: dougstanford/living-manual@<tag>`), so a release that is not
+tagged is a release nobody can pin. Every version bump ends the same way:
+
+1. Bump `version` in `.claude-plugin/plugin.json`.
+2. Update `{{PLUGIN_VERSION}}`'s example in the README to the new tag,
+   so the copy-pasteable snippet is never a version behind.
+3. Run `/living-manual:manual update` and let the push guard pass.
+4. After the release commit lands on `main`, tag it and push the tag:
+   `git tag -a v<version> -m "<summary>" && git push origin v<version>`.
+
+The tag names the same commit the manual's base marker does, so a
+consumer pinning a tag gets the scripts the manual at that tag
+describes.

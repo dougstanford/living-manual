@@ -1,0 +1,23 @@
+name: Manual guard
+
+# This repo documents itself with the plugin it ships, so it runs its own
+# action from the checkout rather than a pinned tag: a pull request is
+# guarded by the version it proposes, not the version before it.
+# A consumer repo pins a tag instead — see templates/manual-guard.yml.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  manual:
+    name: Manual reflects the code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # stale.sh resolves the manual's base commit, which is usually
+          # far behind HEAD. A shallow clone would not have it.
+          fetch-depth: 0
+      - uses: ./
