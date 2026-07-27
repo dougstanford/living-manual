@@ -31,9 +31,12 @@ tagged is a release nobody can pin. Every version bump ends the same way:
 2. Update `{{PLUGIN_VERSION}}`'s example in the README to the new tag,
    so the copy-pasteable snippet is never a version behind.
 3. Run `/living-manual:manual update` and let the push guard pass.
-4. After the release commit lands on `main`, tag it and push the tag:
+4. Once it is on `main`, tag the commit that stamped the manual, and
+   push the tag:
    `git tag -a v<version> -m "<summary>" && git push origin v<version>`.
 
-The tag names the same commit the manual's base marker does, so a
-consumer pinning a tag gets the scripts the manual at that tag
-describes.
+Tag the manual-stamp commit, not the code commit before it. A release
+is two commits: the code, then the manual stamped against it. Only at
+the second do the scripts and the manual agree, and agreement is the
+whole point of a pin — a consumer on `@v0.2.6` should get scripts the
+v0.2.6 manual actually describes.
