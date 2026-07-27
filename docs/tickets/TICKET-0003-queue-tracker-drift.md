@@ -3,7 +3,7 @@ id: TICKET-0003
 title: The queue index goes stale against the tracker with no signal
 type: idea
 target: current
-status: needs-answers
+status: ready
 section: Notes become tickets › The queue check (#queue-check)
 created: 2026-07-26
 issue: dougstanford/living-manual#4
@@ -85,16 +85,25 @@ Two things do, just never in response to the tracker. See below.
   manual when it writes: the timestamp, and the provider it reached (or
   that it reached none).
 - FR-3: The note modal's queue section shows that reconciliation
-  timestamp, so a reader sees the queue's age without leaving the
-  modal.
-- FR-4: The pre-push guard runs the FR-1 check and surfaces drift, with
-  the fix named in its message (see Q1 for whether it blocks).
+  timestamp beside the queue label, so a reader sees the queue's age at
+  the moment of deciding whether to trust it. It appears nowhere else in
+  the manual; the hero's "as of" date continues to describe the code the
+  manual reflects, not the queue.
+- FR-4: The pre-push guard runs the FR-1 check on every push. Drift
+  produces a warning naming the drifted issues and the command that
+  fixes them, and the push proceeds. A nonzero check never fails a push.
 - FR-5: The manual update flow reconciles against the tracker
   unconditionally, never with `--no-tracker`, so a released manual's
   queue is current as of its release.
-- FR-6: When the tracker is unreachable, FR-1 and FR-4 report that they
-  could not check and exit zero. An unreachable tracker never blocks a
-  push and never counts as drift.
+- FR-6: When the tracker is unreachable, FR-1 reports that it could not
+  check and exits zero, and FR-4's hook step passes silently. An
+  unreachable tracker never counts as drift, never warns, and never
+  blocks a push.
+- FR-7: The check is one command with a documented exit contract (zero
+  clean or unreachable, nonzero drift), callable unchanged by the
+  pre-push guard and by a CI workflow. The hook's network call uses the
+  same fetch timeout a normal reconciliation run uses, so a push is never
+  delayed beyond it.
 
 ## Acceptance criteria
 
@@ -107,38 +116,49 @@ Two things do, just never in response to the tracker. See below.
   it exits nonzero and names that issue as added.
 - Given a rebuild against a reachable tracker, when the manual is
   written, then it carries the reconciliation timestamp and provider,
-  and the note modal displays that timestamp.
+  and the note modal shows that timestamp beside the queue label.
+- Given a manual carrying a reconciliation timestamp, when a reader opens
+  the manual, then the hero's "as of" date is unchanged by
+  reconciliation and no timestamp appears outside the modal.
 - Given a rebuild attempted with no reachable tracker, when the manual is
   written, then it records that no tracker was reached, and a subsequent
   `--check` exits zero rather than reporting drift.
-- Given drift and a push, when the pre-push guard runs, then its output
-  names the drifted issues and the command that fixes them.
+- Given drift and a push, when the pre-push guard runs, then it prints a
+  warning naming the drifted issues and the fix command, and the push
+  completes successfully.
+- Given an unreachable tracker and a push, when the pre-push guard runs,
+  then it emits no drift warning, adds no delay beyond the fetch
+  timeout, and the push completes successfully.
+- Given the same check invoked from a CI workflow rather than the hook,
+  when it runs, then its exit code and output are identical to the hook's
+  invocation for the same repository state.
 - Given a manual update run, when it completes, then the queue reflects
   tracker state as of that run.
 
-## Open questions
+## Decisions
 
-- Q1 (blocks FR-4): Should tracker drift block a push, the way a stale
-  manual does? Default: no, warn only. A stale manual is caused by the
-  pusher's own commits and is theirs to fix; tracker drift is caused by
-  anyone touching the tracker and can appear between a clone and a push,
-  so blocking would punish the wrong person. If drift proves to be
-  routinely ignored, promote it to a block.
-- Q2 (blocks FR-1, FR-4): Should the check run on every push, adding a
-  network call to the hook? Default: yes, with the short timeout
-  `tickets-index.py` already uses and a silent skip when the tracker is
-  unreachable, since a push already tolerates that latency. If it proves
-  slow, gate it behind a config flag.
-- Q3 (blocks FR-3): Where does the timestamp appear? Default: in the
-  queue section of the note modal only, next to the queue label, since
-  that is where the reader decides whether to trust the list. Putting it
-  in the hero would imply the whole manual was refreshed, which it was
-  not.
-- Q4 (scope): Issue #2 proposes a CI check running `verify.py` and
-  `stale.sh`. Should the FR-1 check join that workflow instead of, or in
-  addition to, the pre-push hook? Default: in addition. CI catches drift
-  on the server where merges happen; the hook catches it before a push.
-  If #2 lands first, this ticket adds one step to its workflow.
+Settled 2026-07-26, all four as proposed. Recorded because each one
+constrains an FR, and a later reader should find the reasoning rather
+than re-litigate it.
+
+- D1 (FR-4): Tracker drift warns, it does not block. A stale manual is
+  caused by the pusher's own commits and is theirs to fix. Drift is
+  caused by anyone touching the tracker and can appear between a clone
+  and a push, so blocking would stop the wrong person. Revisit if drift
+  warnings turn out to be routinely ignored.
+- D2 (FR-1, FR-4, FR-7): The check runs on every push, accepting one
+  network call in the hook, bounded by the fetch timeout a normal
+  reconciliation already uses. Revisit with a config flag if the added
+  latency is felt.
+- D3 (FR-3): The timestamp appears beside the queue label in the note
+  modal and nowhere else. The hero's date describes the code the manual
+  reflects; reusing it for queue freshness would claim the whole manual
+  had been refreshed when only the queue was.
+- D4 (FR-7, scope): The check runs in both the pre-push guard and, once
+  issue #2's workflow exists, in CI. The hook catches drift before a
+  push; CI catches it on the server where merges land. FR-7 keeps the
+  check a single command so #2 adds one step rather than a second
+  implementation.
 
 ## References
 
