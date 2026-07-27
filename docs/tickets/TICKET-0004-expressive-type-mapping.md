@@ -3,7 +3,7 @@ id: TICKET-0004
 title: Type mapping bends onto ill-fitting labels instead of creating honest ones
 type: idea
 target: current
-status: needs-answers
+status: ready
 section: The ticket skill › The issue tracker (#tracker-sync)
 created: 2026-07-26
 issue: dougstanford/living-manual#5
@@ -82,9 +82,9 @@ what this ticket addresses.
 ## Functional requirements
 
 - FR-1: Setup's propose step, when no existing label or issue type is a
-  semantic fit for a note type, proposes creating one named for that
-  type and marks it "would be created". Reusing an existing label stays
-  available as an alternative the user can pick.
+  semantic fit for a note type, leads with creating one named for that
+  type, marked "would be created". Reuse of an existing label is offered
+  as the alternative, not as the leading proposal.
 - FR-2: Setup never silently accepts a poor fit. When it proposes
   reusing a label whose name differs from the note type, it says so in
   the proposal, so the user is choosing the compromise rather than
@@ -94,9 +94,10 @@ what this ticket addresses.
   filing the first issue.
 - FR-4: `github.labels` accepts either a string or an array of strings
   per type. An array applies every label in it to issues of that type.
-- FR-5: Jira gains an equivalent per-type label set, applied alongside
-  the type's `issue_types` mapping and merged with the global `labels`
-  list (see Q2 for the key name).
+- FR-5: Jira gains `type_labels`, a map of note type to list of labels,
+  applied alongside the type's `issue_types` mapping. Its labels merge
+  with (do not replace) the global `labels` list, so an issue carries
+  both sets.
 - FR-6: `create` applies, for a given note type: the type's label or
   label set, the global extras, and any configured routing. Order and
   duplicates do not matter; the resulting issue carries each label once.
@@ -106,13 +107,17 @@ what this ticket addresses.
   label sets: a label in a set that no longer exists is reported at sync
   time and skipped, the issue is still filed with the rest, and nothing
   is recreated.
+- FR-9: This repo's own mapping is corrected as part of the work: a
+  `feedback` label is created at `dougstanford/living-manual`, and
+  `.living-manual.json` maps `feedback` to it instead of `question`.
+  This is the FR-1 path walked end to end on a live repo.
 
 ## Acceptance criteria
 
 - Given a project whose labels contain no fit for `feedback`, when setup
-  runs the propose step, then it offers to create a `feedback` label,
-  marked as would-be-created, alongside the option of reusing an
-  existing label.
+  runs the propose step, then creating a `feedback` label is the leading
+  proposal, marked as would-be-created, and reuse of an existing label
+  is presented as the alternative to it.
 - Given the user picks reuse of a differently-named label, when setup
   prints the proposal, then the proposal states the mismatch before the
   user confirms.
@@ -123,6 +128,11 @@ what this ticket addresses.
 - Given `"bug": "bug"` in a config written before this change, when a
   bug note is filed, then the issue carries exactly the labels it
   carries today.
+- Given a Jira config with `type_labels` for `bug` and a global `labels`
+  list, when a bug note is filed, then the issue carries the union of
+  both, and its issue type still comes from `issue_types`.
+- Given a type label set and a global extras list that name the same
+  label, when a note is filed, then the issue carries that label once.
 - Given a label set naming a label deleted at the tracker since setup,
   when a note is filed, then the issue is created with the remaining
   labels, the missing one is named in the report, and it is not
@@ -131,24 +141,26 @@ what this ticket addresses.
   the resulting issue carries a label meaning feedback rather than
   `question`.
 
-## Open questions
+## Decisions
 
-- Q1 (blocks FR-1): When nothing fits, is creating a label the default
-  proposal, or one option shown level with reuse? Default: creating is
-  the default proposal, with reuse offered as the alternative, because
-  the bend this ticket fixes came from reuse being the path of least
-  resistance. If a project forbids new labels, reuse is one keystroke
-  away.
-- Q2 (blocks FR-5): What is the Jira key for per-type labels, and how
-  does it combine with the existing global `labels` list? Default: a
-  `type_labels` map of type to list, merged with `labels`, so the global
-  list keeps its meaning and the per-type list adds to it. If a project
-  wants per-type to replace rather than add, that is a second key and
-  not this ticket.
-- Q3 (scope): Should this repo's own `feedback: question` mapping be
-  corrected as part of this work? Default: yes, by creating a `feedback`
-  label here and updating `.living-manual.json`, since the dogfood case
-  is the clearest test of FR-1 and the mislabeling is live today.
+Settled 2026-07-26, all three as proposed. Recorded because each one
+constrains an FR, and a later reader should find the reasoning rather
+than re-litigate it.
+
+- D1 (FR-1): When nothing fits, creating a label leads and reuse is the
+  alternative, rather than the two being offered level. The bend this
+  ticket fixes came from reuse being the path of least resistance, so
+  levelling the options would preserve the failure. A project that
+  forbids new labels is one keystroke from reuse.
+- D2 (FR-5): Jira's per-type labels live under `type_labels`, a map of
+  type to list, and merge with the global `labels` list rather than
+  replacing it. The global list keeps the meaning it already has, and
+  per-type adds to it. Replacement semantics, if ever wanted, are a
+  second key and a different ticket.
+- D3 (FR-9, scope): This repo's `feedback: question` is corrected as
+  part of this work rather than separately. It is the clearest test of
+  FR-1, it exercises the create path on a live repo, and the
+  mislabeling is active until it lands.
 
 ## Out of scope
 
