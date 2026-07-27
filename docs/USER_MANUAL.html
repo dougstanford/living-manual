@@ -709,6 +709,18 @@ claude --plugin-dir /path/to/living-manual</pre>
   /*@TICKETS*/
   var TICKETS = [
   {
+    "id": "TICKET-0003",
+    "title": "The queue index goes stale against the tracker with no signal",
+    "type": "idea",
+    "status": "needs-answers",
+    "created": "2026-07-26",
+    "anchors": [
+      "queue-check"
+    ],
+    "roadmap": null,
+    "summary": "The manual's queue is a snapshot. `tickets-index.py` folds open tracker issues into the TICKETS block, but the block is static JSON baked into the HTML, and the only things that rebuild it are a ticket-skill run and a manual update run. Neither is triggered by the tracker changing. An issue closed after the last rebuild keeps appearing as queued; an issue filed since does not appear at all. Nothing detects the drift and nothing tells the reader how old the queue is. This is the reconciliation feature's own blind spot: v0.2.5 closed the gap between the queue and the tracker at write time, and left it open over time."
+  },
+  {
     "id": "#3",
     "title": "Base marker survives history rewrites by stamping content fingerprints alongside the sha",
     "type": "idea",
