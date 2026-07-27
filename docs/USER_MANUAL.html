@@ -707,7 +707,32 @@ claude --plugin-dir /path/to/living-manual</pre>
      token in prose elsewhere is safe; still, keep the literal tokens out
      of prose to keep intent obvious. ---- */
   /*@TICKETS*/
-  var TICKETS = [];
+  var TICKETS = [
+  {
+    "id": "#3",
+    "title": "Base marker survives history rewrites by stamping content fingerprints alongside the sha",
+    "type": "idea",
+    "status": "needs-answers",
+    "created": "",
+    "anchors": [],
+    "roadmap": null,
+    "summary": "The base marker is a commit sha frozen inside the manual, so any history rewrite after stamping (amend, rebase, squash merge) orphans it. Detection now exists (`BAD-BASE` from stale.sh, a verify.py finding), but recovery loses information: with the sha gone there is no commit range, so the update flow cannot list what changed. Stamping a content fingerprint of the user-facing paths alongside th...",
+    "origin": "tracker",
+    "url": "https://github.com/dougstanford/living-manual/issues/3"
+  },
+  {
+    "id": "#2",
+    "title": "CI check runs verify.py and stale.sh so GitHub-side merges can't ship a broken manual",
+    "type": "idea",
+    "status": "needs-answers",
+    "created": "",
+    "anchors": [],
+    "roadmap": null,
+    "summary": "The staleness guard only runs in a developer's clone: the pre-push hook fires on `git push`, and nothing else. A squash merge or \"Update branch\" click in the GitHub web UI rewrites history on the server, passes through no hook, and can land a manual whose base marker is orphaned or whose content is stale. A GitHub Actions workflow running `verify.py` and `stale.sh` on pull requests and on the d...",
+    "origin": "tracker",
+    "url": "https://github.com/dougstanford/living-manual/issues/2"
+  }
+];
   /*@/TICKETS*/
   /*@PREVIEWS*/
   var PREVIEWS = {
