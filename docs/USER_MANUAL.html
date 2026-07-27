@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: def1d10 -->
+<!-- manual-base: 0d62194 -->
 <!--
   Maintained by the living-manual plugin. Do not hand-edit the script's
   data blocks; run scripts/sync-index.py with a JSON payload instead.
@@ -217,7 +217,7 @@
     <div class="lockup"><span>living-manual</span></div>
     <h1>A user's manual that stays true to the code.</h1>
     <span class="tagpill">One file · Interactive · Never stale</span>
-    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">July 26, 2026 (v0.2.5)</span></div>
+    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">July 26, 2026 (v0.2.6)</span></div>
   </div>
 </header>
 
@@ -239,6 +239,7 @@
   <a class="sub" href="#first-run">First run</a>
   <a class="sub" href="#update-flow">Every run after</a>
   <a href="#guard">The staleness guard</a>
+  <a class="sub" href="#ci-check">The same check on the server</a>
   <a href="#reference">Reference</a>
   <a href="#whats-new">What's new</a>
 </nav>
@@ -481,11 +482,12 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p>The manual records the commit it last matched: the base marker,
     stamped in a comment near the top of this file and read by the scripts.
     The manual is stale when user-facing commits postdate that marker.</p>
-    <p>Enforcement is two-layered. CLAUDE.md instructs every session in the
+    <p>Enforcement is layered. CLAUDE.md instructs every session in the
     repo to run the update flow before any push, so freshness is part of the
     normal workflow. The pre-push hook is the backstop: a push with
     user-facing commits past the marker is blocked, with a message naming the
-    fix.</p>
+    fix. On GitHub, a workflow repeats both checks on the server, where
+    merges land without passing through any hook.</p>
     <div class="callout">
       <b>The escape hatch costs the next reader.</b>
       <code>git push --no-verify</code> bypasses the guard once. The push
@@ -501,6 +503,33 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p class="small muted">The guard reads <code>user_facing_paths</code> from
     the config, so documentation-only and tooling-only pushes pass
     untouched.</p>
+
+    <h3 id="ci-check">The same check on the server.</h3>
+    <p>A hook lives in a clone, so it only ever sees a push. A merge
+    performed on GitHub never reaches it: a squash, or an "Update branch"
+    click, rewrites history on the server and can land a manual that is
+    stale or whose marker no longer resolves. Setup offers a workflow that
+    runs the same checks where merges actually happen. It asks only on
+    GitHub-hosted repos, and records your answer either way.</p>
+    <p>The workflow is one step, because the plugin publishes itself as an
+    action:</p>
+    <pre class="cmd">- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
+- uses: dougstanford/living-manual@v0.2.6</pre>
+    <p>Full history is the one thing to get right. The base commit is
+    usually far behind HEAD, and a shallow checkout would report a perfectly
+    good marker as broken. The check recognises that case and says so,
+    rather than sending you to re-stamp a marker that was fine.</p>
+    <p>A failure names the offending commits and the command that fixes
+    them. The scripts need no model, so the server can find the problem;
+    writing the manual still happens in a session.</p>
+    <div class="callout">
+      <b>Advisory until you say otherwise.</b> A red check does not stop a
+      merge on its own. Adding it to the branch's required checks is a
+      repository setting, and the plugin does not write it: supplying the
+      signal is the plugin's job, deciding its force is yours.
+    </div>
   </section>
 
   <section id="reference">
@@ -527,6 +556,10 @@ claude --plugin-dir /path/to/living-manual</pre>
         <td>Provider (jira, github, or none) and that provider's block:
         project key or repo, plus the note-type mapping onto existing issue
         types or labels. A legacy <code>jira</code> block still reads.</td></tr>
+      <tr><td><code>ci</code></td>
+        <td>Whether the server-side check was wired up, and where its
+        workflow lives. <code>provider: none</code> with a reason when it
+        was declined or unavailable.</td></tr>
     </table>
 
     <h3 id="scripts">Scripts.</h3>
@@ -541,7 +574,11 @@ claude --plugin-dir /path/to/living-manual</pre>
         docs, brand candidates.</td></tr>
       <tr><td><code>stale.sh</code></td>
         <td><code>CURRENT</code>, or the commits and user-facing files since
-        the base marker.</td></tr>
+        the base marker. Exits 0 current, 1 needs work, 2 could not
+        check.</td></tr>
+      <tr><td><code>ci-check.sh</code></td>
+        <td>Both checks in one command, for the CI workflow: verification
+        and staleness, each reported even when the other fails.</td></tr>
       <tr><td><code>install-hook.sh</code></td>
         <td>Installs the pre-push guard.</td></tr>
       <tr><td><code>scaffold.py</code></td>
@@ -583,6 +620,21 @@ claude --plugin-dir /path/to/living-manual</pre>
   <section id="whats-new">
     <h2>What's new.</h2>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
+    <div class="release">
+      <div class="date">v0.2.6 · July 26, 2026</div>
+      <p>The staleness guard now runs on the server as well as in your
+      clone. Until now a merge performed on GitHub slipped past it
+      entirely: a squash or an "Update branch" click rewrites history where
+      no hook is watching, and could land a manual that was stale or whose
+      base marker pointed at a commit that no longer existed. Setup offers
+      a workflow that repeats both checks on pull requests and on the
+      default branch. It is a single line in your workflow file, since the
+      plugin now publishes itself as a GitHub Action.</p>
+      <p>A shallow checkout used to be indistinguishable from a broken
+      marker. It is now recognised and reported as what it is, so nobody
+      re-stamps a marker that was never wrong. The check stays advisory
+      until you add it to a branch's required checks.</p>
+    </div>
     <div class="release">
       <div class="date">v0.2.5 · July 26, 2026</div>
       <p>The queue check now sees the tracker, not just the ticket folder.
@@ -696,8 +748,8 @@ claude --plugin-dir /path/to/living-manual</pre>
 <script>
 (function () {
   "use strict";
-  var MANUAL_VERSION = "July 26, 2026 (v0.2.5)";
-  var MANUAL_BASE = "def1d10";
+  var MANUAL_VERSION = "July 26, 2026 (v0.2.6)";
+  var MANUAL_BASE = "0d62194";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -708,18 +760,6 @@ claude --plugin-dir /path/to/living-manual</pre>
      of prose to keep intent obvious. ---- */
   /*@TICKETS*/
   var TICKETS = [
-  {
-    "id": "TICKET-0001",
-    "title": "CI check runs verify.py and stale.sh so GitHub-side merges can't ship a broken manual",
-    "type": "idea",
-    "status": "ready",
-    "created": "2026-07-23",
-    "anchors": [
-      "guard"
-    ],
-    "roadmap": null,
-    "summary": "The staleness guard only runs in a developer's clone: the pre-push hook fires on `git push`, and nothing else. A squash merge or \"Update branch\" click in the GitHub web UI rewrites history on the server, passes through no hook, and can land a manual whose base marker is orphaned or whose content is stale. A GitHub Actions workflow running `verify.py` and `stale.sh` on pull requests and on the default branch would surface the break where it happens. Both scripts are plain python3/sh with no model dependency, so CI can detect the problem; the fix still needs a Claude Code session. Motivating defect: this repo's own manual shipped with base marker `2a646e9`, a commit absent from published history (rewritten after stamping). Nothing server-side could have caught it."
-  },
   {
     "id": "TICKET-0002",
     "title": "Base marker survives history rewrites by stamping content fingerprints alongside the sha",
