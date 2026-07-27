@@ -15,10 +15,19 @@ Payload keys (all optional; present keys replace the whole block):
                HTML comment and the MANUAL_BASE payload variable so a note's
                ticket names the commit the manual reflected
 
+Stamping the base also records a content fingerprint: one git hash per
+user_facing_paths entry, taken at the stamped commit. The sha alone is
+fragile, because it is frozen in a file while history is not: an amend,
+a rebase, or a squash merge orphans it, and with the commit gone there
+is no range left to diff, so the update flow cannot say what changed.
+The fingerprints answer that question without the commit. Identical
+hashes mean nothing user-facing moved and only the marker needs
+re-stamping; a differing hash names the surface that moved.
+
 Glossary regexes travel as {"pattern": "...", "flags": "gi"} and are
 emitted as literals.
 """
-import json, re, sys
+import json, os, re, subprocess, sys
 
 def js(v):
     return json.dumps(v, ensure_ascii=False, indent=2)
@@ -33,6 +42,67 @@ def glossary_js(entries):
             % (json.dumps(e["id"]), json.dumps(e["label"]),
                pattern, e.get("flags", "gi"), json.dumps(e["s"], ensure_ascii=False)))
     return "[\n" + ",\n".join(out) + "\n  ]"
+
+FP_OPEN = "<!-- manual-fingerprint"
+
+def find_config(start):
+    """Nearest .living-manual.json at or above the manual."""
+    d = os.path.dirname(os.path.abspath(start))
+    while True:
+        p = os.path.join(d, ".living-manual.json")
+        if os.path.exists(p):
+            return p
+        parent = os.path.dirname(d)
+        if parent == d:
+            return None
+        d = parent
+
+def tree_hashes(base, paths, warn):
+    """-> [(git hash, path)] for each path that resolves at `base`.
+
+    A directory yields its tree hash, a file its blob hash; either way the
+    hash changes exactly when that path's content does. An entry that is
+    not a tracked path at all (a glob, a directory that exists only
+    untracked) is skipped with a warning rather than failing the stamp:
+    a config naming an as-yet-empty directory should keep working, and
+    the remaining entries still fingerprint fine.
+    """
+    out = []
+    for p in paths:
+        spec = "%s:%s" % (base, p.rstrip("/"))
+        r = subprocess.run(["git", "rev-parse", "--verify", "--quiet", spec],
+                           capture_output=True, text=True)
+        got = r.stdout.strip()
+        # A zero exit is not enough. Handed something it cannot parse as a
+        # rev -- a glob, say -- rev-parse can echo the argument straight
+        # back and still succeed, which would stamp that string in place
+        # of a hash. Only a 40-char sha is a fingerprint.
+        if r.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40}", got):
+            warn("user_facing_paths entry %r is not a tracked path at %s: "
+                 "skipping its fingerprint" % (p, base))
+            continue
+        out.append((got, p))
+    return out
+
+def stamp_fingerprints(src, entries):
+    """Write the fingerprint comment, replacing any previous one.
+
+    It sits directly under the base marker because that is the region
+    stale.sh and verify.py already read; keeping both in the first few
+    hundred bytes means neither has to parse the whole document to
+    answer a question about staleness.
+    """
+    body = (FP_OPEN + " (content hash per user-facing path, at that commit)\n"
+            + "".join("     %s %s\n" % (h, p) for h, p in entries) + "-->")
+    old = re.search(re.escape(FP_OPEN) + r".*?-->", src, re.S)
+    if old:
+        return src[:old.start()] + body + src[old.end():]
+    anchor = re.search(r"<!-- manual-base: [0-9a-f]+ -->", src)
+    if not anchor:
+        # No marker to anchor to. verify.py reports that on its own; do
+        # not invent a placement.
+        return src
+    return src[:anchor.end()] + "\n" + body + src[anchor.end():]
 
 def replace_block(src, name, body):
     # Anchor on the LAST opening marker before the (unique) closing
@@ -73,12 +143,33 @@ def main():
                      lambda m: m.group(1) + p["asof"] + m.group(2), src, count=1)
         src = re.sub(r'(MANUAL_VERSION = ")[^"]*(")',
                      lambda m: m.group(1) + p["asof"] + m.group(2), src, count=1)
+    warnings = []
     if "base" in p:
         src = re.sub(r"(manual-base: )[0-9a-f]+",
                      lambda m: m.group(1) + p["base"], src, count=1)
         src = re.sub(r'(MANUAL_BASE = ")[0-9a-f]+(")',
                      lambda m: m.group(1) + p["base"] + m.group(2), src, count=1)
+        cfg_path = find_config(manual)
+        cfg = {}
+        if cfg_path:
+            try:
+                cfg = json.load(open(cfg_path))
+            except Exception as e:
+                warnings.append("could not read %s (%s): no fingerprints stamped"
+                                % (cfg_path, e))
+        else:
+            warnings.append("no .living-manual.json found: no fingerprints stamped")
+        paths = cfg.get("user_facing_paths") or []
+        if paths:
+            entries = tree_hashes(p["base"], paths, warnings.append)
+            if entries:
+                src = stamp_fingerprints(src, entries)
+            else:
+                warnings.append("no user_facing_paths entry resolved at %s: "
+                                "no fingerprints stamped" % p["base"])
     open(manual, "w").write(src)
+    for w in warnings:
+        print("warning:", w, file=sys.stderr)
     print("synced:", ", ".join(k for k in ("tickets","previews","glossary","defined","asof","base") if k in p))
 
 if __name__ == "__main__":

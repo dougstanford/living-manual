@@ -11,8 +11,13 @@ Config keys used (from .living-manual.json):
   brand: { ink, surface, deep, accent, warn, caution,
            font_stack, hero_gradient_css, logo_data_uri }
 Missing brand keys fall back to a neutral slate palette.
+
+The scaffolded manual is fingerprinted at its base commit, the same way
+an update run stamps it, so a brand new manual survives a history
+rewrite. Setup is exactly when one is likely: the commits that introduce
+a manual are the ones most often amended or squashed before they land.
 """
-import json, re, subprocess, sys
+import importlib.util, json, os, re, subprocess, sys
 
 DEFAULTS = {
     "ink": "#26282b", "surface": "#fafaf7", "deep": "#22303a",
@@ -21,6 +26,15 @@ DEFAULTS = {
     "hero_gradient_css": "linear-gradient(135deg, #22303a 0%, #3a5266 100%)",
     "logo_data_uri": "",
 }
+
+def load_sync(scripts_dir):
+    """sync-index.py owns the fingerprint format; import it rather than
+    growing a second copy that can disagree about the marker."""
+    spec = importlib.util.spec_from_file_location(
+        "sync_index", os.path.join(scripts_dir, "sync-index.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 def main():
     tpl_path, cfg_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -50,7 +64,16 @@ def main():
         src = src.replace(k, v)
     if not cfg.get("tagline_pill"):
         src = re.sub(r'\s*<span class="tagpill"></span>', "", src)
+    warnings = []
+    paths = cfg.get("user_facing_paths") or []
+    if paths:
+        si = load_sync(os.path.dirname(os.path.abspath(__file__)))
+        entries = si.tree_hashes(head, paths, warnings.append)
+        if entries:
+            src = si.stamp_fingerprints(src, entries)
     open(out_path, "w").write(src)
+    for w in warnings:
+        print("warning:", w, file=sys.stderr)
     print("scaffolded", out_path, "base", head)
 
 if __name__ == "__main__":

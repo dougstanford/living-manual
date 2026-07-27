@@ -29,7 +29,7 @@ try:
     cfg = json.load(open(".living-manual.json"))
     manual = cfg.get("manual_path", "docs/USER_MANUAL.html")
     try:
-        head = open(manual).read(4000)
+        head = open(manual).read(8000)
     except FileNotFoundError:
         print("MISSING-MANUAL"); sys.exit(0)
     m = re.search(r"manual-base: ([0-9a-f]+)", head)
@@ -38,7 +38,25 @@ try:
     base = m.group(1)
     if subprocess.run("git cat-file -e %s^{commit}" % base, shell=True,
                       capture_output=True).returncode != 0:
-        print("BAD-BASE " + base); sys.exit(0)
+        # History was rewritten after stamping, so there is no commit
+        # range. The content fingerprints outlive the commit and can
+        # still say whether anything user-facing actually moved.
+        fp = re.search(r"<!-- manual-fingerprint.*?-->", head, re.S)
+        fps = re.findall(r"^\s*([0-9a-f]{40})\s+(\S.*?)\s*$", fp.group(0), re.M) if fp else []
+        if not fps:
+            print("BAD-BASE " + base); sys.exit(0)
+        moved = []
+        for want, path in fps:
+            got = subprocess.run(["git", "rev-parse", "HEAD:" + path.rstrip("/")],
+                                 capture_output=True, text=True)
+            if got.returncode != 0 or got.stdout.strip() != want:
+                moved.append(path)
+        if not moved:
+            print("RESTAMP " + base); sys.exit(0)
+        print("MOVED")
+        for p in moved:
+            print("  " + p)
+        sys.exit(0)
     globs = " ".join("'%s'" % g for g in cfg.get("user_facing_paths", ["src/"]))
     out = subprocess.run("git log --oneline %s..HEAD -- %s" % (base, globs),
                          shell=True, capture_output=True, text=True).stdout.strip()
@@ -58,6 +76,22 @@ case "$OUT" in
     echo "living-manual: the manual's base commit (${OUT#BAD-BASE }) is not in this clone."
     echo "Re-stamp it:  claude -p \"/living-manual:manual update\""
     echo "Bypass once:  git push --no-verify"
+    exit 1 ;;
+  RESTAMP*)
+    echo "living-manual: the manual's base commit (${OUT#RESTAMP }) is gone, but every"
+    echo "user-facing path still hashes the same. The manual's content is current."
+    echo ""
+    echo "Re-stamping the marker is the whole fix. Nothing needs rewriting:"
+    echo "Re-stamp it:  claude -p \"/living-manual:manual update\""
+    echo "Bypass once:  git push --no-verify"
+    exit 1 ;;
+  MOVED*)
+    echo "living-manual: the manual's base commit is gone, so there is no commit"
+    echo "range to read. These user-facing paths changed since it was stamped:"
+    echo "$OUT" | tail -n +2
+    echo ""
+    echo "Update it before pushing:  claude -p \"/living-manual:manual update\""
+    echo "Or bypass once:            git push --no-verify"
     exit 1 ;;
   *)
     echo "living-manual: the manual predates these user-facing commits:"
