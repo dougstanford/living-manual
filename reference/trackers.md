@@ -21,17 +21,31 @@ them during setup.
   "jira": {
     "project_key": "ABC",
     "issue_types": { "bug": "Bug", "idea": "Story", "feedback": "Task" },
+    "type_labels": { "bug": ["needs-triage"] },
     "component": "optional: route new issues to one component",
     "labels": ["optional: labels applied to every issue"]
   },
   "github": {
     "repo": "owner/name",
-    "labels": { "bug": "bug", "idea": "enhancement", "feedback": "feedback" },
+    "labels": { "bug": ["bug", "needs-triage"], "idea": "enhancement",
+                "feedback": "feedback" },
     "extra_labels": ["optional: applied to every issue"],
     "milestone": "optional: title of the milestone new issues join"
   }
 }
 ```
+
+`github.labels` maps a note type to either one label or a list of them.
+A list applies every label in it, so issues the plugin files can carry
+the routing labels a project expects on that kind of work and look like
+issues the team files by hand. A plain string behaves exactly as it
+always has; configs written before lists existed need no change.
+
+`jira.type_labels` is the same idea for Jira, kept separate from
+`issue_types` because Jira's issue type and its labels are different
+fields. Its labels **merge** with the global `labels` list rather than
+replacing it: the global list keeps the meaning it already has, and
+per-type adds to it. A label named in both is applied once.
 
 When a provider was considered and rejected (tools missing, no write
 permission, user declined), record `"provider": "none"` with a
@@ -71,13 +85,36 @@ above fit.
    provider's inspect commands. Read before write, always.
 2. **Propose.** Print what was found, then a mapping built from it:
    each ticket type (`bug`, `idea`, `feedback`) mapped to an existing
-   type or label wherever one fits. Offer optional routing (a
-   component, a milestone, extra labels) from the existing list only.
-   Suggest creating something new only when nothing existing fits, and
-   mark it plainly as "would be created".
+   type or label **wherever one genuinely fits**. Offer optional
+   routing (a component, a milestone, extra labels) from the existing
+   list only.
+
+   A fit means the label means what the note type means. It is not
+   "the closest of what happens to exist". When nothing fits, **lead
+   with creating a label named for the type**, marked plainly as
+   "would be created", and offer reuse of an existing label as the
+   alternative to it — not as an equal option beside it. Reuse being
+   the path of least resistance is exactly how a type ends up filed
+   under a label that means something else, so levelling the two would
+   preserve the failure. A project that forbids new labels is one
+   keystroke from reuse.
+
+   Never let a poor fit pass silently. When the proposal reuses a label
+   whose name differs from the note type, say so in the proposal, in
+   the form "feedback would be filed as `question`, which on GitHub
+   means someone is asking for information". The user should be
+   choosing the compromise, not inheriting it.
 3. **Commit.** Write the config only after the user confirms the
    mapping. Create missing taxonomy only on that explicit
-   confirmation, never as a side effect of the first synced ticket.
+   confirmation, never as a side effect of the first synced ticket. A
+   proposed label the user does not confirm is never created, then or
+   later.
+
+This repo is the worked example of getting it wrong. Nothing here meant
+feedback, so setup reached for `question` — which on GitHub means
+someone is asking a question, not reporting how a shipped feature
+behaves. Every feedback note would have been mislabeled. The fix was to
+create a `feedback` label, which is what step 2 now leads with.
 
 ## Jira (Atlassian MCP)
 
@@ -89,8 +126,9 @@ above fit.
   permission. Never create a test issue to probe.
 - create: the MCP create-issue tool. Summary = ticket title.
   Description = ticket body converted to the format the tool accepts.
-  Issue type from `issue_types`; component and labels from config when
-  set.
+  Issue type from `issue_types`; component from config when set. Labels
+  are the union of `type_labels[<type>]` and the global `labels`, each
+  applied once.
 - update: the MCP edit tool, same issue key.
 - comment: the MCP comment tool.
 - list: the MCP search tool, open issues in `project_key`. MCP tools
@@ -108,8 +146,9 @@ above fit.
   issue templates under `.github/`. Write permission:
   `gh api repos/{owner}/{repo} --jq .permissions.push`.
 - create: `gh issue create --repo <repo> --title <title>
-  --body-file <file>` with the mapped label, `extra_labels`, and
-  `--milestone` when configured.
+  --body-file <file>` with `--milestone` when configured, and the
+  union of the type's label or label list and `extra_labels`, each
+  passed once.
 - update: `gh issue edit`.
 - comment: `gh issue comment`.
 - list: `gh issue list --state open --json
@@ -122,6 +161,12 @@ above fit.
 
 - A tracker write failure never blocks the local ticket. The ticket
   file is the record; report the failure and the retry path.
+- Config taxonomy the tracker no longer has is reported and skipped,
+  never recreated. This holds per label, not per issue: when a type
+  maps to several labels and one has been deleted since setup, the
+  issue is still filed with the rest, and the missing one is named in
+  the report. Losing a routing label is not a reason to lose the
+  issue, and silently recreating it would undo a deliberate deletion.
 - Additions and status changes update the issue the plugin created:
   comment with the new submission, edit the description. Never a twin
   issue.
