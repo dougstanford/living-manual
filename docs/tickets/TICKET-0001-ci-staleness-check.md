@@ -3,7 +3,7 @@ id: TICKET-0001
 title: CI check runs verify.py and stale.sh so GitHub-side merges can't ship a broken manual
 type: idea
 target: current
-status: ready
+status: shipped
 section: The staleness guard (#guard)
 created: 2026-07-23
 issue: dougstanford/living-manual#2
@@ -144,6 +144,38 @@ carry the consequences.
 - D3 (FR-8): The workflow runs on this repo. The defect that motivated
   the ticket shipped here, and PR #1 was exactly the web-UI merge path
   the workflow exists to catch.
+
+## Shipped
+
+v0.2.6, 2026-07-26. All eight requirements.
+
+- FR-1, FR-3: `scripts/ci-check.sh` is the unattended entry point. It
+  runs `verify.py` and `stale.sh` and reports both, rather than stopping
+  at the first failure: they are one fix each, and a second round trip
+  costs more than the extra output.
+- FR-2: `fetch-depth: 0` in both the workflow and the template. The
+  script also detects a shallow clone directly and says so, because the
+  misreport it causes looks exactly like an orphaned marker and sends
+  the reader to re-stamp something that was never wrong.
+- FR-4: `action.yml` at the repo root, a composite action running
+  ci-check.sh from `$GITHUB_ACTION_PATH`.
+- FR-5: tags backfilled from v0.2.5 and pushed. The release routine now
+  lives in this repo's CLAUDE.md.
+- FR-6: `manual-path` and `tickets-dir` inputs, each defaulting to the
+  consumer's `.living-manual.json`.
+- FR-7: setup step 5 offers the workflow on GitHub-hosted repos only and
+  records the outcome under a new `ci` config key. `state.sh` reports
+  `ci_installed` from the file on disk, not the config's claim about it.
+- FR-8: `.github/workflows/manual-guard.yml`, running the action from
+  the checkout (`uses: ./`) rather than a tag, so a pull request is
+  guarded by the version it proposes.
+
+One thing the ticket did not anticipate: `stale.sh` had no exit contract
+worth relying on. It exited 0 whether the manual was current or stale,
+reserving nonzero for `BAD-BASE`, so FR-3's "nonzero exit from either
+script" would have passed every stale manual through. It now exits 0
+current, 1 needs work, 2 could not check. The pre-push hook was
+unaffected: it parses output and never read the code.
 
 ## References
 

@@ -15,5 +15,9 @@
       "repo": "dougstanford/living-manual",
       "labels": { "bug": "bug", "idea": "enhancement", "feedback": "feedback" }
     }
+  },
+  "ci": {
+    "provider": "github-actions",
+    "workflow": ".github/workflows/manual-guard.yml"
   }
 }

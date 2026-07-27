@@ -108,9 +108,14 @@ user's terms.
   "tracker": { "provider": "github",
                "github": { "repo": "acme/app",
                            "labels": { "bug": "bug", "idea": "enhancement",
-                                       "feedback": "feedback" } } }
+                                       "feedback": "feedback" } } },
+  "ci": { "provider": "github-actions",
+          "workflow": ".github/workflows/manual-guard.yml" }
 }
 ```
+
+`ci` records what step 5 wired up, so a later run knows whether the
+server-side check exists. It is written by step 5, not here.
 
 `user_facing_paths` are the globs whose changes make the manual stale.
 Choose them from the inventory; confirm with the user.
@@ -123,6 +128,35 @@ Choose them from the inventory; confirm with the user.
   the manual as part of a push. This is the durable half; the hook is
   the enforcement half.
 - Create `tickets_dir` with a README explaining the queue and statuses.
+- **Offer the CI check, on GitHub only.** The hook guards a clone. A
+  squash merge or an "Update branch" click in the web UI rewrites
+  history on the server, passes through no hook, and can land a stale
+  manual. A workflow catches that where it happens.
+
+  Offer this only when the repo is hosted on GitHub (`git remote get-url
+  origin` names github.com, or `gh repo view` resolves). Elsewhere,
+  write nothing CI-related and say nothing about it. If the user
+  accepts, copy `$LM/templates/manual-guard.yml` to
+  `.github/workflows/manual-guard.yml`, filling `{{DEFAULT_BRANCH}}`
+  from the repo and `{{PLUGIN_VERSION}}` from the `version` in
+  `$LM/.claude-plugin/plugin.json`.
+
+  Record the outcome either way, alongside `tracker` in the config:
+
+  ```json
+  "ci": { "provider": "github-actions",
+          "workflow": ".github/workflows/manual-guard.yml" }
+  ```
+
+  Declined or unavailable: `"ci": { "provider": "none", "reason": "..." }`
+  in the user's terms, so a later run can say what to change.
+
+  Then tell the user the check is advisory until they make it required:
+  the plugin does not write branch protection. Point them at the
+  repository's branch protection settings for the default branch, where
+  "Manual reflects the code" can be added as a required check. Supplying
+  the signal is the plugin's job; deciding its force is the repo
+  owner's.
 
 **6. Build the manual.**
 - `python3 $LM/scripts/scaffold.py $LM/templates/manual-shell.html .living-manual.json <manual_path>`
@@ -154,7 +188,9 @@ sh $LM/scripts/stale.sh
 ```
 
 `CURRENT`: say so, stop. Otherwise the output lists the commits and
-user-facing files since the manual's base. Then:
+user-facing files since the manual's base. It exits nonzero in that
+case, which is the signal that work is needed, not a script failure;
+read the output and carry on. Then:
 
 1. Read the diffs that matter (`git show` per commit, or the changed
    files). Derive what changed in the user's experience, not in the

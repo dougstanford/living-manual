@@ -59,15 +59,39 @@ The pre-push hook blocks pushes whose user-facing commits postdate the
 manual's base commit, so the next dev always opens a manual that
 matches the release. Bypass once with `git push --no-verify`.
 
+## The same guard in CI
+
+The hook lives in a clone, so it never sees a merge performed on
+GitHub: a squash or an "Update branch" click rewrites history on the
+server and can land a stale manual. Setup offers a workflow that runs
+the same checks where merges actually happen. It is one step, because
+the plugin publishes itself as a composite action:
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0        # the manual's base commit is usually far back
+- uses: dougstanford/living-manual@v0.2.6
+```
+
+The action reads `.living-manual.json` for the paths it needs; pass
+`manual-path` or `tickets-dir` only if this workflow guards a repo
+whose manual moved. A failing check names the offending commits and
+the command that fixes them. It stays advisory until an admin adds it
+to the branch's required checks — the plugin supplies the signal, the
+repo owner decides its force.
+
 ## Layout
 
 ```
+action.yml        composite action: the guard, runnable in CI
 skills/manual/    the builder and updater
 skills/ticket/    note → ticket (+ tracker sync)
 scripts/          state, inventory, staleness, hook install, ticket
                   numbering, tickets-index rebuild, data-block sync,
-                  scaffolding, static verification
-templates/        the interactive manual shell + CLAUDE.md snippet
+                  scaffolding, static verification, the CI entry point
+templates/        the interactive manual shell, CLAUDE.md snippet, and
+                  the CI workflow setup installs
 reference/        writing style (binding) + maintenance checklist +
                   tracker gateway contract
 ```
