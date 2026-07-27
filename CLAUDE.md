@@ -4,6 +4,45 @@ This repo is the living-manual plugin itself. The manual below documents
 the plugin, built by the plugin: dogfooding is the point. Changes to
 skills/, scripts/, templates/, or reference/ are user-facing.
 
+## Start of every session
+
+1. `git fetch origin`, then create your working branch from
+   `origin/main`: `git switch -c <topic> origin/main`. Ticket work reads
+   `ticket-NNNN-<slug>`. Use a `git worktree` if another session may be
+   active. **Never build directly on `main`.**
+2. Read `README.md` and `docs/WORKFLOW.md` before your first commit.
+
+If the working tree has uncommitted non-trivial changes, or the session
+was deliberately started on another branch, surface that instead of
+forcing a switch.
+
+## How work lands — non-negotiable
+
+`main` is protected: direct pushes, force-pushes, and deletion are
+refused by GitHub itself. Everything reaches trunk through a merge
+request that passes **Manual reflects the code**.
+
+- One branch = one session = **one concern**. If a branch grows a second
+  concern, split it.
+- **Never `git add -A` or `git add .`** in a tree another session may
+  share — stage explicit paths.
+- Push the branch the same day it exists; open the MR with
+  `gh pr create --base main`.
+- Rebase onto trunk; never merge trunk into your branch.
+- **Merge with a merge commit. Squash and rebase merging are disabled at
+  the repository, deliberately.** Both replay work under new SHAs, which
+  orphans the manual's base marker the moment the MR lands — the exact
+  failure the guard exists to catch. Full reasoning in
+  `docs/WORKFLOW.md` §3.
+- Required approvals are 0 by design (agent sessions act as the owner,
+  and GitHub forbids self-approval), so the enforced gate is *MR + green
+  check*. The merge click is the human judgment.
+- Write the MR body in plain, user-facing language: what changed, why,
+  and what to look at. The reviewer may not read the diff.
+
+Full contract, including the protection ruleset and the reviewer's
+guide: `docs/WORKFLOW.md`.
+
 ## User's manual (living-manual)
 
 This project's user manual is docs/USER_MANUAL.html, maintained by the
@@ -44,6 +83,6 @@ print CURRENT, it is not the release point.
 Agreement is the whole point of a pin. A consumer on `@v0.2.6` should
 get scripts the v0.2.6 manual actually describes.
 
-Merge PRs with a merge commit, not a squash. A squash rewrites the
-base commit out of history and orphans the manual's marker — the very
-failure the guard exists to catch, self-inflicted at merge time.
+Tagging is unaffected by branch protection: tags are a separate ruleset
+target, so `git push origin v<version>` works normally even though a
+direct push to `main` does not.
