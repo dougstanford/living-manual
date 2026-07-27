@@ -111,6 +111,10 @@ what this ticket addresses.
   `feedback` label is created at `dougstanford/living-manual`, and
   `.living-manual.json` maps `feedback` to it instead of `question`.
   This is the FR-1 path walked end to end on a live repo.
+  **Landed 2026-07-26, ahead of the rest.** The label exists (amber,
+  described "How a shipped feature behaves, and what better would look
+  like") and the config points at it. No issue needed relabelling: none
+  had been filed as feedback. FR-1 through FR-8 remain to build.
 
 ## Acceptance criteria
 

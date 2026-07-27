@@ -13,7 +13,7 @@
     "provider": "github",
     "github": {
       "repo": "dougstanford/living-manual",
-      "labels": { "bug": "bug", "idea": "enhancement", "feedback": "question" }
+      "labels": { "bug": "bug", "idea": "enhancement", "feedback": "feedback" }
     }
   }
 }
