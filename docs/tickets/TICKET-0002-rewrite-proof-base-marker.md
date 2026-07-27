@@ -3,7 +3,7 @@ id: TICKET-0002
 title: Base marker survives history rewrites by stamping content fingerprints alongside the sha
 type: idea
 target: current
-status: ready
+status: shipped
 section: The staleness guard (#guard)
 created: 2026-07-23
 issue: dougstanford/living-manual#3
@@ -146,6 +146,52 @@ Settled 2026-07-26, all three as proposed.
   skipped with a warning rather than failing the stamp. A config naming
   an as-yet-empty directory or a glob keeps working. All four entries in
   this repo resolve today, so this path is for other repos.
+
+## Shipped
+
+v0.2.7, 2026-07-27. All six requirements.
+
+The marker format: a `<!-- manual-fingerprint ... -->` comment directly
+under `manual-base`, one `<40-char hash> <path>` line per entry. It sits
+there because that is the region `stale.sh` and `verify.py` already
+read, so neither has to parse the whole document to answer a staleness
+question. The readers' window grew from 4000 to 8000 bytes to hold it
+with room to spare; a block too large to fit still degrades safely,
+because the parse needs a closing `-->` and falls back to today's
+`BAD-BASE` without it.
+
+- FR-1, FR-1a: `sync-index.py` stamps one hash per entry when it stamps
+  the base. A directory yields its tree hash, a file its blob hash.
+- FR-2: unchanged when the sha resolves. The fingerprints are not read
+  at all on that path.
+- FR-3: `RESTAMP <sha>`, exit 3.
+- FR-4: `MOVED <sha>` naming only the paths whose hashes differ.
+- FR-5: `verify.py` reports a malformed block and is silent about a
+  well-formed one. A sha-only manual is untouched everywhere.
+- FR-6: three distinct hook messages (`BAD-BASE`, `RESTAMP`, `MOVED`),
+  all blocking.
+
+Beyond the ticket: `scaffold.py` fingerprints a freshly built manual.
+The ticket assigned stamping to `sync-index.py`, which is only reached
+on an update run, leaving every new manual sha-only until then. Setup's
+own commits are among the most likely to be squashed or amended before
+landing, so that window is the wrong one to leave open. `scaffold.py`
+imports the helpers rather than copying them, so one module owns the
+format.
+
+Found while testing: `git rev-parse` exits 0 and echoes its argument
+back when handed something it cannot parse as a rev. A glob in
+`user_facing_paths` therefore passed the return-code check and stamped
+the literal `<sha>:scripts/*.py` where a hash belonged, which is the
+FR-1a case failing silently instead of warning. The result is now
+required to match 40 hex characters.
+
+Also corrected: a test that appeared to confirm FR-3 was passing for
+the wrong reason. `git commit --amend` leaves the original commit in the
+object store, so the base still resolved and the run reported `CURRENT`
+rather than exercising the new path at all. Verifying it needs history
+that is genuinely gone: squash the base commit away, then expire the
+reflog and prune.
 
 ## References
 

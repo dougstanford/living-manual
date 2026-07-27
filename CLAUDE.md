@@ -31,12 +31,19 @@ tagged is a release nobody can pin. Every version bump ends the same way:
 2. Update `{{PLUGIN_VERSION}}`'s example in the README to the new tag,
    so the copy-pasteable snippet is never a version behind.
 3. Run `/living-manual:manual update` and let the push guard pass.
-4. Once it is on `main`, tag the commit that stamped the manual, and
-   push the tag:
+4. Once it is on `main`, tag the release point and push the tag:
    `git tag -a v<version> -m "<summary>" && git push origin v<version>`.
 
-Tag the manual-stamp commit, not the code commit before it. A release
-is two commits: the code, then the manual stamped against it. Only at
-the second do the scripts and the manual agree, and agreement is the
-whole point of a pin — a consumer on `@v0.2.6` should get scripts the
-v0.2.6 manual actually describes.
+The release point is the first commit on `main` at which the manual is
+current — never the code commit before the manual was stamped against
+it. Landing through a PR, that is the merge commit; landing directly,
+it is the manual-stamp commit. Test it the same way either way: check
+out the candidate and run `sh scripts/ci-check.sh`. If it does not
+print CURRENT, it is not the release point.
+
+Agreement is the whole point of a pin. A consumer on `@v0.2.6` should
+get scripts the v0.2.6 manual actually describes.
+
+Merge PRs with a merge commit, not a squash. A squash rewrites the
+base commit out of history and orphans the manual's marker — the very
+failure the guard exists to catch, self-inflicted at merge time.

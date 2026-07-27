@@ -71,7 +71,7 @@ the plugin publishes itself as a composite action:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0        # the manual's base commit is usually far back
-- uses: dougstanford/living-manual@v0.2.6
+- uses: dougstanford/living-manual@v0.2.7
 ```
 
 The action reads `.living-manual.json` for the paths it needs; pass
