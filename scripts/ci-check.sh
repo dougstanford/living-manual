@@ -67,6 +67,18 @@ echo ""
 echo "== staleness =="
 sh "$SELF/stale.sh" . "$MANUAL" || FAILED=1
 
+# Advisory, exactly as in the pre-push hook, and the same command: drift
+# is reported and never fails the check. A stale queue leaves the guard
+# working, and proving drift needs the tracker, which can be down for
+# reasons this branch did not cause.
+echo ""
+echo "== queue drift (advisory) =="
+if [ -d "$TICKETS" ]; then
+  python3 "$SELF/tickets-index.py" "$TICKETS" "$MANUAL" --check || true
+else
+  echo "no ticket directory at $TICKETS: skipping"
+fi
+
 if [ "$FAILED" -ne 0 ]; then
   echo ""
   echo "The manual does not match what this branch would release."

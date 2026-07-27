@@ -3,7 +3,7 @@ id: TICKET-0003
 title: The queue index goes stale against the tracker with no signal
 type: idea
 target: current
-status: ready
+status: shipped
 section: Notes become tickets › The queue check (#queue-check)
 created: 2026-07-26
 issue: dougstanford/living-manual#4
@@ -165,6 +165,50 @@ than re-litigate it.
   push; CI catches it on the server where merges land. FR-7 keeps the
   check a single command so #2 adds one step rather than a second
   implementation.
+
+## Shipped
+
+v0.2.8, 2026-07-27. All seven requirements.
+
+- FR-1: `tickets-index.py --check`. Only tracker-sourced entries are
+  compared; the rest are built from the ticket files, and the directory
+  cannot disagree with itself between rebuilds.
+- FR-2: a `QUEUESYNC` data block holding the timestamp and the provider
+  that answered, or `none`.
+- FR-3: rendered beside the queue label in the modal, nowhere else. A
+  manual scaffolded before the block existed shows nothing rather than
+  implying freshness.
+- FR-4, FR-6, FR-7: the pre-push guard and `ci-check.sh` call the same
+  command. Drift warns and never changes an exit code; an unreachable
+  tracker exits zero silently.
+- FR-5: written into `reference/maintenance.md` step 6 and the update
+  flow, with the reason rather than just the rule.
+
+Exit contract as built: 0 agree **or** could not compare, 1 disagree.
+The ticket asked for "zero clean or unreachable, nonzero drift", and
+every case that cannot be proven was folded into zero rather than given
+a third code. An unreadable TICKETS block reports itself and exits zero
+too: a malformed manual is `verify.py`'s finding to make, and reporting
+it as drift would put a second, worse name on it.
+
+`from_tracker` had to change shape first. It returned an empty list both
+when a tracker had nothing open and when it could not be reached, and
+the check would have read the second as a queue that had lost every
+issue. It now reports which provider it actually read.
+
+The hook needs the plugin's path to call the check, since FR-7 requires
+one command rather than a second inline implementation, so
+`install-hook.sh` bakes the path in at install time. If the plugin later
+moves, the drift check goes quiet and the blocking staleness guard is
+untouched. That is the right way round: the advisory half degrades, the
+enforcing half does not.
+
+Testing note, carried over from TICKET-0002: two early drift cases
+passed for the wrong reason. Every open issue in this repo already had a
+ticket file referencing it, so there were no tracker-sourced entries to
+drift, and "added" and "changed" both reported agreement against an
+empty set. Exercising them needs a fixture where an open issue has no
+local ticket file.
 
 ## References
 

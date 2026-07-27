@@ -165,6 +165,11 @@
   .scope-chip.on { border-color: var(--accent); color: var(--accent); }
   .scope-chip.on.roadmap { background: var(--accent); color: var(--surface); }
   .rev-queue { margin-bottom: 14px; }
+  .queue-stamp { font-size: 0.66rem; color: var(--muted); opacity: 0.8;
+    margin-left: 8px; font-variant-numeric: tabular-nums;
+    /* Wrap as a unit: a bare "UTC" alone on the next line reads as
+       debris rather than a timestamp. */
+    white-space: nowrap; }
   .queue-item { border: 1px solid var(--line); border-radius: 10px;
     padding: 7px 12px; margin-top: 8px; font-size: 0.84rem; }
   .queue-item summary { cursor: pointer; }
@@ -306,6 +311,14 @@
      sync-index.py anchors on the LAST marker pair, so writing a marker
      token in prose elsewhere is safe; still, keep the literal tokens out
      of prose to keep intent obvious. ---- */
+  /* When the queue was last reconciled against the tracker, and which
+     provider answered. The queue is a snapshot: this file makes no
+     network call when opened, so a reader is always looking at the last
+     rebuild. Showing its age is what keeps that honest. */
+  /*@QUEUESYNC*/
+  var QUEUE_SYNC = { at: "", provider: "none" };
+  /*@/QUEUESYNC*/
+
   /*@TICKETS*/
   var TICKETS = [];
   /*@/TICKETS*/
@@ -442,6 +455,19 @@
       ? "Already in the queue. Is your note one of these?"
       : "Nothing is queued for this area yet.";
     revQueue.appendChild(label);
+    /* The queue's age, beside the queue and nowhere else. The hero's
+       "as of" date describes the code this manual reflects; reusing it
+       here would claim the whole manual had been refreshed when only
+       the queue was. A manual scaffolded before this existed has no
+       stamp, and says nothing rather than implying freshness. */
+    if (typeof QUEUE_SYNC !== "undefined" && QUEUE_SYNC && QUEUE_SYNC.at) {
+      var stamp = document.createElement("span");
+      stamp.className = "queue-stamp";
+      stamp.textContent = QUEUE_SYNC.provider && QUEUE_SYNC.provider !== "none"
+        ? "checked against " + QUEUE_SYNC.provider + " " + QUEUE_SYNC.at
+        : "not reconciled against a tracker (" + QUEUE_SYNC.at + ")";
+      revQueue.appendChild(stamp);
+    }
     matches.forEach(function (t) { revQueue.appendChild(ticketItem(t)); });
     if (rest.length) {
       var all = document.createElement("details");

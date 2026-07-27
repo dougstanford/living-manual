@@ -77,6 +77,13 @@ def main():
     if dupes:
         f.append("duplicate element ids: %s" % ", ".join(dupes))
 
+    # Optional: manuals scaffolded before the queue stamp existed have
+    # no such block, and that is not a fault. A present one must parse.
+    if "/*@/QUEUESYNC*/" in src:
+        qsync, e = json_block(src, "QUEUESYNC", "QUEUE_SYNC"); f += e
+        if qsync is not None and "provider" not in qsync:
+            f.append("QUEUE_SYNC missing provider")
+
     previews, e = json_block(src, "PREVIEWS", "PREVIEWS"); f += e
     tickets, e = json_block(src, "TICKETS", "TICKETS"); f += e
     defined, e = json_block(src, "DEFINED", "DEFINED_IN"); f += e
