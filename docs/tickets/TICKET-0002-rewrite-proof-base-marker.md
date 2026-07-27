@@ -3,7 +3,7 @@ id: TICKET-0002
 title: Base marker survives history rewrites by stamping content fingerprints alongside the sha
 type: idea
 target: current
-status: needs-answers
+status: ready
 section: The staleness guard (#guard)
 created: 2026-07-23
 issue: dougstanford/living-manual#3
@@ -78,7 +78,12 @@ written:
 
 - FR-1: `sync-index.py` stamps, alongside the base sha, one git tree
   hash per entry in `user_facing_paths` (the hash of that path's tree at
-  the stamped commit).
+  the stamped commit). One hash per path, not one combined hash, so FR-4
+  can name the surface that moved.
+- FR-1a: An entry that does not resolve as a tracked tree path
+  (`git rev-parse HEAD:<path>` fails, as with a glob or an empty
+  directory) is skipped with a warning. The remaining entries are still
+  fingerprinted and the stamp still succeeds.
 - FR-2: When the base sha resolves, behavior is unchanged: commit list
   from `git log base..HEAD`.
 - FR-3: When the base sha does not resolve and every stamped tree hash
@@ -90,8 +95,10 @@ written:
 - FR-5: `verify.py` accepts a manual with fingerprints and continues to
   verify sha resolution; a manual stamped before this change (sha only)
   keeps today's behavior everywhere.
-- FR-6: The pre-push hook distinguishes the FR-3 case (allow the push or
-  auto-message "re-stamp only") from the FR-4 case (block).
+- FR-6: The pre-push hook distinguishes the FR-3 case from the FR-4
+  case. Both block the push. FR-3's message says the manual's content is
+  current and names the re-stamp command as the whole fix; FR-4's
+  message names the changed paths and points at the update flow.
 
 ## Acceptance criteria
 
@@ -103,24 +110,37 @@ written:
   path's content changed, then stale.sh exits nonzero naming that path.
 - Given a manual carrying only a sha, when any script runs, then output
   is identical to today's.
+- Given a manual carrying fingerprints, when `verify.py` runs, then it
+  accepts the marker format without a finding, and still reports an
+  unresolvable base sha as one.
 - Given a resolvable base sha, when stale.sh runs, then fingerprints are
   not consulted.
+- Given a `user_facing_paths` entry that does not resolve as a tracked
+  tree path, when the manual is stamped, then that entry is skipped with
+  a warning naming it, and the other entries are still fingerprinted.
+- Given the re-stamp-only state, when a push is attempted, then the hook
+  blocks it and its message names the re-stamp command as the whole fix.
 
-## Open questions
+## Decisions
 
-- Q1 (blocks FR-1): One combined hash or one per path? Default: per
-  path, so FR-4 can name where the change is. If the marker comment gets
-  unwieldy for repos with many entries, fall back to one combined hash
-  and lose the naming.
-- Q2 (blocks FR-6): In the re-stamp-only state, should the hook block
-  the push? Default: block with a message that the fix is a re-stamp,
-  since letting it through publishes a manual whose marker is broken for
-  every future clone. If that proves too noisy, downgrade to a warning.
-- Q3 (blocks FR-1): `user_facing_paths` entries are path prefixes today
-  (directories). Tree hashes require each entry to resolve as a tracked
-  path. Default: resolve each entry with `git rev-parse HEAD:<path>` and
-  skip, with a warning, entries that do not resolve (a glob or an
-  as-yet-empty directory).
+Settled 2026-07-26, all three as proposed.
+
+- D1 (FR-1): One tree hash per `user_facing_paths` entry, not one
+  combined hash. Per path is what lets FR-4 name the surface that moved,
+  which is the recovery the ticket exists to provide. This repo has four
+  entries, so the marker stays small; revisit only if a repo with many
+  entries makes the comment unwieldy.
+- D2 (FR-6): The re-stamp-only state blocks the push, like the
+  fully-stale state, but with a different message. The manual's content
+  is correct, yet its marker is broken for every future clone, and the
+  fix is a single `sync-index.py` call by the person already pushing.
+  This cuts against TICKET-0003's D1, where drift only warns, and the
+  distinction is deliberate: there the fix belonged to whoever touched
+  the tracker, here it belongs to the pusher and costs one command.
+- D3 (FR-1a): An entry that does not resolve as a tracked tree path is
+  skipped with a warning rather than failing the stamp. A config naming
+  an as-yet-empty directory or a glob keeps working. All four entries in
+  this repo resolve today, so this path is for other repos.
 
 ## References
 

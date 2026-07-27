@@ -3,7 +3,7 @@ id: TICKET-0001
 title: CI check runs verify.py and stale.sh so GitHub-side merges can't ship a broken manual
 type: idea
 target: current
-status: needs-answers
+status: ready
 section: The staleness guard (#guard)
 created: 2026-07-23
 issue: dougstanford/living-manual#2
@@ -81,11 +81,21 @@ written:
 - FR-3: A nonzero exit from either script fails the check, and the step
   output includes the script's findings plus the fix path
   (`claude -p "/living-manual:manual update"`).
-- FR-4: The workflow obtains the plugin's scripts in CI (mechanism is
-  Q1).
-- FR-5: The manual skill's wiring step (setup step 5) offers the
+- FR-4: The plugin publishes a composite GitHub Action at its repo root,
+  so a documented repo's workflow obtains the scripts with
+  `uses: dougstanford/living-manual@<tag>` and no second checkout step.
+  The action runs both scripts and surfaces their output.
+- FR-5: The plugin repo carries release tags matching the version in
+  `.claude-plugin/plugin.json`, so FR-4's `uses:` can pin one. Tagging
+  becomes part of the release routine; no tags exist today.
+- FR-6: The action accepts the manual path and tickets directory as
+  inputs, defaulting to the values in the consumer's
+  `.living-manual.json`, so a repo that moved either still works.
+- FR-7: The manual skill's wiring step (setup step 5) offers the
   workflow when the repo is hosted on GitHub, and records the choice in
   `.living-manual.json`.
+- FR-8: This repo carries the workflow itself, running on pull requests
+  and on pushes to `main`.
 
 ## Acceptance criteria
 
@@ -96,23 +106,44 @@ written:
   when the workflow runs, then the check fails naming the orphaned sha.
 - Given a PR with a current manual and resolvable base, when the
   workflow runs, then the check passes.
+- Given a repo whose manual base is many commits behind HEAD, when the
+  workflow runs, then the checkout has enough history for `stale.sh` to
+  resolve that base, and it is not misreported as `BAD-BASE`.
 - Given a repo not hosted on GitHub, when setup's wiring step runs, then
   no workflow is offered and nothing CI-related is written.
+- Given a consumer workflow using `uses: dougstanford/living-manual@<tag>`,
+  when it runs, then both scripts execute with no checkout of the plugin
+  repo in the consumer's workflow file.
+- Given a consumer whose manual lives somewhere other than the default
+  path, when the action runs with that path as an input, then it checks
+  the right file.
+- Given a release of the plugin, when it is published, then a tag
+  matching `plugin.json`'s version exists and `uses:` can pin it.
+- Given this repo, when a pull request is opened, then the workflow runs
+  and its result is visible on the PR.
 
-## Open questions
+## Decisions
 
-- Q1 (blocks FR-4): How does a documented repo's CI get `verify.py` and
-  `stale.sh`, which live in the plugin rather than the repo? Default:
-  the workflow checks out the living-manual repo at a pinned ref as a
-  second checkout step. If wrong (private forks, air-gapped runners),
-  setup vendors the two scripts into the repo instead.
-- Q2 (blocks FR-3): Blocking or advisory? Making the check required is
-  repo-settings territory the plugin cannot write. Default: the workflow
-  fails loudly and the setup report tells the admin how to mark it
-  required; the plugin does not touch branch protection.
-- Q3 (blocks FR-5): Should the workflow also run on this repo (the
-  plugin dogfooding itself) as part of this ticket? Default: yes, since
-  the defect that motivated the ticket shipped here.
+Settled 2026-07-26. Q1 changed the shape of the work, so FR-4 was
+rewritten rather than merely pinned, and FR-5, FR-6, FR-8 were added to
+carry the consequences.
+
+- D1 (FR-4, FR-5, FR-6): CI obtains the scripts through a composite
+  GitHub Action published from this repo, referenced as
+  `uses: dougstanford/living-manual@<tag>`. Chosen over the pinned
+  second checkout the ticket originally proposed because it is one line
+  in the consumer, versioned, and idiomatic for GitHub. The cost is
+  real: this repo has no tags, so release tagging becomes a discipline
+  (FR-5). Vendoring the scripts was rejected because the copies drift
+  from the plugin as it evolves.
+- D2 (FR-3): The check fails loudly on a stale or orphaned manual. Setup
+  reports how an admin marks it required. The plugin does not write
+  branch protection, so a failing check is advisory until an admin
+  elects otherwise, and that is the correct division: the plugin
+  supplies the signal, the repo owner decides its force.
+- D3 (FR-8): The workflow runs on this repo. The defect that motivated
+  the ticket shipped here, and PR #1 was exactly the web-UI merge path
+  the workflow exists to catch.
 
 ## References
 
