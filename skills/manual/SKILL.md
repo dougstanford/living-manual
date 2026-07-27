@@ -82,11 +82,21 @@ project already has (Jira: issue types, components; GitHub: labels,
 milestones) before proposing anything. Propose a mapping of ticket
 types (`bug`, `idea`, `feedback`) onto that existing taxonomy, plus
 any optional routing (component, milestone, extra labels) drawn from
-the same lists. Never assume the defaults in trackers.md fit; suggest
-creating a new label or type only when nothing existing does, marked
-as "would be created", and create it only on explicit confirmation.
-Verify write permission the provider's way; never create a test issue
-to probe. Record the confirmed mapping in the `tracker` block. Write
+the same lists. Never assume the defaults in trackers.md fit.
+
+Map a type onto an existing label only when that label means what the
+type means, not when it is merely the closest thing available. When
+nothing fits, lead with creating a label named for the type, marked
+"would be created", and offer reuse as the alternative to it rather
+than as an equal option. When you do propose reuse under a different
+name, say so in the proposal and say what the existing label actually
+means, so the user is choosing the compromise rather than inheriting
+it. Create nothing without explicit confirmation.
+
+A type may map to several labels when the project routes that kind of
+work with more than one; see the config schema in trackers.md. Verify
+write permission the provider's way; never create a test issue to
+probe. Record the confirmed mapping in the `tracker` block. Write
 access missing: record `"provider": "none"` with the reason, in the
 user's terms.
 

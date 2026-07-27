@@ -94,9 +94,11 @@ ticket against that item, stated in the summary.
      title, body from the ticket (stories, FRs, criteria, open
      questions) in the format the provider accepts, type or label
      mapping and any routing (component, milestone, extra labels) from
-     config. Config taxonomy missing at the tracker (a label deleted
-     since setup, say): create nothing; sync without it and report the
-     mismatch.
+     config. A type may map to one label or several; apply them all,
+     plus the global extras, each label once. Config taxonomy missing
+     at the tracker (a label deleted since setup, say): create
+     nothing; file the issue with the labels that do exist, and name
+     the missing one in the report.
    - Write the returned ref into the ticket frontmatter (`issue:`) and
      mention it in your report.
    - Additions and status changes update the same issue (comment with

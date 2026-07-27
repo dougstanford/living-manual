@@ -3,7 +3,7 @@ id: TICKET-0004
 title: Type mapping bends onto ill-fitting labels instead of creating honest ones
 type: idea
 target: current
-status: ready
+status: shipped
 section: The ticket skill › The issue tracker (#tracker-sync)
 created: 2026-07-26
 issue: dougstanford/living-manual#5
@@ -165,6 +165,38 @@ than re-litigate it.
   part of this work rather than separately. It is the clearest test of
   FR-1, it exercises the create path on a live repo, and the
   mislabeling is active until it lands.
+
+## Shipped
+
+v0.2.9, 2026-07-27. FR-1 through FR-8; FR-9 had landed 2026-07-26.
+
+Most of this ticket is discipline, not machinery. FR-1, FR-2, FR-3,
+FR-6, and FR-8 govern what setup and the ticket skill do, so they landed
+in `reference/trackers.md` and the two skills, with the reasoning
+attached rather than the rule alone. The propose step now defines a fit
+("the label means what the type means, not the closest of what happens
+to exist"), leads with creation when nothing fits, and requires a
+proposal that reuses a differently-named label to state what that label
+already means. This repo's `feedback` to `question` bend is written into
+trackers.md as the worked example of getting it wrong.
+
+FR-4, FR-5, FR-7 are the config schema: `github.labels` takes a string
+or a list, `jira.type_labels` maps a type to a list and merges with the
+global `labels` rather than replacing it.
+
+One code path actually read the mapping, and it would have broken:
+`type_from_labels` matched only values that were strings, so a list
+would have silently classified every folded-in issue as `idea` — the
+new config shape failing quietly rather than loudly. Any one of a
+type's labels now identifies it, which is the right rule anyway: an
+issue routed as `bug` + `needs-triage` is still a bug after someone
+drops the routing label. First match wins when a label is named under
+two types.
+
+Verified: ten mapping cases including old string configs unchanged,
+lists matching on any member, mixed string-and-list configs,
+case-insensitivity, and empty or null values tolerated. Then end to end
+against this repo's live issues with a list mapping configured.
 
 ## Out of scope
 

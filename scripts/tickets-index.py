@@ -118,9 +118,17 @@ def github_issues(conf):
     return json.loads(r.stdout or "[]")
 
 def type_from_labels(labels, mapping):
+    """Which note type an issue's labels say it is.
+
+    A type maps to one label or to a list of them. Any one of a type's
+    labels identifies it: an issue routed as bug + needs-triage is still
+    a bug when someone drops the routing label. First match wins, so a
+    label named under two types resolves to whichever is declared first.
+    """
     have = {str(l).lower() for l in labels}
     for typ, lab in (mapping or {}).items():
-        if isinstance(lab, str) and lab.lower() in have:
+        names = [lab] if isinstance(lab, str) else (lab or [])
+        if any(isinstance(n, str) and n.lower() in have for n in names):
             return typ
     return "idea"
 
