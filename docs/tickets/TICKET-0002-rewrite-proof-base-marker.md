@@ -131,12 +131,17 @@ Settled 2026-07-26, all three as proposed.
   entries, so the marker stays small; revisit only if a repo with many
   entries makes the comment unwieldy.
 - D2 (FR-6): The re-stamp-only state blocks the push, like the
-  fully-stale state, but with a different message. The manual's content
-  is correct, yet its marker is broken for every future clone, and the
-  fix is a single `sync-index.py` call by the person already pushing.
-  This cuts against TICKET-0003's D1, where drift only warns, and the
-  distinction is deliberate: there the fix belonged to whoever touched
-  the tracker, here it belongs to the pusher and costs one command.
+  fully-stale state, but with a different message. This follows the
+  enforcement principle in `reference/maintenance.md`: an orphaned
+  marker disables the guard itself, so every later staleness check
+  returns a meaningless answer until someone re-stamps, and the tool
+  proves it locally with no network call. Both halves of the rule are
+  met, so it blocks. TICKET-0003's queue drift warns under the same
+  rule, because stale queue content leaves the mechanism working and
+  proving it needs the tracker. An earlier draft of this decision
+  justified the split by who caused the problem; that was wrong, since
+  a marker is as often orphaned by someone else's squash merge as by
+  the pusher's own rebase.
 - D3 (FR-1a): An entry that does not resolve as a tracked tree path is
   skipped with a warning rather than failing the stamp. A config naming
   an as-yet-empty directory or a glob keeps working. All four entries in

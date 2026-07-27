@@ -24,3 +24,35 @@ checklist form, for review before reporting done.
    previews open, note payload copies.
 9. Prose passes reference/writing-style.md. Em-dash count in new prose:
    zero.
+
+## Enforcement principle
+
+When a check finds something wrong at push time, it either blocks the
+push or warns and lets it through. One rule decides which, and every
+guard the plugin installs follows it:
+
+**Block when the guard itself is disabled and the tool can prove it
+locally. Warn when the output is merely imperfect, or when proving it
+requires an external service.**
+
+Two halves, both load-bearing:
+
+- *The guard itself is disabled.* A broken base marker means every later
+  staleness check returns a meaningless answer, for every clone, until
+  someone re-stamps. The mechanism is down, not the content. Content
+  that is merely out of date is what the manual already tolerates
+  between updates, and it self-corrects on the next run.
+- *Provable locally.* A check that must reach a third party can fail for
+  reasons the pusher did not cause and cannot fix. Blocking on it trades
+  a real outage for a theoretical correctness gain, and it teaches
+  people to reach for `--no-verify`, which costs more than the check was
+  worth.
+
+Do not decide by who caused the problem. The tool cannot tell: a marker
+is as often orphaned by someone else's squash merge as by your own
+rebase, and a stale queue is as often your own doing as a colleague's.
+Blame is unmeasurable, so it makes a poor rule.
+
+Applied: an orphaned or re-stamp-only base marker blocks
+(TICKET-0002 D2). Queue drift against the tracker warns
+(TICKET-0003 D1). Both follow from the one rule above.

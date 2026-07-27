@@ -141,11 +141,17 @@ Settled 2026-07-26, all four as proposed. Recorded because each one
 constrains an FR, and a later reader should find the reasoning rather
 than re-litigate it.
 
-- D1 (FR-4): Tracker drift warns, it does not block. A stale manual is
-  caused by the pusher's own commits and is theirs to fix. Drift is
-  caused by anyone touching the tracker and can appear between a clone
-  and a push, so blocking would stop the wrong person. Revisit if drift
-  warnings turn out to be routinely ignored.
+- D1 (FR-4): Tracker drift warns, it does not block. This follows the
+  enforcement principle in `reference/maintenance.md`: a stale queue
+  leaves the guard working and only makes one section of the manual
+  imperfect, which self-corrects on the next rebuild, and proving the
+  drift needs a call to the tracker rather than a local computation.
+  Neither half of the rule is met, so it warns. TICKET-0002's orphaned
+  marker blocks under the same rule, because that failure disables the
+  guard and is locally provable. An earlier draft justified the split by
+  who caused the problem; that was wrong, since drift is as often the
+  pusher's own doing as a colleague's. Revisit if drift warnings turn
+  out to be routinely ignored.
 - D2 (FR-1, FR-4, FR-7): The check runs on every push, accepting one
   network call in the hook, bounded by the fetch timeout a normal
   reconciliation already uses. Revisit with a config flag if the added
