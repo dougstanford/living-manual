@@ -864,13 +864,26 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-27 11:22 UTC",
+  "at": "2026-07-27 23:34 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
 
   /*@TICKETS*/
-  var TICKETS = [];
+  var TICKETS = [
+  {
+    "id": "TICKET-0005",
+    "title": "Export a static copy of the manual for distribution outside the team",
+    "type": "idea",
+    "status": "ready",
+    "created": "2026-07-27",
+    "anchors": [
+      "the-manual"
+    ],
+    "roadmap": null,
+    "summary": "The manual is built for the people who maintain the code: every heading files a note, the modal shows the internal queue, and the payload is addressed to a Claude Code session. Shipping that same file to customers or to a wider audience hands them affordances they cannot use and information meant for the team. An export step should produce a static copy of the same document with the note-filing path removed, so a release can be distributed without the machinery that only makes sense inside the repo. The removal is not only about hiding buttons. The queue data travels inside the file. `TICKETS` carries every queued ticket's id, title, status, and summary, and `QUEUE_SYNC` names the tracker the project reconciles against. A distributed manual that still contains those blocks publishes the team's backlog and the location of its issue tracker, whether or not anything on screen displays them."
+  }
+];
   /*@/TICKETS*/
   /*@PREVIEWS*/
   var PREVIEWS = {
