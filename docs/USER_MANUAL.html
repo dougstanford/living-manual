@@ -709,6 +709,30 @@ claude --plugin-dir /path/to/living-manual</pre>
   /*@TICKETS*/
   var TICKETS = [
   {
+    "id": "TICKET-0001",
+    "title": "CI check runs verify.py and stale.sh so GitHub-side merges can't ship a broken manual",
+    "type": "idea",
+    "status": "needs-answers",
+    "created": "2026-07-23",
+    "anchors": [
+      "guard"
+    ],
+    "roadmap": null,
+    "summary": "The staleness guard only runs in a developer's clone: the pre-push hook fires on `git push`, and nothing else. A squash merge or \"Update branch\" click in the GitHub web UI rewrites history on the server, passes through no hook, and can land a manual whose base marker is orphaned or whose content is stale. A GitHub Actions workflow running `verify.py` and `stale.sh` on pull requests and on the default branch would surface the break where it happens. Both scripts are plain python3/sh with no model dependency, so CI can detect the problem; the fix still needs a Claude Code session. Motivating defect: this repo's own manual shipped with base marker `2a646e9`, a commit absent from published history (rewritten after stamping). Nothing server-side could have caught it."
+  },
+  {
+    "id": "TICKET-0002",
+    "title": "Base marker survives history rewrites by stamping content fingerprints alongside the sha",
+    "type": "idea",
+    "status": "needs-answers",
+    "created": "2026-07-23",
+    "anchors": [
+      "guard"
+    ],
+    "roadmap": null,
+    "summary": "The base marker is a commit sha frozen inside the manual, so any history rewrite after stamping (amend, rebase, squash merge) orphans it. Detection now exists (`BAD-BASE` from stale.sh, a verify.py finding), but recovery loses information: with the sha gone there is no commit range, so the update flow cannot list what changed. Stamping a content fingerprint of the user-facing paths alongside the sha would make staleness answerable even after a rewrite: identical fingerprint means the manual is still current and only needs a re-stamp; a differing fingerprint names which surfaces changed. Motivating defect: this repo's manual carried base `2a646e9`, orphaned by a rewrite before the history was ever published; the update flow had to reconstruct the true base by hand from the clone point. A squash merge of any PR would recreate the situation on upstream main."
+  },
+  {
     "id": "TICKET-0003",
     "title": "The queue index goes stale against the tracker with no signal",
     "type": "idea",
@@ -731,30 +755,6 @@ claude --plugin-dir /path/to/living-manual</pre>
     ],
     "roadmap": null,
     "summary": "Setup maps each note type onto exactly one existing label or issue type. When a project has nothing that fits a type, the mapping bends: the type gets filed under a label that means something else. Two changes remove the bend. Let setup propose creating a label named for the type when nothing existing fits, and let a type carry a set of labels rather than one, so issues can also pick up the routing labels a project expects. This repo is the live example. Nothing here fits `feedback`, so setup mapped it to `question`, which on GitHub means someone is asking for information. Feedback filed from the manual is not a question, so every feedback note this repo receives will be mislabeled."
-  },
-  {
-    "id": "#3",
-    "title": "Base marker survives history rewrites by stamping content fingerprints alongside the sha",
-    "type": "idea",
-    "status": "needs-answers",
-    "created": "",
-    "anchors": [],
-    "roadmap": null,
-    "summary": "The base marker is a commit sha frozen inside the manual, so any history rewrite after stamping (amend, rebase, squash merge) orphans it. Detection now exists (`BAD-BASE` from stale.sh, a verify.py finding), but recovery loses information: with the sha gone there is no commit range, so the update flow cannot list what changed. Stamping a content fingerprint of the user-facing paths alongside th...",
-    "origin": "tracker",
-    "url": "https://github.com/dougstanford/living-manual/issues/3"
-  },
-  {
-    "id": "#2",
-    "title": "CI check runs verify.py and stale.sh so GitHub-side merges can't ship a broken manual",
-    "type": "idea",
-    "status": "needs-answers",
-    "created": "",
-    "anchors": [],
-    "roadmap": null,
-    "summary": "The staleness guard only runs in a developer's clone: the pre-push hook fires on `git push`, and nothing else. A squash merge or \"Update branch\" click in the GitHub web UI rewrites history on the server, passes through no hook, and can land a manual whose base marker is orphaned or whose content is stale. A GitHub Actions workflow running `verify.py` and `stale.sh` on pull requests and on the d...",
-    "origin": "tracker",
-    "url": "https://github.com/dougstanford/living-manual/issues/2"
   }
 ];
   /*@/TICKETS*/
