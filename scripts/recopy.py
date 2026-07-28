@@ -16,8 +16,15 @@ was meant.
 Nothing is written until every entry checks out, so a payload either
 lands whole or not at all.
 
+A block emptied in the browser is deleted outright rather than left
+standing blank: its entry carries "remove", its original is the whole
+element, and the blank line it sat on goes with it so the prose above
+and below closes up.
+
 Payload:
-  {"edits": [{"key": "...", "original": "...", "new": "..."}, ...]}
+  {"edits": [{"key": "...", "original": "...", "new": "..."},
+             {"key": "...", "original": "<p>...</p>", "new": "",
+              "remove": true}, ...]}
 
 `key` is the browser's name for the block. It is carried for the
 message this prints, never used to find anything.
@@ -51,6 +58,8 @@ def main():
         if e["original"] == e["new"]:
             print("unchanged, skipping: %s" % name)
             continue
+        if e.get("remove") and e["new"].strip():
+            die("%s: marked for removal but carries replacement text" % name)
         found = src.count(e["original"])
         if found == 0:
             die("%s: the text it replaces is no longer in %s. The manual "
@@ -60,17 +69,32 @@ def main():
             die("%s: the text it replaces appears %d times, so there is no "
                 "way to tell which one was edited. Revise that passage by "
                 "hand instead." % (name, found))
-        planned.append((name, e["original"], e["new"]))
+        planned.append((name, e["original"], e["new"], bool(e.get("remove"))))
 
     if not planned:
         print("nothing to apply")
         return
-    for _, original, new in planned:
-        src = src.replace(original, new, 1)
+    removed = 0
+    for _, original, new, remove in planned:
+        if remove:
+            # Take the line the block sat on with it, so deleting a
+            # paragraph closes the gap instead of leaving one behind.
+            i = src.index(original)
+            j = i + len(original)
+            k = i
+            while k > 0 and src[k - 1] in " \t":
+                k -= 1
+            if k > 0 and src[k - 1] == "\n":
+                k -= 1
+            src = src[:k] + src[j:]
+            removed += 1
+        else:
+            src = src.replace(original, new, 1)
     open(manual, "w").write(src)
-    print("recopy: applied %d edit(s)" % len(planned))
-    for name, _, _ in planned:
-        print("  " + name)
+    print("recopy: applied %d edit(s)%s"
+          % (len(planned), ", %d of them removals" % removed if removed else ""))
+    for name, _, _, remove in planned:
+        print("  " + name + (" (removed)" if remove else ""))
 
 if __name__ == "__main__":
     main()

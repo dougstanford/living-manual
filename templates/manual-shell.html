@@ -60,8 +60,6 @@
      and its subsections wrap into a .toc-group at load; drag the group
      and the manual follows on release. Styled with its own classes (not
      .btn) because reordering survives in exports and .btn does not. ---- */
-  .toc-hint { font-size: 0.62rem; color: var(--muted); opacity: 0.8;
-    margin: -6px 0 10px; }
   .toc-group { position: relative; border-radius: 8px; padding-left: 16px; }
   /* Three lines, and the only grab point. It fades in for its own hover
      only, so reading the contents never lights anything up. The box is
@@ -219,13 +217,12 @@
     white-space: nowrap; cursor: pointer; user-select: none; }
   main h2:hover .note-pill, main h3:hover .note-pill { opacity: 1; }
   .note-pill:hover { color: var(--accent); border-color: var(--accent); }
-  .editing { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
-    outline-offset: 5px; border-radius: 3px; }
-  .edit-hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
-    z-index: 45; background: var(--deep); color: var(--surface);
-    border-radius: 999px; padding: 7px 16px; font-size: 0.76rem;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3); pointer-events: none;
-    opacity: 0; transition: opacity 0.2s ease; }
+  /* No frame around the block being edited. The blinking caret is the
+     signal; a border would only fence off the words being read. The
+     hint sits under the contents in plain body type, no box. */
+  .edit-hint { position: fixed; bottom: 5vh; z-index: 45;
+    font-size: 0.84rem; line-height: 1.5; color: var(--muted);
+    pointer-events: none; opacity: 0; transition: opacity 0.16s ease; }
   .edit-hint.showing { opacity: 1; }
   .edit-hint[hidden] { display: none; }
 
@@ -374,7 +371,6 @@
 
 <nav class="toc">
   <div class="toc-title">Contents</div>
-  <div class="toc-hint">Drag a handle to rearrange the manual.</div>
   <!-- SLOT: TOC — one <a href="#id"> per section, .sub for subsections -->
 <!--@EXPORT-DROP-->
   <div class="ro-actions" id="ro-actions">
@@ -412,7 +408,7 @@
 <button type="button" class="menu-btn" id="menu-btn" aria-label="Contents"
   aria-expanded="false" aria-controls="menu-overlay"><i aria-hidden="true"></i></button>
 <!--@EXPORT-DROP-->
-<div class="edit-hint" id="edit-hint" hidden>Enter stages · Shift+Enter breaks a line · Esc discards</div>
+<div class="edit-hint" id="edit-hint" hidden>Enter to stage · Shift+Enter breaks a line · Esc discards</div>
 <!--@/EXPORT-DROP-->
 <div class="menu-overlay" id="menu-overlay" hidden>
   <nav class="menu-sheet" id="menu-sheet" aria-label="Contents"></nav>
@@ -931,14 +927,24 @@
      order, and changed words. Either one summons it, and each brings
      only its own button. */
   var copyDirty = false;
+  /* Pressing a commit button hands that work off, so the button goes.
+     The next change of its kind arms it again. */
+  var orderHandedOff = false;
+  var copyHandedOff = false;
   function refreshActions() {
-    var orderChanged = roChanged();
-    if (roActions) roActions.classList.toggle("showing", orderChanged || copyDirty);
+    var showOrder = roChanged() && !orderHandedOff;
+    var showCopy = copyDirty && !copyHandedOff;
     var oc = document.getElementById("ro-copy");
-    if (oc) oc.hidden = !orderChanged;
+    if (oc) oc.hidden = !showOrder;
     var cc = document.getElementById("copy-commit");
-    if (cc) cc.hidden = !copyDirty;
-    if (roNoteEl && !orderChanged && !copyDirty) roNoteEl.textContent = "";
+    if (cc) cc.hidden = !showCopy;
+    var rp = document.getElementById("ro-payload");
+    var cp = document.getElementById("copy-payload");
+    var payloadShown = (rp && !rp.hidden) || (cp && !cp.hidden);
+    if (roActions) {
+      roActions.classList.toggle("showing", showOrder || showCopy || payloadShown);
+    }
+    if (roNoteEl && !showOrder && !showCopy && !payloadShown) roNoteEl.textContent = "";
   }
 
   function roSections() {
@@ -1035,6 +1041,7 @@
   }
 
   function roAfterChange() {
+    orderHandedOff = false;
     var changed = roChanged();
     try {
       if (changed) localStorage.setItem(RO_KEY, JSON.stringify(roOrder()));
@@ -1229,6 +1236,8 @@
     roPayloadEl.textContent = payload;
     roPayloadEl.hidden = false;
     roNoteEl.textContent = "Copied. Paste it into a Claude Code session to make this the committed order.";
+    orderHandedOff = true;
+    refreshActions();
     function roFallback() {
       var range = document.createRange();
       range.selectNodeContents(roPayloadEl);
@@ -1262,6 +1271,11 @@
   var EDIT_SKIP = ".note-pill, .preview-btn, .mock, a, button, pre, code, kbd";
   var COPY_KEY = "living-manual:copy:" + location.pathname;
   var copyOriginals = {};
+  var copyOuter = {};
+  /* Keys are fixed once, at load. They count position among siblings,
+     and emptying a block removes one, so recomputing later would
+     rename every block after it and orphan its edit. */
+  var copyKeys = new Map();
   var copyEdits = {};
   var editing = null;
   var editHint = document.getElementById("edit-hint");
@@ -1295,14 +1309,28 @@
     return c.innerHTML;
   }
 
-  function copyKeyFor(el) {
-    var host = el.closest("section[id]") || el.closest(".hero") || document.body;
-    var hostKey = host.id || (host.className.indexOf("hero") !== -1 ? "hero" : "root");
-    var sameTag = Array.prototype.slice.call(host.getElementsByTagName(el.tagName));
-    return hostKey + "|" + el.tagName.toLowerCase() + "|" + sameTag.indexOf(el);
+  /* The whole block as the file holds it, for the case where a reader
+     empties one and it should go rather than stand there blank. */
+  function copySerializeOuter(el) {
+    var c = el.cloneNode(true);
+    Array.prototype.forEach.call(c.querySelectorAll(".note-pill"), function (p) {
+      p.parentNode.removeChild(p);
+    });
+    Array.prototype.forEach.call(c.querySelectorAll(".term"), function (t) {
+      t.parentNode.replaceChild(document.createTextNode(t.textContent), t);
+    });
+    return c.outerHTML;
   }
 
+  function copyIsEmpty(el) {
+    return el.textContent.replace(/\s|\u00a0/g, "") === ""
+      && !el.querySelector("img, .preview-btn");
+  }
+
+  function copyKeyFor(el) { return copyKeys.get(el); }
+
   function copyPersist() {
+    copyHandedOff = false;
     try {
       if (Object.keys(copyEdits).length) {
         localStorage.setItem(COPY_KEY, JSON.stringify(copyEdits));
@@ -1317,7 +1345,13 @@
   /* Record what the file says before anything is restored on top of it,
      so a committed payload can name the exact text it replaces. */
   editableElements().forEach(function (el) {
-    copyOriginals[copyKeyFor(el)] = copySerialize(el);
+    var host = el.closest("section[id]") || el.closest(".hero") || document.body;
+    var hostKey = host.id || (host.className.indexOf("hero") !== -1 ? "hero" : "root");
+    var sameTag = Array.prototype.slice.call(host.getElementsByTagName(el.tagName));
+    var k = hostKey + "|" + el.tagName.toLowerCase() + "|" + sameTag.indexOf(el);
+    copyKeys.set(el, k);
+    copyOriginals[k] = copySerialize(el);
+    copyOuter[k] = copySerializeOuter(el);
   });
 
   (function restoreCopy() {
@@ -1332,6 +1366,13 @@
       /* Only restore onto the text the edit was made against. When the
          manual itself has moved on, the local edit is out of date and
          the file's words win rather than being silently overwritten. */
+      if (entry.remove) {
+        if (entry.original !== copyOuter[k]) { stale++; return; }
+        el.parentNode.removeChild(el);
+        copyEdits[k] = entry;
+        applied++;
+        return;
+      }
       if (entry.original !== copyOriginals[k]) { stale++; return; }
       el.innerHTML = entry.edited;
       if (el.tagName === "H2" || el.tagName === "H3") addNotePill(el);
@@ -1369,7 +1410,6 @@
     el.dataset.editBefore = copySerialize(el);
     el.contentEditable = "true";
     el.spellcheck = false;
-    el.classList.add("editing");
     el.focus();
     var r = caretAt(x, y);
     if (r) {
@@ -1378,6 +1418,11 @@
       s.addRange(r);
     }
     if (editHint) {
+      /* Under the contents, in the same column, so it reads as an aside
+         to the panel rather than a banner over the page. */
+      var col = roNav.getBoundingClientRect();
+      editHint.style.left = Math.round(col.left) + "px";
+      editHint.style.width = Math.round(col.width) + "px";
       editHint.hidden = false;
       void editHint.offsetWidth;
       editHint.classList.add("showing");
@@ -1389,7 +1434,6 @@
     if (!el) return;
     editing = null;
     el.contentEditable = "false";
-    el.classList.remove("editing");
     if (!stage && typeof el.dataset.editBefore === "string") {
       el.innerHTML = el.dataset.editBefore;
       if (el.tagName === "H2" || el.tagName === "H3") addNotePill(el);
@@ -1402,6 +1446,14 @@
       }, 220);
     }
     var k = copyKeyFor(el);
+    if (stage && copyIsEmpty(el)) {
+      /* Emptied on purpose: the block goes rather than sitting there as
+         a blank gap, and what was above and below closes up. */
+      copyEdits[k] = { original: copyOuter[k], edited: "", remove: true };
+      if (el.parentNode) el.parentNode.removeChild(el);
+      copyPersist();
+      return;
+    }
     var now = copySerialize(el);
     if (now === copyOriginals[k]) delete copyEdits[k];
     else copyEdits[k] = { original: copyOriginals[k], edited: now };
@@ -1463,7 +1515,9 @@
     copyCommitBtn.addEventListener("click", function () {
       if (editing) endEdit(true);
       var edits = Object.keys(copyEdits).map(function (k) {
-        return { key: k, original: copyEdits[k].original, new: copyEdits[k].edited };
+        var e = { key: k, original: copyEdits[k].original, new: copyEdits[k].edited };
+        if (copyEdits[k].remove) e.remove = true;
+        return e;
       });
       var payload = [
         "/living-manual:manual recopy", "",
@@ -1483,6 +1537,8 @@
       copyPayloadEl.textContent = payload;
       copyPayloadEl.hidden = false;
       if (roNoteEl) roNoteEl.textContent = "Copied. Paste it into a Claude Code session to keep these words.";
+      copyHandedOff = true;
+      refreshActions();
       function copyFallback() {
         var range = document.createRange();
         range.selectNodeContents(copyPayloadEl);
