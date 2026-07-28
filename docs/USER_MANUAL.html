@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 2b37cce -->
+<!-- manual-base: 0834053 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      abf496ee590dd12da5acddb8b5fc0ad8ca6039d7 skills/
      f174534cd1a13cf493fc3f6092cae0c14edacfcf scripts/
-     0a7e6f80ab04d8e8fb81bb137b32b67e5e13578c templates/
+     7d0886ff458a7448b7d018065384523b3a58fdac templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -100,7 +100,12 @@
     transition: border-color 0.25s ease, color 0.25s ease; }
   .ro-btn:hover { border-color: var(--accent); color: var(--accent); }
   .ro-btn.primary { border-color: var(--accent); color: var(--accent); }
-  .ro-note { font-size: 0.7rem; color: var(--muted); margin-top: 8px; }
+  .ro-slot { transition: opacity 0.2s ease; }
+  .ro-slot.leaving { opacity: 0; }
+  .ro-said { font-size: 0.66rem; color: var(--muted); text-align: center;
+    margin-top: 4px; opacity: 0; transition: opacity 0.18s ease; }
+  .ro-said.showing { opacity: 1; }
+  .ro-said[hidden] { display: none; }
   .ro-pre { font-family: ui-monospace, Menlo, monospace; font-size: 0.62rem;
     line-height: 1.5; background: color-mix(in srgb, var(--ink) 6%, transparent);
     border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px;
@@ -408,11 +413,16 @@
   <a href="#whats-new">What's new</a>
 <!--@EXPORT-DROP-->
   <div class="ro-actions" id="ro-actions">
-    <button type="button" class="ro-btn primary" id="ro-copy" hidden>Commit TOC</button>
+    <div class="ro-slot" id="slot-order">
+      <button type="button" class="ro-btn primary" id="ro-copy" hidden>Commit TOC</button>
+      <div class="ro-said" id="said-order" hidden></div>
+    </div>
     <pre class="ro-pre" id="ro-payload" hidden></pre>
-    <button type="button" class="ro-btn primary" id="copy-commit" hidden>Commit copy</button>
+    <div class="ro-slot" id="slot-copy">
+      <button type="button" class="ro-btn primary" id="copy-commit" hidden>Commit copy</button>
+      <div class="ro-said" id="said-copy" hidden></div>
+    </div>
     <pre class="ro-pre" id="copy-payload" hidden></pre>
-    <div class="ro-note" id="ro-note"></div>
   </div>
 <!--@/EXPORT-DROP-->
 </nav>
@@ -491,7 +501,11 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p>Edits keep themselves in your browser and survive a refresh, and
     they change nothing in the file. When the wording is worth keeping
     for everyone, <span class="pill">Commit copy</span> appears beneath
-    the contents; it hands the revised passages to a Claude Code session
+    the contents. It is there whenever what this browser has saved
+    differs from what the file says, and gone when the two agree, so
+    editing a passage back to its original wording puts it away.
+    Pressing it copies the prompt, says so underneath, and both fade a
+    moment later. It hands the revised passages to a Claude Code session
     that applies them with <code>scripts/recopy.py</code>. That script
     replaces each passage by exact match, so it can prove it is changing
     the text you were looking at, and refuses an edit whose original has
@@ -959,9 +973,10 @@ claude --plugin-dir /path/to/living-manual</pre>
       told apart by whether the pointer moved.</p>
       <p>Nothing is written to the file. Edits live in your browser and
       survive a refresh, and Commit copy appears beneath the contents
-      while any are outstanding, so an uncommitted change is visible
-      rather than remembered, and clears once pressed. Committing hands
-      the revised passages to a
+      whenever what the browser has saved differs from what the file
+      says, so an uncommitted change is visible rather than remembered.
+      Pressing it copies the prompt, says so underneath, and both fade
+      a moment later. Committing hands the revised passages to a
       session, which applies them by exact match and refuses any whose
       original has moved since. Filing a note is now the pill's job
       rather than the whole heading's, so a heading can be corrected
@@ -1166,7 +1181,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 <button type="button" class="menu-btn" id="menu-btn" aria-label="Contents"
   aria-expanded="false" aria-controls="menu-overlay"><i aria-hidden="true"></i></button>
 <!--@EXPORT-DROP-->
-<div class="edit-hint" id="edit-hint" hidden>Enter to stage · Shift+Enter breaks a line · Esc discards</div>
+<div class="edit-hint" id="edit-hint" hidden>Enter to stage<br>Shift+Enter breaks a line<br>Esc discards</div>
 <!--@/EXPORT-DROP-->
 <div class="menu-overlay" id="menu-overlay" hidden>
   <nav class="menu-sheet" id="menu-sheet" aria-label="Contents"></nav>
@@ -1224,7 +1239,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 28, 2026";
-  var MANUAL_BASE = "2b37cce";
+  var MANUAL_BASE = "0834053";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1239,7 +1254,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 05:05 UTC",
+  "at": "2026-07-28 05:17 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
@@ -1710,21 +1725,32 @@ claude --plugin-dir /path/to/living-manual</pre>
   var roMain = document.querySelector("main");
   /* Both are absent from an export, which carries no write-back. */
   var roActions = document.getElementById("ro-actions");
-  var roNoteEl = document.getElementById("ro-note");
+
   /* Keyed by path, not by a maintained-copy variable: exports persist a
      reader's arrangement the same way. */
   var RO_KEY = "living-manual:order:" + location.pathname;
   /* The panel serves two kinds of uncommitted work now: a changed
      order, and changed words. Either one summons it, and each brings
      only its own button. */
-  var copyDirty = false;
   /* Pressing a commit button hands that work off, so the button goes.
      The next change of its kind arms it again. */
   var orderHandedOff = false;
   var copyHandedOff = false;
+
+  /* A commit button offers to carry the gap between what this browser
+     has saved and what the file says. No saved preference, or one that
+     matches the file, means there is nothing to carry and no button. */
+  function orderDiffersFromCode() {
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(RO_KEY) || "null"); } catch (e) {}
+    if (!stored || !stored.length) return false;
+    return stored.join() !== RO_AUTHORED.join();
+  }
+
   function refreshActions() {
-    var showOrder = roChanged() && !orderHandedOff;
-    var showCopy = copyDirty && !copyHandedOff;
+    var showOrder = orderDiffersFromCode() && !orderHandedOff;
+    var showCopy = typeof copyDiffersFromCode === "function"
+      && copyDiffersFromCode() && !copyHandedOff;
     var oc = document.getElementById("ro-copy");
     if (oc) oc.hidden = !showOrder;
     var cc = document.getElementById("copy-commit");
@@ -1735,7 +1761,61 @@ claude --plugin-dir /path/to/living-manual</pre>
     if (roActions) {
       roActions.classList.toggle("showing", showOrder || showCopy || payloadShown);
     }
-    if (roNoteEl && !showOrder && !showCopy && !payloadShown) roNoteEl.textContent = "";
+  }
+
+  /* Hand a payload to the clipboard, say so under the button, and let
+     both go after a beat. The payload only appears when the clipboard
+     refuses it, and then it stays: text nobody has read should not
+     dissolve. */
+  function roHandOff(payload, slotId, saidId, preId, mark) {
+    var slot = document.getElementById(slotId);
+    var said = document.getElementById(saidId);
+    var pre = document.getElementById(preId);
+    function announce(text) {
+      said.textContent = text;
+      said.hidden = false;
+      void said.offsetWidth;
+      said.classList.add("showing");
+    }
+    function settle() {
+      announce("Prompt copied");
+      setTimeout(function () {
+        slot.classList.add("leaving");
+        setTimeout(function () {
+          said.classList.remove("showing");
+          said.hidden = true;
+          slot.classList.remove("leaving");
+          mark();
+          refreshActions();
+        }, 220);
+      }, 2000);
+    }
+    function fallback() {
+      pre.textContent = payload;
+      pre.hidden = false;
+      var range = document.createRange();
+      range.selectNodeContents(pre);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      if (ok) { pre.hidden = true; settle(); }
+      else { announce("Copy the text below"); }
+      refreshActions();
+    }
+    /* The clipboard promise can hang rather than reject, which a page
+       that is not focused will do, so it is raced against a deadline.
+       Whichever answers first wins, and the reader always hears back. */
+    var answered = false;
+    function once(fn) {
+      return function () { if (answered) return; answered = true; fn(); };
+    }
+    var yes = once(settle), no = once(fallback);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).then(yes, no);
+      setTimeout(no, 800);
+    } else { no(); }
   }
 
   function roSections() {
@@ -2024,22 +2104,9 @@ claude --plugin-dir /path/to/living-manual</pre>
       "which moves the sections and their TOC entries. Prose is untouched;",
       "verify must print OK."
     ].join("\n");
-    roPayloadEl.textContent = payload;
-    roPayloadEl.hidden = false;
-    roNoteEl.textContent = "Copied. Paste it into a Claude Code session to make this the committed order.";
-    orderHandedOff = true;
-    refreshActions();
-    function roFallback() {
-      var range = document.createRange();
-      range.selectNodeContents(roPayloadEl);
-      var sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      try { document.execCommand("copy"); } catch (e) { /* stays selectable */ }
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(payload).catch(roFallback);
-    } else { roFallback(); }
+    roHandOff(payload, "slot-order", "said-order", "ro-payload", function () {
+      orderHandedOff = true;
+    });
   });
 /*@/EXPORT-DROP*/
 
@@ -2129,7 +2196,6 @@ claude --plugin-dir /path/to/living-manual</pre>
         localStorage.removeItem(COPY_KEY);
       }
     } catch (e) { /* private mode: the edits live for this session */ }
-    copyDirty = Object.keys(copyEdits).length > 0;
     refreshActions();
   }
 
@@ -2170,14 +2236,27 @@ claude --plugin-dir /path/to/living-manual</pre>
       copyEdits[k] = entry;
       applied++;
     });
-    if (applied) {
-      copyDirty = true;
-      refreshActions();
-    }
+    if (applied) refreshActions();
     if (stale) {
       try { localStorage.setItem(COPY_KEY, JSON.stringify(copyEdits)); } catch (e) {}
     }
   })();
+
+  /* What this browser has saved against what the file holds. An entry
+     matching the file counts for nothing, so a round trip back to the
+     original wording puts the button away. */
+  function copyDiffersFromCode() {
+    if (!copyOriginals) return false;
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(COPY_KEY) || "null"); } catch (e) {}
+    if (!stored) return false;
+    return Object.keys(stored).some(function (k) {
+      var e = stored[k];
+      if (!e) return false;
+      if (e.remove) return e.original === copyOuter[k];
+      return typeof e.edited === "string" && e.edited !== copyOriginals[k];
+    });
+  }
 
   function editEnabled() { return window.innerWidth > MENU_WIDTH; }
 
@@ -2325,22 +2404,9 @@ claude --plugin-dir /path/to/living-manual</pre>
         "no longer matches the file. Do not retype the prose by hand.",
         "Then verify must print OK."
       ].join("\n");
-      copyPayloadEl.textContent = payload;
-      copyPayloadEl.hidden = false;
-      if (roNoteEl) roNoteEl.textContent = "Copied. Paste it into a Claude Code session to keep these words.";
-      copyHandedOff = true;
-      refreshActions();
-      function copyFallback() {
-        var range = document.createRange();
-        range.selectNodeContents(copyPayloadEl);
-        var sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        try { document.execCommand("copy"); } catch (e) { /* stays selectable */ }
-      }
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(payload).catch(copyFallback);
-      } else { copyFallback(); }
+      roHandOff(payload, "slot-copy", "said-copy", "copy-payload", function () {
+        copyHandedOff = true;
+      });
     });
   }
 /*@/EXPORT-DROP*/
