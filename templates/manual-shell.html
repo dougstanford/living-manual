@@ -103,6 +103,56 @@
     margin-top: 8px; max-height: 160px; overflow: auto; white-space: pre-wrap;
     user-select: text; -webkit-user-select: text; }
 /*@/EXPORT-DROP*/
+  /* ---- compact navigation: the contents give way to a menu when the
+     frame is too short to show them whole, or too narrow for a sidebar.
+     Everything here is sized for a fingertip. ---- */
+  nav.toc.fading { opacity: 0; transition: opacity 0.25s ease; }
+  nav.toc.stowed { position: fixed; left: -10000px; top: 0; visibility: hidden;
+    max-height: none; pointer-events: none; }
+  /* Flat on the page, no plate under it. The tint follows what it sits
+     over, so the lines read against the hero and against the page. */
+  .menu-btn { position: fixed; top: 14px; left: 14px; z-index: 40;
+    width: 44px; height: 44px; display: none; align-items: center;
+    justify-content: center; padding: 0; cursor: pointer;
+    border: 0; background: transparent; color: var(--ink);
+    opacity: 0; transition: opacity 0.25s ease, color 0.2s ease; }
+  .menu-btn.on-dark { color: #fff; }
+  .menu-btn.present { display: flex; }
+  .menu-btn.visible { opacity: 1; }
+  .menu-btn i { display: block; width: 18px; height: 12px;
+    background-image: linear-gradient(currentColor, currentColor),
+                      linear-gradient(currentColor, currentColor),
+                      linear-gradient(currentColor, currentColor);
+    background-size: 100% 2px; background-repeat: no-repeat;
+    background-position: 0 0, 0 5px, 0 10px; }
+  /* The page is pinned while the sheet is open, so the background sits
+     still instead of scrolling away under it. */
+  body.menu-open { position: fixed; width: 100%; overflow: hidden; }
+  .menu-overlay { position: fixed; inset: 0; z-index: 55;
+    background: color-mix(in srgb, var(--deep) 62%, transparent);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; transition: opacity 0.22s ease; }
+  .menu-overlay[hidden] { display: none; }
+  .menu-overlay.showing { opacity: 1; }
+  .menu-sheet { background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 18px;
+    width: min(440px, 100%); max-height: calc(100vh - 40px);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain; padding: 14px 12px 20px;
+    text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,0.34);
+    transform: translateY(-10px); transition: transform 0.22s ease;
+    /* Scrolls, but the bar itself would only clutter the sheet. */
+    scrollbar-width: none; -ms-overflow-style: none; }
+  .menu-sheet::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .menu-overlay.showing .menu-sheet { transform: none; }
+  .menu-sheet .menu-title { font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); padding: 6px 14px 12px; }
+  /* Rows, not links in a paragraph: every target clears 44px, and the
+     type is set large enough to aim at without care. */
+  .menu-sheet a { display: block; color: var(--ink); text-decoration: none;
+    padding: 12px 14px; border-radius: 10px; font-size: 1.5rem; line-height: 1.3; }
+  .menu-sheet a.sub { font-size: 1.15rem; color: var(--muted); padding: 12px 14px; }
+  .menu-sheet a:active { background: color-mix(in srgb, var(--ink) 10%, transparent); }
   main { flex: 1; min-width: 0; padding-bottom: 96px; }
   section { margin-bottom: 64px; }
   h2 { font-weight: 300; font-size: 1.9rem; margin-bottom: 18px; scroll-margin-top: 24px; }
@@ -267,9 +317,22 @@
   #prev-body p, #prev-body ul { font-size: 0.92rem; }
 /*@/EXPORT-DROP*/
   @media (max-width: 880px) {
-    .layout { flex-direction: column; gap: 24px; }
+    /* stretch, not flex-start: a column flex item left to its own
+       devices takes the width of its widest unbreakable child, and one
+       long command in a code block would drag the whole page past the
+       edge of the screen. */
+    .layout { flex-direction: column; gap: 24px; align-items: stretch; }
     nav.toc { position: static; width: 100%; max-height: none; }
     .frame, .hero { padding-left: 24px; padding-right: 24px; }
+    main { width: 100%; }
+    /* Commands wrap instead of widening the page; a wide table scrolls
+       inside its own box instead of taking the layout with it. */
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    table { display: block; width: 100%; overflow-x: auto; }
+    p, ul, ol, .lead, .card, .callout, .mock, .caption, .release,
+    .modal, blockquote { max-width: 100%; }
+    code { overflow-wrap: anywhere; }
+    .hero { padding-top: 72px; }
   }
   @media (prefers-reduced-motion: reduce) {
     * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
@@ -325,6 +388,12 @@
 <footer>
   <div class="frame">{{PRODUCT}} · This manual travels with the app — {{MANUAL_PATH}}</div>
 </footer>
+
+<button type="button" class="menu-btn" id="menu-btn" aria-label="Contents"
+  aria-expanded="false" aria-controls="menu-overlay"><i aria-hidden="true"></i></button>
+<div class="menu-overlay" id="menu-overlay" hidden>
+  <nav class="menu-sheet" id="menu-sheet" aria-label="Contents"></nav>
+</div>
 
 <!--@EXPORT-DROP-->
 <div class="overlay" id="rev-overlay" hidden>
@@ -1128,6 +1197,157 @@
     } else { roFallback(); }
   });
 /*@/EXPORT-DROP*/
+
+  /* ================= Compact navigation =================
+     The contents panel is only worth its space when it can be read
+     whole. Below the sidebar layout, or in a frame too short to show
+     every entry, it fades out before the window can cut it off and
+     hands over to a menu button. The menu it opens is built for a
+     thumb: full-width rows with generous targets, a background frozen
+     rather than scrolling behind the sheet, and no affordance that
+     depends on hovering. */
+  var menuBtn = document.getElementById("menu-btn");
+  var menuOverlay = document.getElementById("menu-overlay");
+  var menuSheet = document.getElementById("menu-sheet");
+  var MENU_WIDTH = 880;
+  var navStowed = null;
+  var menuScrollY = 0;
+
+  /* The height the contents want, measured without the ceiling that
+     would otherwise cap the answer. */
+  function navNaturalHeight() {
+    var prev = roNav.style.maxHeight;
+    roNav.style.maxHeight = "none";
+    var h = roNav.scrollHeight;
+    roNav.style.maxHeight = prev;
+    return h;
+  }
+  function shouldStow() {
+    if (window.innerWidth <= MENU_WIDTH) return true;
+    return navNaturalHeight() > window.innerHeight * 0.8 - 28;
+  }
+
+  function setStowed(on, instant) {
+    if (on === navStowed) return;
+    navStowed = on;
+    if (on) {
+      function land() {
+        if (!navStowed) return;
+        roNav.classList.add("stowed");
+        menuBtn.classList.add("present");
+        document.body.classList.add("nav-compact");
+        /* Commit the display change with a forced layout rather than
+           waiting for a frame. A window resized while this tab sits in
+           the background paints nothing, and a queued frame would leave
+           the button invisible until someone looked at it again. */
+        void menuBtn.offsetWidth;
+        menuBtn.classList.add("visible");
+        menuBtnTint();
+      }
+      if (instant) { land(); return; }
+      roNav.classList.add("fading");
+      setTimeout(land, 260);
+    } else {
+      closeMenu();
+      menuBtn.classList.remove("visible");
+      document.body.classList.remove("nav-compact");
+      setTimeout(function () {
+        if (!navStowed) menuBtn.classList.remove("present");
+      }, 260);
+      roNav.classList.remove("stowed");
+      if (instant) { roNav.classList.remove("fading"); return; }
+      void roNav.offsetWidth;
+      roNav.classList.remove("fading");
+    }
+  }
+
+  /* Built at open time from the current order, so the menu always lists
+     the manual as it now reads. */
+  function buildMenu() {
+    menuSheet.textContent = "";
+    var title = document.createElement("div");
+    title.className = "menu-title";
+    title.textContent = "Contents";
+    menuSheet.appendChild(title);
+    roGroups().forEach(function (g) {
+      Array.prototype.forEach.call(g.querySelectorAll("a"), function (a) {
+        var link = document.createElement("a");
+        link.href = a.getAttribute("href");
+        link.textContent = a.textContent;
+        if (a.classList.contains("sub")) link.className = "sub";
+        menuSheet.appendChild(link);
+      });
+    });
+  }
+
+  function openMenu() {
+    if (!menuOverlay.hidden) return;
+    buildMenu();
+    /* Freeze the page where it stands. Pinning the body and offsetting
+       it by the scroll position holds the background still even where
+       overflow alone would not. */
+    menuScrollY = window.scrollY;
+    document.body.style.top = (-menuScrollY) + "px";
+    document.body.classList.add("menu-open");
+    menuOverlay.hidden = false;
+    menuBtn.setAttribute("aria-expanded", "true");
+    void menuOverlay.offsetWidth;
+    menuOverlay.classList.add("showing");
+  }
+
+  function closeMenu(goTo) {
+    if (menuOverlay.hidden) return;
+    menuOverlay.classList.remove("showing");
+    menuBtn.setAttribute("aria-expanded", "false");
+    setTimeout(function () {
+      if (!menuOverlay.classList.contains("showing")) menuOverlay.hidden = true;
+    }, 240);
+    document.body.classList.remove("menu-open");
+    document.body.style.top = "";
+    window.scrollTo(0, menuScrollY);
+    if (goTo) {
+      var el = document.getElementById(goTo);
+      if (el) setTimeout(function () {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 0);
+    }
+  }
+
+  /* The button carries no plate, so its lines take their colour from
+     whatever is behind them: white over the hero, ink over the page. */
+  function menuBtnTint() {
+    var hero = document.querySelector(".hero");
+    if (!hero || !menuBtn) return;
+    menuBtn.classList.toggle("on-dark",
+      hero.getBoundingClientRect().bottom > menuBtn.getBoundingClientRect().bottom);
+  }
+
+  if (menuBtn && menuOverlay && menuSheet) {
+    window.addEventListener("scroll", menuBtnTint, { passive: true });
+    menuBtn.addEventListener("click", function () {
+      if (menuOverlay.hidden) openMenu(); else closeMenu();
+    });
+    menuSheet.addEventListener("click", function (e) {
+      var a = e.target.closest("a");
+      if (!a) return;
+      /* Navigate after the freeze lifts, so the destination is reached
+         from a page that can scroll. */
+      e.preventDefault();
+      closeMenu((a.getAttribute("href") || "").replace(/^#/, ""));
+    });
+    menuOverlay.addEventListener("click", function (e) {
+      if (e.target === menuOverlay) closeMenu();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeMenu();
+    });
+    var menuResize = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(menuResize);
+      menuResize = setTimeout(function () { setStowed(shouldStow()); }, 120);
+    });
+    setStowed(shouldStow(), true);
+  }
 
   /* ================= Concept glossary =================
      At most one alert per concept, on its first instance, and only when
