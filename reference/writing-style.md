@@ -5,69 +5,110 @@ preview bodies, ticket text, "What's new" entries, and tracker issue
 descriptions. The product's own brand voice layers on top of these
 rules; it never overrides them.
 
-The pattern catalogue under "Words to cut" and "Patterns to cut" is
-adapted from the `no-ai-slop` skill by Peter Yang, used and modified
-under the MIT License. The notice is at the end of this file.
+The catalogue under "Words to cut" and "Patterns to cut" is adapted
+from the `no-ai-slop` skill by Peter Yang, used and modified under the
+MIT License. The notice is at the end of this file.
 
-## Who is reading, and when
+## The register
 
-A manual is not read for pleasure and rarely read in order. Someone
-opens it mid-task, often mid-problem, looking for one answer. That
-fact decides most of what follows.
+A manual is reference documentation. It is scanned, re-read, and
+consulted, usually by someone in the middle of a task. That is a
+different job from an article, and it takes a different voice.
 
-- They arrive in the middle. Every section has to work for someone who
-  did not read the one above it.
-- They scan before they read. The first sentence of a paragraph carries
-  the answer; the rest supports it.
-- They stop as soon as they have what they came for. Prose after the
-  answer is prose nobody reads.
-- They are already a little annoyed. Something did not work, or they
-  would not be here.
+Reference prose explains how the thing works. It does not argue that
+the thing is good, walk the reader through the writer's reasoning, or
+build to a point.
+
+Borrow nothing from persuasive writing. Specifically, none of these
+belong in a manual:
+
+- a personal journey, or any first-person account of how something came
+  to be built
+- a thesis the section argues toward
+- a metaphor carrying the explanation
+- a call to engagement, or any closing line that reaches for
+  significance
+- emotional vocabulary about the software
+
+Write the operational fact. Let the reader decide what it is worth.
+
+## The prose never narrates
+
+This is the rule most often broken, so it gets its own section.
+
+**No audience narration.** The prose never says who is reading, why
+they are here, what they want, or what state of mind they are in.
+"Someone opens the manual mid-task, looking for one answer" is about
+the reader. Delete it and explain the feature.
+
+**No meta-commentary.** The prose never describes the document, its
+own structure, or what a section is about to do. Delete "this section
+covers", "as described above", "from there it sets two obligations",
+"what follows is". Explain the thing; the explanation is the orienting.
+
+**Content does the orienting.** A section opens by naming what it
+contains, stated mechanically. Not what it is for, not who it serves,
+not why it exists.
+
+Wrong: "This section will help you understand how the guard works."
+Right: "The guard compares the manual's base marker against the
+commits since it."
+
+**Cross-references are concrete.** Name the specific thing the reader
+will find, not its direction. "The base marker, described under The
+staleness guard" beats "see above" or "as described elsewhere".
+
+## How a sentence earns the next one
+
+By adding the next layer of operational detail, in order. Not by
+advancing an argument.
+
+- **Depth accumulates.** Each sentence adds a concrete layer: what it
+  does, then under what condition, then what happens when the condition
+  fails.
+- **State the mechanism.** Say what the thing does, concretely and
+  once. "The guard compares the manual's base marker against the
+  commits since it" beats "the guard checks whether the manual is
+  current".
+- **State the consequence.** Whenever getting it wrong costs anything,
+  say what breaks, how they will know, and what undoing it takes.
+- **Explain why only when the why changes what they do.** Reasoning
+  earns its space when it tells the reader how to handle the case this
+  page does not cover. It does not earn its space as background.
+- **One idea per sentence, one job per paragraph.**
+- **Prefer the instance to the rule.** Name the file, the command, the
+  number, the error text.
+- **One term for one thing.** Define it once and reuse that exact term.
+  Never rotate synonyms for variety. In documentation a new word means
+  a new thing.
+- **Name things as the reader would.** Use the ordinary term for the
+  thing on screen: the desktop layout, the table of contents, the menu.
+  Describing how it looks ("three flat lines in the upper left") makes
+  the reader translate before they can act.
+- **Headings are plain nouns.** "Distribution", not "Handing it out".
+  A heading is a label in a list someone is scanning, not an opening
+  line.
+- **Describe only what has shipped.** Planned work lives in previews,
+  labelled as planned. Never blend the two.
 
 ## Respect the reader
 
-The reader is competent and busy. Both halves matter.
+Not by addressing them. By what the prose refuses to do.
 
-- **Assume competence.** They know their own job. Explain this system,
-  not the general concept it belongs to. Do not define what a branch
-  is.
+- **Assume competence.** Explain this system, not the general concept
+  it belongs to. Do not define what a branch is.
 - **Never flatter.** No "great question", no "you're all set!", no
-  congratulating someone for reading. Praise sits between them and the
-  answer.
+  congratulating anyone for reading.
 - **Never condescend.** Cut "simply", "just", "easy", "obviously", "of
   course". A step that was easy for the writer is not always easy for
   the reader, and calling it easy makes failure feel like their fault.
-- **Do not hedge to cover yourself.** "May potentially cause issues in
-  some cases" tells the reader nothing and protects only the writer.
-  Say what happens, or find out and then say it.
-- **Name the sharp edges.** When something is genuinely awkward, slow,
-  or destructive, say so and say what to do about it. A manual that
-  only ever sounds pleased is one nobody trusts twice.
+- **Do not hedge to protect yourself.** "May potentially cause issues
+  in some cases" informs nobody. Say what happens, or find out and then
+  say it.
+- **Name the sharp edges.** When something is awkward, slow, or
+  destructive, say so and say what to do about it.
 - **Own the product's failures.** "You entered it wrong" becomes "The
   field takes a short SHA and rejects a full one."
-
-## Make them understand, not just comply
-
-A reader who has only followed steps cannot recover when a step fails.
-A reader who understands the mechanism can.
-
-- **Name the mechanism.** Say what the thing does, once, concretely.
-  "The guard compares the manual's base marker against the commits
-  since it" beats "the guard checks whether the manual is current".
-- **State the consequence.** Every instruction implies an "or else".
-  Make it explicit whenever getting it wrong costs something: what
-  breaks, how they will know, and what undoing it takes.
-- **Explain why when the why changes what they do.** Reasoning earns
-  its space when it tells the reader how to handle the case this page
-  does not cover. It does not earn its space as background colour.
-- **One idea per sentence, one job per paragraph.** A paragraph doing
-  two jobs gets skimmed and half understood.
-- **Prefer the instance to the rule.** Name the file, the command, the
-  number, the error text.
-- **Define a term once, then reuse that exact term.** Never rotate
-  synonyms for variety. In documentation a new word means a new thing.
-- **Describe only what has shipped.** Planned work lives in previews,
-  labelled as planned. Never blend the two.
 
 ## Hard rules
 
@@ -92,17 +133,26 @@ A reader who understands the mechanism can.
 
 - "It's worth noting", "It's important to note", "Note that"
 - "delve", "dive into", "deep dive", "unpack", "explore"
-- "seamless", "robust", "comprehensive", "powerful", "leverage",
-  "utilize", "facilitate", "streamline", "empower"
+- "seamless", "comprehensive", "powerful", "cutting-edge"
+- "leverage", "utilize", "facilitate", "streamline", "empower",
+  "optimize", "align", "synergy", "paradigm", "closed loop"
+- "stakeholder". Name the people or the role.
+- "robust". Say what holds: "survives a rebase", "refuses a bad SHA".
 - "not just X, but Y" constructions
 - Rule-of-three lists used for rhythm rather than content
 - Hedging stacks: "may potentially", "can help to", "could possibly"
 - A colon in every heading; a summary sentence restating the paragraph
 - Exclamation points in body prose
 
+Any word that could appear in a corporate mission statement without
+anyone noticing.
+
 ## Patterns to cut
 
-**Binary contrasts.** "It's not X, it's Y." State Y directly.
+**Binary contrasts.** "It's not X, it's Y." Also "X alone isn't enough,
+what's needed is Y" and "requires Y, not just X". State Y directly. If
+the reader needs to know why the alternative falls short, the specifics
+will show them. Never perform the contrast.
 
 **Throat-clearing.** "Here's the thing", "Let me be clear". Cut it and
 state the point.
@@ -132,11 +182,10 @@ source or cut the claim.
 **Rhetorical setups.** "What if I told you", "Think about it:".
 
 **Fake-profound kickers.** The closing line that turns a concrete point
-into an aphorism. Delete it and end on the clearest concrete sentence
-already there.
+into an aphorism. Delete it and end on the last concrete sentence.
 
 **Summary-recap endings.** "In conclusion", "Overall", or a last
-paragraph restating the section. The reader was just there.
+paragraph restating the section.
 
 **Formatting slop.** Emoji in headings, bold sprinkled mid-sentence,
 bullets where two sentences read better, a header over two sentences.
@@ -154,9 +203,9 @@ consequence, and nothing else.
 
 ## Attribution
 
-The pattern catalogue in this file is adapted from the `no-ai-slop`
-skill by Peter Yang, modified for documentation and reused under the
-terms below.
+The catalogue in this file is adapted from the `no-ai-slop` skill by
+Peter Yang, modified for documentation and reused under the terms
+below.
 
 ```
 MIT License
