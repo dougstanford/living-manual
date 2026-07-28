@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: d89ec45 -->
+<!-- manual-base: 68f4fa8 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      060c8a411815129bbcecf5e38788484071db165b skills/
      32bd78521ebe1fafbea5e305b0bd049366092ec8 scripts/
-     c7e2758eb9d4dc9efd8ab5acb431e8f6a9183f76 templates/
+     705c9742d5f390c3cae459193b853730ce0f676e templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -73,7 +73,7 @@
   .toc-handle { position: absolute; left: -2px; top: 3px; width: 10px; height: 8px;
     box-sizing: content-box; padding: 6px 4px;
     color: var(--muted); opacity: 0; cursor: grab; touch-action: none;
-    transition: opacity 0.4s ease, color 0.2s ease;
+    transition: opacity 0.8s ease, color 0.4s ease;
     background-image: linear-gradient(currentColor, currentColor),
                       linear-gradient(currentColor, currentColor),
                       linear-gradient(currentColor, currentColor);
@@ -338,9 +338,9 @@
     changes; click it to preview the planned state. Terms with a dotted
     underline show a short definition on hover, once, before the manual
     explains them in full. Every entry in the contents panel has a handle
-    in its left margin, which appears as your cursor comes near it; drag
-    the handle to rearrange the manual, and your browser keeps that order
-    for every visit.</p>
+    in its left margin, which appears when your cursor moves into the
+    margin beside it; drag the handle to rearrange the manual, and your
+    browser keeps that order for every visit.</p>
     <p class="small" style="margin-bottom:0">Notes copy as a payload for a
     Claude Code session, which writes the developer ticket. Nothing leaves
     this file until you paste.</p>
@@ -389,7 +389,9 @@ claude --plugin-dir /path/to/living-manual</pre>
     as your cursor comes near and stay out of the way the rest of the
     time. They answer to proximity rather than contact, so a handle is
     already showing by the time you reach it instead of hiding under the
-    cursor. Drag the handle and the entry moves with its subsections; the
+    cursor. Proximity stops at the words: a cursor over an entry's text
+    is on its way to the link, and nothing lights up.
+    Drag the handle and the entry moves with its subsections; the
     contents show where it will land while the page holds still, and the
     manual glides into the new arrangement when you let go. Change your
     mind mid-drag and press Escape: everything slides back.</p>
@@ -818,8 +820,10 @@ claude --plugin-dir /path/to/living-manual</pre>
       <p>The manual's section order is now the reader's to change. Each
       entry in the contents panel has a handle in its left margin, which
       fades in as the cursor comes near rather than waiting to be
-      touched, so it is visible before the pointer covers it; drag it and
-      the entry moves with its subsections. While you hold it the contents preview where
+      touched, so it is visible before the pointer covers it. Moving
+      across the words leaves the handles dark, because a cursor on an
+      entry's text is going to the link. Drag a handle and the entry
+      moves with its subsections. While you hold it the contents preview where
       it will land and the page stays still, so nothing shifts under you
       mid-decision. Release, and the sections glide into the new
       arrangement. Movement is softened throughout:
@@ -1052,7 +1056,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 27, 2026";
-  var MANUAL_BASE = "d89ec45";
+  var MANUAL_BASE = "68f4fa8";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1067,7 +1071,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 03:22 UTC",
+  "at": "2026-07-28 03:26 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
@@ -1668,8 +1672,12 @@ claude --plugin-dir /path/to/living-manual</pre>
      that hovering it summons, so it has to answer to proximity rather
      than contact: it lights as the pointer comes near, while there is
      still clear space between them, and the nearest one wins so only
-     ever one is lit. */
-  var RO_NEAR = 52;
+     ever one is lit.
+
+     Proximity stops at the words. A pointer over an entry's text is
+     reaching for the link; only one to its left, out in the margin, is
+     reaching for the handle. */
+  var RO_NEAR = 26;
   var roLit = null;
   function roLightHandle(h) {
     if (roLit === h) return;
@@ -1681,7 +1689,9 @@ claude --plugin-dir /path/to/living-manual</pre>
     var best = null, bestD = RO_NEAR;
     roGroups().forEach(function (g) {
       var h = g.querySelector(".toc-handle");
-      if (!h) return;
+      var a = g.querySelector("a");
+      if (!h || !a) return;
+      if (x >= a.getBoundingClientRect().left) return;
       var r = h.getBoundingClientRect();
       var dx = x < r.left ? r.left - x : (x > r.right ? x - r.right : 0);
       var dy = y < r.top ? r.top - y : (y > r.bottom ? y - r.bottom : 0);
