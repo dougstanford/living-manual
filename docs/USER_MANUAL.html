@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 1a71372 -->
+<!-- manual-base: bb7fc27 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      26f8f05298901415174839f2febe816332964e63 skills/
      3fdad69d05c0846ff70d41fc5a003ed9f8d9fb18 scripts/
@@ -447,17 +447,15 @@
        any prose about the manual itself so the glossary skips it. -->
   <div class="callout tip manual-meta">
     <p><b>This manual is interactive.</b> Hover any heading and click
-    <span class="pill">✎ make a note</span> to file an idea, feedback, or a
-    bug against that section. A ▶ icon marks a feature with roadmapped
-    changes; click it to preview the planned state. Terms with a dotted
-    underline show a short definition on hover, once, before the manual
-    explains them in full. Every entry in the contents panel has a handle
-    in its left margin, which appears when your cursor moves into the
-    margin beside it; drag the handle to rearrange the manual, and your
-    browser keeps that order for every visit. Click into any line of
-    prose to correct it, and press Enter to keep the change. On a screen
-    too small to hold the contents, a menu button in the upper left
-    carries them instead.</p>
+    <span class="pill">✎ make a note</span> to file an idea, feedback, or
+    a bug against that section. Click a ▶ icon to preview the planned
+    state of a feature with roadmapped changes. Hover a term with a
+    dotted underline to see a short definition, shown once, before the
+    manual explains it in full. Drag the handle in a contents entry's
+    left margin to rearrange the manual, and your browser keeps that
+    order for every visit. Click into any line of prose to correct it,
+    then press Enter to save your edit. On a screen too small to hold the
+    contents, tap the menu button in the upper left to reach them.</p>
     <p class="small" style="margin-bottom:0">Notes copy as a payload for a
     Claude Code session, which writes the developer ticket. Nothing leaves
     this file until you paste.</p>
@@ -504,7 +502,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p>Press Enter to save your edit and step back out. Press
     Shift+Enter to start a new line without leaving. Press Escape to
     discard your changes and put the original words back.</p>
-    <p>Dragging across the words still selects them. A click and a drag
+    <p>Drag across the words to select them as usual. A click and a drag
     are told apart by whether the pointer moved and whether it left a
     selection behind.</p>
     <p>Notes are filed from the pill rather than from the whole
@@ -533,37 +531,35 @@ claude --plugin-dir /path/to/living-manual</pre>
     only.</p>
 
     <h3 id="reorder">Arrange it your way.</h3>
-    <p>Each table of contents entry has a handle in its left margin, three short lines that fade in
-    as your cursor comes near and stay out of the way the rest of the
-    time. They answer to proximity rather than contact, so a handle is
-    already showing by the time you reach it instead of hiding under the
-    cursor. Proximity stops at the words: a cursor over an entry's text
-    is on its way to the link, and nothing lights up.
-    Drag the handle and the entry moves with its subsections; the
-    contents show where it will land while the page holds still, and the
-    manual glides into the new arrangement when you let go. Change your
-    mind mid-drag and press Escape: everything slides back.</p>
+    <p>Each table of contents entry has a handle in its left margin,
+    three short lines that fade in as your cursor comes near. They answer
+    to proximity rather than contact, so a handle is showing by the time
+    you reach it instead of hiding under the cursor. Move over an entry's
+    text instead and nothing lights up, because a cursor on the words is
+    on its way to the link.</p>
+    <p>Drag a handle to move that entry and its subsections. The contents
+    show where it will land while the page holds still, and the manual
+    slides into the new arrangement when you let go. Press Escape
+    mid-drag to cancel the move and put everything back.</p>
     <p>Your browser stores the order and reapplies it every time you
     open the manual, so there is nothing to save and nothing to paste.
-    Dragging an entry back where it started clears the stored order.</p>
-    <p>The committed file never changes from the browser. To make your
-    order the one everyone opens, <span class="pill">Commit TOC</span>
-    appears under the contents whenever your order differs from the
-    file's. It copies a payload naming the section order; hand that to a
-    Claude Code session and <code>scripts/reorder.py</code> moves whole
-    sections and their contents entries in the file, touching nothing
-    else.</p>
+    Drag an entry back where it started to clear the stored order.</p>
+    <p>The committed file never changes from the browser.
+    <span class="pill">Commit TOC</span> appears under the contents
+    whenever your order differs from the file's. Press it to copy a
+    payload naming the section order, then paste that into a Claude Code
+    session. <code>scripts/reorder.py</code> moves whole sections and
+    their contents entries in the file, touching nothing else.</p>
     <p>In a frame too short or too narrow to display the TOC in full, it
     collapses down to a menu in the upper left corner of the screen.
-    Tapping that menu dims the page, holds it still where it stands, and
-    floats the contents in the middle of the screen, set large enough to
-    aim at with a thumb. Tap an entry and the menu closes on the way to
-    that section; tap anywhere outside it and the menu closes leaving the
-    page where it was. Rearranging is available in the desktop layout
-    only.</p>
+    Tap the menu to open it. The page dims and holds still, and the
+    contents float in the middle of the screen, set large enough to aim
+    at with a thumb. Tap an entry to close the menu and go to that
+    section. Tap anywhere outside the menu to close it and stay where you
+    are. Rearranging is available in the desktop layout only.</p>
 
     <h3 id="export">Distribution.</h3>
-    <p>To strip the interactive functionality and export for
+    <p>Run this to strip the interactive functionality and export for
     production:</p>
     <pre class="cmd">python3 scripts/export.py docs/USER_MANUAL.html</pre>
     <p>That writes a second file, <code>USER_MANUAL_prod.html</code>, with the
@@ -607,21 +603,22 @@ claude --plugin-dir /path/to/living-manual</pre>
     or a bug. Write one line on what should change, and as much detail as you
     have. The placeholder text tells you what a useful report of that type
     contains.</p>
-    <p><span class="pill accent">Copy for Claude Code</span> builds a
-    structured payload: your note plus the section, its anchor, the manual
-    version, the commit the manual reflects, and instructions for the model.
-    That commit pins the code state, so the ticket gets written against the
-    behavior you were looking at, not whatever the repo has drifted to since.
-    Paste it into a Claude Code session in this repo and the ticket gets
-    written. Nothing is sent anywhere; the manual only copies text to your
-    clipboard.</p>
+    <p>Press <span class="pill accent">Copy for Claude Code</span> to
+    build a structured payload: your note plus the section, its anchor,
+    the manual version, the commit the manual reflects, and instructions
+    for the model. That commit pins the code state, so the ticket is
+    written against the behavior you were looking at rather than whatever
+    the repo has drifted to since. Paste the payload into a Claude Code
+    session in this repo and the session writes the ticket. Nothing is
+    sent anywhere; the manual only copies text to your clipboard.</p>
 
     <h3 id="queue-check">The queue check.</h3>
     <p>The note modal lists the tickets already queued for the section you are
-    annotating, with the rest of the queue one click deeper. Recognize your
-    request in the list, mark it as yours, and the payload files your note as
-    an addition: the existing ticket updates in place, its requirements absorb
-    the new information, and no twin is created.</p>
+    annotating, with the rest of the queue one click deeper. If you
+    recognize your request in the list, mark it as yours. The payload then
+    files your note as an addition: the existing ticket updates in place,
+    its requirements absorb the new information, and no twin is
+    created.</p>
     <p>The queue is not only what's on disk. An issue can exist at the tracker
     with no ticket file behind it: filed straight in the web UI, or written on
     a branch that never merged. The index asks the configured tracker for its
@@ -999,11 +996,11 @@ claude --plugin-dir /path/to/living-manual</pre>
     <div class="release">
       <div class="date">v0.5.0 · July 27, 2026</div>
       <p>The manual's words are now editable where you read them. Click
-      into a paragraph, a heading, or the title, and it becomes a text
-      field with the caret where you clicked. Enter keeps the change,
-      Shift+Enter breaks a line, Escape puts the block back. Selecting
-      text still works exactly as it did, because a click and a drag are
-      told apart by whether the pointer moved.</p>
+      into a paragraph, a heading, or the title to start editing, and
+      the caret lands where you clicked. Press Enter to save your edit,
+      Shift+Enter to start a new line, Escape to discard your changes.
+      Selecting text still works exactly as it did, because a click and a
+      drag are told apart by whether the pointer moved.</p>
       <p>Nothing is written to the file. Edits live in your browser and
       survive a refresh, and Commit copy appears beneath the contents
       whenever what the browser has saved differs from what the file
@@ -1287,7 +1284,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "2026-07-28";
-  var MANUAL_BASE = "1a71372";
+  var MANUAL_BASE = "bb7fc27";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
