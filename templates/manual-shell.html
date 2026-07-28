@@ -47,8 +47,15 @@
   .layout { display: flex; gap: 56px; align-items: flex-start; padding-top: 56px; }
   /* Rides along in flow until scrolling would carry it past a fifth of
      the way down the frame, then holds there. The height allows for the
-     offset so a long contents list still ends on screen. */
+     offset so a long contents list still ends on screen.
+
+     The top margin is the one the content column already opens with:
+     the intro callout, like every block that follows it, carries 18px
+     above. Without the same margin here the panel starts a block-gap
+     higher than the dialog beside it, and the two read as misaligned
+     rather than as one row. */
   nav.toc { position: sticky; top: 20vh; width: 218px; flex-shrink: 0;
+    margin-top: 18px;
     font-size: 0.84rem; border: 1px solid var(--line); border-radius: 16px;
     padding: 18px 20px; max-height: calc(80vh - 28px); overflow-y: auto; }
   nav.toc .toc-title { font-size: 0.68rem; text-transform: uppercase;
@@ -56,10 +63,16 @@
   nav.toc a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
   nav.toc a:hover { color: var(--accent); }
   nav.toc a.sub { padding-left: 14px; color: var(--muted); font-size: 0.8rem; }
+/*@EXPORT-DROP*/
   /* ---- reorder: the contents are the drag surface. A top-level entry
      and its subsections wrap into a .toc-group at load; drag the group
-     and the manual follows on release. Styled with its own classes (not
-     .btn) because reordering survives in exports and .btn does not. ---- */
+     and the manual follows on release.
+
+     None of this travels. An export is a reading copy, so it keeps the
+     grouping (the compact menu is built from it) and loses the handle,
+     the gutter it sits in, and every drag state. Left in, the styles
+     would draw a grab affordance for a gesture the export no longer
+     answers. ---- */
   .toc-group { position: relative; border-radius: 8px; padding-left: 16px; }
   /* Three lines, and the only grab point. It fades in for its own hover
      only, so reading the contents never lights anything up. The box is
@@ -83,7 +96,6 @@
     box-shadow: 0 8px 22px rgba(0,0,0,0.16); }
   .toc-group.dragging .toc-handle { cursor: grabbing; opacity: 1; }
   body.ro-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
-/*@EXPORT-DROP*/
   /* The commit affordance, which no export carries. */
   .ro-actions { overflow: hidden; max-height: 0; opacity: 0;
     transition: max-height 0.25s ease, opacity 0.25s ease; }
@@ -930,17 +942,57 @@
      this browser and is reapplied on every open, so keeping an order
      costs nothing. The committed file never changes from the browser.
 
+     Rearranging is for the people who maintain the manual, so an export
+     does not carry it. What an export keeps is the grouping below and
+     the compact menu, which are how the contents are read rather than
+     how they are changed.
+
      Pointer events, not HTML5 drag-and-drop: the entries are links, and
      a browser turns a dragged link into a native link-drag that fights
      for the gesture. Pointers also let the held entry track the cursor
      exactly and let every motion stay interruptible. */
   var roNav = document.querySelector("nav.toc");
+
+  /* Wrap each top-level link and its .sub links into one group, so a
+     section's entry never separates from its subsections.
+
+     This much is structure rather than interaction, and it survives
+     export: the compact menu is built by walking these groups, and the
+     menu is how every narrow or short window reads the contents. The
+     handle is the part that does not survive, so it is fenced on its
+     own; an export gets the grouping and no grab point. */
+  (function () {
+    var current = null;
+    Array.prototype.slice.call(roNav.querySelectorAll("a")).forEach(function (a) {
+      a.draggable = false;
+      if (a.classList.contains("sub")) {
+        if (current) current.appendChild(a);
+        return;
+      }
+      var g = document.createElement("div");
+      g.className = "toc-group";
+      g.dataset.sec = (a.getAttribute("href") || "").replace(/^#/, "");
+      a.parentNode.insertBefore(g, a);
+/*@EXPORT-DROP*/
+      var handle = document.createElement("span");
+      handle.className = "toc-handle";
+      handle.setAttribute("aria-hidden", "true");
+      g.appendChild(handle);
+/*@/EXPORT-DROP*/
+      g.appendChild(a);
+      current = g;
+    });
+  })();
+  function roGroups() {
+    return Array.prototype.slice.call(roNav.querySelectorAll(".toc-group"));
+  }
+
+/*@EXPORT-DROP*/
   var roMain = document.querySelector("main");
   /* Both are absent from an export, which carries no write-back. */
   var roActions = document.getElementById("ro-actions");
 
-  /* Keyed by path, not by a maintained-copy variable: exports persist a
-     reader's arrangement the same way. */
+  /* Keyed by path: an arrangement belongs to the reader who made it. */
   var RO_KEY = "living-manual:order:" + location.pathname;
   /* The panel serves two kinds of uncommitted work now: a changed
      order, and changed words. Either one summons it, and each brings
@@ -1039,31 +1091,6 @@
   function roOrder() { return roSections().map(function (s) { return s.id; }); }
   var RO_AUTHORED = roOrder();
 
-  /* Wrap each top-level link and its .sub links into one group, so a
-     section's entry never separates from its subsections. */
-  (function () {
-    var current = null;
-    Array.prototype.slice.call(roNav.querySelectorAll("a")).forEach(function (a) {
-      a.draggable = false;
-      if (a.classList.contains("sub")) {
-        if (current) current.appendChild(a);
-        return;
-      }
-      var g = document.createElement("div");
-      g.className = "toc-group";
-      g.dataset.sec = (a.getAttribute("href") || "").replace(/^#/, "");
-      var handle = document.createElement("span");
-      handle.className = "toc-handle";
-      handle.setAttribute("aria-hidden", "true");
-      a.parentNode.insertBefore(g, a);
-      g.appendChild(handle);
-      g.appendChild(a);
-      current = g;
-    });
-  })();
-  function roGroups() {
-    return Array.prototype.slice.call(roNav.querySelectorAll(".toc-group"));
-  }
   function roGroupOrder() {
     return roGroups().map(function (g) { return g.dataset.sec; });
   }
@@ -1296,13 +1323,11 @@
     if (e.key === "Escape" && roDrag && roDrag.held) roRelease(false);
   });
 
-/*@EXPORT-DROP*/
   /* Write-back, optional: a reader's arrangement already persists in
      their browser with no step at all. This is for making it the order
      everyone opens. The payload crosses the browser-to-repo boundary
      through a Claude Code session, because a page cannot write to the
-     repository and a git hook cannot read a browser's storage. Dropped
-     from exports: an outside reader has no repo to write to. */
+     repository and a git hook cannot read a browser's storage. */
   var roCopyBtn = document.getElementById("ro-copy");
   var roPayloadEl = document.getElementById("ro-payload");
   roCopyBtn.addEventListener("click", function () {

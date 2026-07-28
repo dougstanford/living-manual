@@ -237,7 +237,15 @@ Default destination is the manual's path with `_prod.html` in place of
 queue (`TICKETS` and `QUEUE_SYNC` travel inside the file, so a
 distributed copy carrying them would publish the backlog and name the
 tracker), and the roadmap previews, which describe work that has not
-shipped. The glossary and all prose stay.
+shipped. It also drops the two surfaces that write back to the repo:
+editing the prose and rearranging the contents. An outside reader has
+no repo to commit to, and an affordance that cannot finish what it
+starts is worse than none.
+
+The glossary and all prose stay, and so does the responsive layout: a
+distributed copy still moves between the sidebar and the compact menu
+with the window, because that is how it is read rather than how it is
+changed.
 
 Never hand-edit an export, and never commit one: it is a build artifact
 regenerated from the manual, and the maintained manual is the only
