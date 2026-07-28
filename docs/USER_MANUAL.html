@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: a76f458 -->
+<!-- manual-base: e378a31 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      060c8a411815129bbcecf5e38788484071db165b skills/
      32bd78521ebe1fafbea5e305b0bd049366092ec8 scripts/
-     fc7572971c60c84d154dd01343968d725c5fd379 templates/
+     18d4e54dca21c634d6ea8ef5df7e862cdc9141ce templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -332,7 +332,15 @@
        long command in a code block would drag the whole page past the
        edge of the screen. */
     .layout { flex-direction: column; gap: 24px; align-items: stretch; }
-    nav.toc { position: static; width: 100%; max-height: none; }
+    /* The contents never render inline at this width. Left to the
+       script alone they would first land full-width above the body copy
+       and only then collapse, and that intermediate step reads as a
+       layout glitch. CSS takes them out on the same frame the width
+       changes, so the panel goes straight from its full size to the
+       menu, and the button is here from the first paint rather than
+       waiting for a measurement. */
+    nav.toc { display: none; }
+    .menu-btn { display: flex; opacity: 1; }
     .frame, .hero { padding-left: 24px; padding-right: 24px; }
     main { width: 100%; }
     /* Commands wrap instead of widening the page; a wide table scrolls
@@ -1147,7 +1155,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 27, 2026";
-  var MANUAL_BASE = "a76f458";
+  var MANUAL_BASE = "e378a31";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1162,7 +1170,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 04:25 UTC",
+  "at": "2026-07-28 04:36 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
