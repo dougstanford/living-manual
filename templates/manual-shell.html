@@ -109,6 +109,7 @@
   footer { border-top: 1px solid var(--line-soft); padding: 32px 48px 48px;
     font-size: 0.82rem; color: var(--muted); }
 
+/*@EXPORT-DROP*/
   main h2, main h3 { cursor: pointer; }
   main h2::after, main h3::after {
     content: "✎ make a note"; font-size: 0.68rem; font-weight: 400;
@@ -126,6 +127,7 @@
   .preview-btn:hover { background: var(--accent); color: var(--surface); }
   .preview-btn svg { width: 9px; height: 9px; display: block; margin-left: 1px; }
   h2 .preview-btn, h3 .preview-btn { width: 22px; height: 22px; }
+/*@/EXPORT-DROP*/
 
   .term { text-decoration: underline dotted color-mix(in srgb, var(--ink) 38%, transparent);
     text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: help; }
@@ -138,6 +140,7 @@
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
     color: var(--caution); }
 
+/*@EXPORT-DROP*/
   .overlay { position: fixed; inset: 0; z-index: 50;
     background: color-mix(in srgb, var(--deep) 55%, transparent);
     display: flex; align-items: flex-start; justify-content: center;
@@ -204,6 +207,7 @@
     border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px 14px;
     max-height: 220px; overflow: auto; white-space: pre-wrap; user-select: text; }
   #prev-body p, #prev-body ul { font-size: 0.92rem; }
+/*@/EXPORT-DROP*/
   @media (max-width: 880px) {
     .layout { flex-direction: column; gap: 24px; }
     nav.toc { position: static; width: 100%; max-height: none; }
@@ -252,6 +256,7 @@
   <div class="frame">{{PRODUCT}} · This manual travels with the app — {{MANUAL_PATH}}</div>
 </footer>
 
+<!--@EXPORT-DROP-->
 <div class="overlay" id="rev-overlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rev-context">
     <div class="modal-label">Make a note</div>
@@ -297,6 +302,7 @@
     </div>
   </div>
 </div>
+<!--@/EXPORT-DROP-->
 
 <script>
 (function () {
@@ -332,6 +338,7 @@
   var DEFINED_IN = {};
   /*@/DEFINED*/
 
+/*@EXPORT-DROP*/
   function wireOverlay(overlay, onClose) {
     var began = false;
     overlay.addEventListener("mousedown", function (e) { began = e.target === overlay; });
@@ -709,6 +716,7 @@
       openRev(title, anchor, scope.locked, scope.scoped, anchors);
     });
   });
+/*@/EXPORT-DROP*/
 
   /* ================= Concept glossary =================
      At most one alert per concept, on its first instance, and only when

@@ -221,6 +221,26 @@ read the output and carry on. Then:
 6. `python3 $LM/scripts/verify.py <manual_path>` must print OK.
    Browser-check only when slots or machinery changed.
 
+## Exporting a static copy
+
+When the user wants a copy to hand outside the team:
+
+```
+python3 $LM/scripts/export.py <manual_path> [dest]
+```
+
+Default destination is the manual's path with `_prod.html` in place of
+`.html`. The export drops the note-filing path and its affordances, the
+queue (`TICKETS` and `QUEUE_SYNC` travel inside the file, so a
+distributed copy carrying them would publish the backlog and name the
+tracker), and the roadmap previews, which describe work that has not
+shipped. The glossary and all prose stay.
+
+Never hand-edit an export, and never commit one: it is a build artifact
+regenerated from the manual, and the maintained manual is the only
+document anyone keeps current. `verify.py` recognises an export by its
+`manual-export` comment and judges it by the right rules.
+
 The pre-push hook calls this flow by name
 (`claude -p "/living-manual:manual update"`), so keep the update path
 non-interactive: no questions unless the diff is genuinely ambiguous,

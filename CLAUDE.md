@@ -70,7 +70,10 @@ tagged is a release nobody can pin. Every version bump ends the same way:
 2. Update `{{PLUGIN_VERSION}}`'s example in the README to the new tag,
    so the copy-pasteable snippet is never a version behind.
 3. Run `/living-manual:manual update` and let the push guard pass.
-4. Once it is on `main`, tag the release point and push the tag:
+4. Regenerate the distributable copy if one goes out with the release:
+   `python3 scripts/export.py docs/USER_MANUAL.html`. It is gitignored,
+   so it never lands in the repo — build it from the tagged state.
+5. Once it is on `main`, tag the release point and push the tag:
    `git tag -a v<version> -m "<summary>" && git push origin v<version>`.
 
 The release point is the first commit on `main` at which the manual is
