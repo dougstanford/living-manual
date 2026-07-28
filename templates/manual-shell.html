@@ -37,8 +37,11 @@
   .hero-inner { max-width: 1020px; margin: 0 auto; }
   .hero .lockup { display: flex; align-items: center; gap: 12px;
     font-weight: 600; font-size: 1.3rem; margin-bottom: 48px; }
+  /* Measured in ch so the cap scales with the clamped font size: the
+     title keeps the same line length at every width rather than
+     wrapping earlier as the type shrinks. */
   .hero h1 { font-weight: 200; font-size: clamp(2.2rem, 5vw, 3.6rem);
-    line-height: 1.12; max-width: 16ch; }
+    line-height: 1.12; max-width: 22ch; }
   .hero .tagpill { display: inline-block; margin-top: 24px;
     border: 1px solid rgba(255,255,255,0.75); border-radius: 999px;
     padding: 6px 18px; font-size: 0.82rem; }
