@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 25e8f2a -->
+<!-- manual-base: b4a5ff8 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      26f8f05298901415174839f2febe816332964e63 skills/
-     3fdad69d05c0846ff70d41fc5a003ed9f8d9fb18 scripts/
+     7280c560ffd537db453f9d994a64c9b4b4f3ff22 scripts/
      0ddb708d71a1d7c18cbae58e50455f15fcbb7941 templates/
      6a945b46d05e7ac42793f3af05be002d4cc0b333 reference/
 -->
@@ -560,9 +560,14 @@ claude --plugin-dir /path/to/living-manual</pre>
     <pre class="cmd">python3 scripts/export.py docs/USER_MANUAL.html</pre>
     <p>This creates a second file, <code>USER_MANUAL_prod.html</code>, with note-filing and TOC reordering removed.
 The glossary, roadmap, and responsive design are preserved in the exported manual. In place of the base marker, an export contains a version line.</p>
+    <p>Add a second argument to write the copy somewhere else:</p>
+    <pre class="cmd">python3 scripts/export.py docs/USER_MANUAL.html /tmp/manual.html</pre>
     <p class="small muted">Exports are build artifacts. Git ignores them
     and they are regenerated at release, so only the maintained manual
-    has to be kept true.</p>
+    has to be kept true. A copy written inside the repo picks up that
+    git rule when the repo has none. A copy written outside the repo
+    leaves <code>.gitignore</code> alone, because git never sees a file
+    outside the working tree.</p>
   </section>
 
   <section id="flows">
@@ -1001,6 +1006,12 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
       something works, never narrates the reader or the document, and
       adds operational detail instead of advancing an argument. The
       prose contract under Reference records what it asks for.</p>
+      <p>Exporting to a path outside the repo no longer edits
+      <code>.gitignore</code>. Git reports any such path as unignored,
+      because it is not in the repo at all, and the export read that as
+      a missing rule: every copy written to a temp directory appended a
+      rule the repo already had. Git never sees a file outside the
+      working tree, so nothing is written for one now.</p>
     </div>
     <div class="release">
       <div class="date">v0.4.0 · July 27, 2026</div>
@@ -1257,7 +1268,7 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
 (function () {
   "use strict";
   var MANUAL_VERSION = "2026-07-28";
-  var MANUAL_BASE = "25e8f2a";
+  var MANUAL_BASE = "b4a5ff8";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
