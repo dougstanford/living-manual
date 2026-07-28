@@ -8,3 +8,7 @@ __pycache__/
 
 # Per-user session permissions, never shared.
 .claude/settings.local.json
+
+# Editor and agent working state, never shared.
+.obsidian/
+.claude/worktrees/
