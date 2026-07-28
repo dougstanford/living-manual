@@ -18,6 +18,18 @@ The manual is one self-contained HTML file:
   per concept, and only before the manual defines them.
 - **A queue check** in the note modal shows already-submitted tickets
   so duplicates become additions instead of twins.
+- **Drag the contents to reorder**: each TOC entry has a handle in its
+  left margin; drag it (subsections riding along) and the manual slides
+  into the new order on release. The browser remembers the arrangement
+  on every open; an optional payload makes it the committed order for
+  everyone.
+- **Edit the copy where you read it**: click into any paragraph,
+  heading, or the title and correct it. Enter keeps the change,
+  Shift+Enter breaks a line, Escape puts it back. Edits persist in the
+  browser and change no file until a payload commits them.
+- **A menu on small screens**: when a frame is too short or too narrow
+  to show the contents whole, they give way to a three-line button that
+  opens them centred over a frozen page.
 
 **See it demonstrate itself:** [docs/USER_MANUAL.html](docs/USER_MANUAL.html)
 is this plugin's own manual, built and maintained by the plugin. Open it
@@ -99,7 +111,7 @@ the plugin publishes itself as a composite action:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0        # the manual's base commit is usually far back
-- uses: dougstanford/living-manual@v0.3.1
+- uses: dougstanford/living-manual@v0.5.0
 ```
 
 The action reads `.living-manual.json` for the paths it needs; pass
@@ -118,7 +130,7 @@ skills/ticket/    note → ticket (+ tracker sync)
 scripts/          state, inventory, staleness, hook install, ticket
                   numbering, tickets-index rebuild, data-block sync,
                   scaffolding, static verification, the CI entry point,
-                  static export
+                  static export, section reorder, prose write-back
 templates/        the interactive manual shell, CLAUDE.md snippet, and
                   the CI workflow setup installs
 reference/        writing style (binding) + maintenance checklist +

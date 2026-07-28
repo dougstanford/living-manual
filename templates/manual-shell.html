@@ -45,14 +45,132 @@
   .hero .asof { margin-top: 30px; font-size: 0.8rem; opacity: 0.75; }
   .frame { max-width: 1020px; margin: 0 auto; padding: 0 48px; }
   .layout { display: flex; gap: 56px; align-items: flex-start; padding-top: 56px; }
-  nav.toc { position: sticky; top: 28px; width: 218px; flex-shrink: 0;
+  /* Rides along in flow until scrolling would carry it past a fifth of
+     the way down the frame, then holds there. The height allows for the
+     offset so a long contents list still ends on screen.
+
+     The top margin is the one the content column already opens with:
+     the intro callout, like every block that follows it, carries 18px
+     above. Without the same margin here the panel starts a block-gap
+     higher than the dialog beside it, and the two read as misaligned
+     rather than as one row. */
+  nav.toc { position: sticky; top: 20vh; width: 218px; flex-shrink: 0;
+    margin-top: 18px;
     font-size: 0.84rem; border: 1px solid var(--line); border-radius: 16px;
-    padding: 18px 20px; max-height: calc(100vh - 56px); overflow-y: auto; }
+    padding: 18px 20px; max-height: calc(80vh - 28px); overflow-y: auto; }
   nav.toc .toc-title { font-size: 0.68rem; text-transform: uppercase;
     letter-spacing: 0.09em; color: var(--muted); margin-bottom: 10px; }
   nav.toc a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
   nav.toc a:hover { color: var(--accent); }
   nav.toc a.sub { padding-left: 14px; color: var(--muted); font-size: 0.8rem; }
+/*@EXPORT-DROP*/
+  /* ---- reorder: the contents are the drag surface. A top-level entry
+     and its subsections wrap into a .toc-group at load; drag the group
+     and the manual follows on release.
+
+     None of this travels. An export is a reading copy, so it keeps the
+     grouping (the compact menu is built from it) and loses the handle,
+     the gutter it sits in, and every drag state. Left in, the styles
+     would draw a grab affordance for a gesture the export no longer
+     answers. ---- */
+  .toc-group { position: relative; border-radius: 8px; padding-left: 16px; }
+  /* Three lines, and the only grab point. It fades in for its own hover
+     only, so reading the contents never lights anything up. The box is
+     padded well past the lines: the target stays easy to catch inside
+     the gutter while the drawn icon stays small. */
+  .toc-handle { position: absolute; left: -2px; top: 3px; width: 10px; height: 8px;
+    box-sizing: content-box; padding: 6px 4px;
+    color: var(--muted); opacity: 0; cursor: grab; touch-action: none;
+    transition: opacity 0.8s ease, color 0.4s ease;
+    background-image: linear-gradient(currentColor, currentColor),
+                      linear-gradient(currentColor, currentColor),
+                      linear-gradient(currentColor, currentColor);
+    background-size: 10px 1.5px; background-repeat: no-repeat;
+    background-origin: content-box; background-clip: content-box;
+    background-position: 0 0, 0 3.25px, 0 6.5px; }
+  .toc-handle.on { color: var(--accent); opacity: 1; }
+  /* Held, not ghosted: the entry the reader is moving is the real one,
+     lifted above the rest while they choose where it lands. */
+  .toc-group.dragging { z-index: 5;
+    background: color-mix(in srgb, var(--ink) 8%, var(--surface));
+    box-shadow: 0 8px 22px rgba(0,0,0,0.16); }
+  .toc-group.dragging .toc-handle { cursor: grabbing; opacity: 1; }
+  body.ro-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+  /* The commit affordance, which no export carries. */
+  .ro-actions { overflow: hidden; max-height: 0; opacity: 0;
+    transition: max-height 0.25s ease, opacity 0.25s ease; }
+  .ro-actions.showing { max-height: 260px; opacity: 1; }
+  .ro-btn { display: block; width: 100%; border: 1px solid var(--line); background: transparent;
+    color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 0.74rem;
+    font-family: inherit; cursor: pointer; margin-top: 8px;
+    transition: border-color 0.25s ease, color 0.25s ease; }
+  /* An author display wins over the hidden attribute, so a button
+     marked hidden kept rendering and both were showing at once. */
+  .ro-btn[hidden] { display: none; }
+  .ro-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ro-btn.primary { border-color: var(--accent); color: var(--accent); }
+  .ro-slot { transition: opacity 0.2s ease; }
+  .ro-slot.leaving { opacity: 0; }
+  .ro-said { font-size: 0.66rem; color: var(--muted); text-align: center;
+    margin-top: 4px; opacity: 0; transition: opacity 0.18s ease; }
+  .ro-said.showing { opacity: 1; }
+  .ro-said[hidden] { display: none; }
+  .ro-pre { font-family: ui-monospace, Menlo, monospace; font-size: 0.62rem;
+    line-height: 1.5; background: color-mix(in srgb, var(--ink) 6%, transparent);
+    border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px;
+    margin-top: 8px; max-height: 160px; overflow: auto; white-space: pre-wrap;
+    user-select: text; -webkit-user-select: text; }
+/*@/EXPORT-DROP*/
+  /* ---- compact navigation: the contents give way to a menu when the
+     frame is too short to show them whole, or too narrow for a sidebar.
+     Everything here is sized for a fingertip. ---- */
+  nav.toc.fading { opacity: 0; transition: opacity 0.25s ease; }
+  nav.toc.stowed { position: fixed; left: -10000px; top: 0; visibility: hidden;
+    max-height: none; pointer-events: none; }
+  /* Flat on the page, no plate under it. The tint follows what it sits
+     over, so the lines read against the hero and against the page. */
+  .menu-btn { position: fixed; top: 14px; left: 14px; z-index: 40;
+    width: 44px; height: 44px; display: none; align-items: center;
+    justify-content: center; padding: 0; cursor: pointer;
+    border: 0; background: transparent; color: var(--ink);
+    opacity: 0; transition: opacity 0.25s ease, color 0.2s ease; }
+  .menu-btn.on-dark { color: #fff; }
+  .menu-btn.present { display: flex; }
+  .menu-btn.visible { opacity: 1; }
+  .menu-btn i { display: block; width: 18px; height: 12px;
+    background-image: linear-gradient(currentColor, currentColor),
+                      linear-gradient(currentColor, currentColor),
+                      linear-gradient(currentColor, currentColor);
+    background-size: 100% 2px; background-repeat: no-repeat;
+    background-position: 0 0, 0 5px, 0 10px; }
+  /* The page is pinned while the sheet is open, so the background sits
+     still instead of scrolling away under it. */
+  body.menu-open { position: fixed; width: 100%; overflow: hidden; }
+  .menu-overlay { position: fixed; inset: 0; z-index: 55;
+    background: color-mix(in srgb, var(--deep) 62%, transparent);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; transition: opacity 0.22s ease; }
+  .menu-overlay[hidden] { display: none; }
+  .menu-overlay.showing { opacity: 1; }
+  .menu-sheet { background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 18px;
+    width: min(440px, 100%); max-height: calc(100vh - 40px);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain; padding: 14px 12px 20px;
+    text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,0.34);
+    transform: translateY(-10px); transition: transform 0.22s ease;
+    /* Scrolls, but the bar itself would only clutter the sheet. */
+    scrollbar-width: none; -ms-overflow-style: none; }
+  .menu-sheet::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .menu-overlay.showing .menu-sheet { transform: none; }
+  .menu-sheet .menu-title { font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); padding: 6px 14px 12px; }
+  /* Rows, not links in a paragraph: every target clears 44px, and the
+     type is set large enough to aim at without care. */
+  .menu-sheet a { display: block; color: var(--ink); text-decoration: none;
+    padding: 12px 14px; border-radius: 10px; font-size: 1.5rem; line-height: 1.3; }
+  .menu-sheet a.sub { font-size: 1.15rem; color: var(--muted); padding: 12px 14px; }
+  .menu-sheet a:active { background: color-mix(in srgb, var(--ink) 10%, transparent); }
   main { flex: 1; min-width: 0; padding-bottom: 96px; }
   section { margin-bottom: 64px; }
   h2 { font-weight: 300; font-size: 1.9rem; margin-bottom: 18px; scroll-margin-top: 24px; }
@@ -110,14 +228,29 @@
     font-size: 0.82rem; color: var(--muted); }
 
 /*@EXPORT-DROP*/
-  main h2, main h3 { cursor: pointer; }
-  main h2::after, main h3::after {
-    content: "✎ make a note"; font-size: 0.68rem; font-weight: 400;
+  /* A real element, not a pseudo-element: the heading's words are
+     editable now, so filing a note needs a target of its own. */
+  .note-pill { display: inline-block; font-size: 0.68rem; font-weight: 400;
     letter-spacing: 0.05em; color: var(--muted); border: 1px solid var(--line);
     border-radius: 999px; padding: 2px 10px; margin-left: 12px;
     vertical-align: middle; opacity: 0; transition: opacity 0.25s ease;
-    white-space: nowrap; }
-  main h2:hover::after, main h3:hover::after { opacity: 1; }
+    white-space: nowrap; cursor: pointer; user-select: none; }
+  main h2:hover .note-pill, main h3:hover .note-pill { opacity: 1; }
+  .note-pill:hover { color: var(--accent); border-color: var(--accent); }
+  /* No frame around the block being edited. The blinking caret is the
+     signal; a border would only fence off the words being read. The
+     browser draws its own focus ring on an editable block, which is
+     the blue box, and it only shows while the window has focus, so it
+     has to be turned off explicitly rather than merely not added. */
+  [contenteditable="true"], [contenteditable="true"]:focus,
+  [contenteditable="true"]:focus-visible {
+    outline: none; box-shadow: none; }
+  /* The hint sits under the contents in plain body type, no box. */
+  .edit-hint { position: fixed; bottom: 5vh; z-index: 45;
+    font-size: 0.84rem; line-height: 1.5; color: var(--muted);
+    pointer-events: none; opacity: 0; transition: opacity 0.16s ease; }
+  .edit-hint.showing { opacity: 1; }
+  .edit-hint[hidden] { display: none; }
 
   .preview-btn { display: inline-flex; align-items: center; justify-content: center;
     width: 20px; height: 20px; margin: 0 2px; vertical-align: middle;
@@ -131,11 +264,15 @@
 
   .term { text-decoration: underline dotted color-mix(in srgb, var(--ink) 38%, transparent);
     text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: help; }
+  /* Quick in, soft out: the dissolve starts the instant the cursor
+     leaves the term, and re-entering reverses it from wherever it is. */
   .term-tip { position: fixed; z-index: 60; max-width: 340px; background: var(--deep);
     color: var(--surface); border-radius: 12px; padding: 11px 15px;
     font-size: 0.82rem; line-height: 1.55; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    opacity: 0; visibility: hidden; transition: opacity 0.15s ease, visibility 0.15s ease; }
-  .term-tip.visible { opacity: 1; visibility: visible; }
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+  .term-tip.visible { opacity: 1; visibility: visible;
+    transition: opacity 0.12s ease, visibility 0s; }
   .term-tip b { display: block; margin-bottom: 3px; font-size: 0.72rem;
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
     color: var(--caution); }
@@ -144,11 +281,15 @@
   .overlay { position: fixed; inset: 0; z-index: 50;
     background: color-mix(in srgb, var(--deep) 55%, transparent);
     display: flex; align-items: flex-start; justify-content: center;
-    padding: 11vh 24px 24px; overflow-y: auto; }
+    padding: 11vh 24px 24px; overflow-y: auto;
+    opacity: 0; transition: opacity 0.18s ease; }
+  .overlay.showing { opacity: 1; }
   .overlay[hidden] { display: none; }
   .modal { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
     border-radius: 18px; width: 560px; max-width: 100%; padding: 26px 30px 24px;
-    box-shadow: 0 18px 50px rgba(0,0,0,0.3); }
+    box-shadow: 0 18px 50px rgba(0,0,0,0.3);
+    transform: translateY(8px) scale(0.985); transition: transform 0.18s ease; }
+  .overlay.showing .modal { transform: none; }
   .modal-label { font-size: 0.68rem; text-transform: uppercase;
     letter-spacing: 0.09em; color: var(--muted); margin-bottom: 6px; }
   .modal h3 { margin: 0 0 14px; font-weight: 600; font-size: 1.12rem; }
@@ -209,9 +350,34 @@
   #prev-body p, #prev-body ul { font-size: 0.92rem; }
 /*@/EXPORT-DROP*/
   @media (max-width: 880px) {
-    .layout { flex-direction: column; gap: 24px; }
-    nav.toc { position: static; width: 100%; max-height: none; }
+    /* stretch, not flex-start: a column flex item left to its own
+       devices takes the width of its widest unbreakable child, and one
+       long command in a code block would drag the whole page past the
+       edge of the screen. */
+    .layout { flex-direction: column; gap: 24px; align-items: stretch; }
+    /* The contents never render inline at this width. Left to the
+       script alone they would first land full-width above the body copy
+       and only then collapse, and that intermediate step reads as a
+       layout glitch. CSS takes them out on the same frame the width
+       changes, so the panel goes straight from its full size to the
+       menu, and the button is here from the first paint rather than
+       waiting for a measurement. */
+    nav.toc { display: none; }
+    .menu-btn { display: flex; opacity: 1; }
     .frame, .hero { padding-left: 24px; padding-right: 24px; }
+    main { width: 100%; }
+    /* Commands wrap instead of widening the page; a wide table scrolls
+       inside its own box instead of taking the layout with it. */
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    table { display: block; width: 100%; overflow-x: auto; }
+    p, ul, ol, .lead, .card, .callout, .mock, .caption, .release,
+    .modal, blockquote { max-width: 100%; }
+    code { overflow-wrap: anywhere; }
+    .hero { padding-top: 72px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    html { scroll-behavior: auto; }
   }
 </style>
 </head>
@@ -232,6 +398,20 @@
 <nav class="toc">
   <div class="toc-title">Contents</div>
   <!-- SLOT: TOC — one <a href="#id"> per section, .sub for subsections -->
+<!--@EXPORT-DROP-->
+  <div class="ro-actions" id="ro-actions">
+    <div class="ro-slot" id="slot-order">
+      <button type="button" class="ro-btn primary" id="ro-copy" hidden>Commit TOC</button>
+      <div class="ro-said" id="said-order" hidden></div>
+    </div>
+    <pre class="ro-pre" id="ro-payload" hidden></pre>
+    <div class="ro-slot" id="slot-copy">
+      <button type="button" class="ro-btn primary" id="copy-commit" hidden>Commit copy</button>
+      <div class="ro-said" id="said-copy" hidden></div>
+    </div>
+    <pre class="ro-pre" id="copy-payload" hidden></pre>
+  </div>
+<!--@/EXPORT-DROP-->
 </nav>
 
 <main>
@@ -255,6 +435,15 @@
 <footer>
   <div class="frame">{{PRODUCT}} · This manual travels with the app — {{MANUAL_PATH}}</div>
 </footer>
+
+<button type="button" class="menu-btn" id="menu-btn" aria-label="Contents"
+  aria-expanded="false" aria-controls="menu-overlay"><i aria-hidden="true"></i></button>
+<!--@EXPORT-DROP-->
+<div class="edit-hint" id="edit-hint" hidden>Enter to stage<br>Shift+Enter breaks a line<br>Esc discards</div>
+<!--@/EXPORT-DROP-->
+<div class="menu-overlay" id="menu-overlay" hidden>
+  <nav class="menu-sheet" id="menu-sheet" aria-label="Contents"></nav>
+</div>
 
 <!--@EXPORT-DROP-->
 <div class="overlay" id="rev-overlay" hidden>
@@ -340,6 +529,21 @@
   /*@/DEFINED*/
 
 /*@EXPORT-DROP*/
+  /* Overlays dissolve in and out; a close during the fade-in reverses
+     it from wherever it is. hidden lands only after the fade finishes,
+     and only if nothing reopened meanwhile. */
+  function showOverlay(ov) {
+    ov.hidden = false;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { ov.classList.add("showing"); });
+    });
+  }
+  function hideOverlay(ov) {
+    ov.classList.remove("showing");
+    setTimeout(function () {
+      if (!ov.classList.contains("showing")) ov.hidden = true;
+    }, 200);
+  }
   function wireOverlay(overlay, onClose) {
     var began = false;
     overlay.addEventListener("mousedown", function (e) { began = e.target === overlay; });
@@ -535,10 +739,10 @@
     revCopied = false;
     revCopyBtn.textContent = "Copy for Claude Code";
     revCopyAgain.hidden = true;
-    revOverlay.hidden = false;
+    showOverlay(revOverlay);
     revSummary.focus();
   }
-  function closeRev() { if (!revOverlay.hidden) revOverlay.hidden = true; }
+  function closeRev() { if (!revOverlay.hidden) hideOverlay(revOverlay); }
   wireOverlay(revOverlay, closeRev);
   document.getElementById("rev-cancel").addEventListener("click", closeRev);
 
@@ -667,9 +871,9 @@
       (p.status === "In progress" ? "warn" : "accent") + "\">" + p.status + "</span>";
     prevBody.innerHTML = p.body;
     prevSrc.textContent = "Source: " + p.source;
-    prevOverlay.hidden = false;
+    showOverlay(prevOverlay);
   }
-  function closePrev() { if (!prevOverlay.hidden) prevOverlay.hidden = true; }
+  function closePrev() { if (!prevOverlay.hidden) hideOverlay(prevOverlay); }
   wireOverlay(prevOverlay, closePrev);
   document.getElementById("prev-close").addEventListener("click", closePrev);
   document.querySelectorAll(".preview-btn").forEach(function (btn) {
@@ -702,9 +906,19 @@
       else if (current) scopeFor(current).scoped.push(el.dataset.preview);
     });
   });
+  function addNotePill(h) {
+    if (h.querySelector(".note-pill")) return;
+    var pill = document.createElement("span");
+    pill.className = "note-pill";
+    pill.contentEditable = "false";
+    pill.textContent = "\u270e make a note";
+    h.appendChild(pill);
+  }
   document.querySelectorAll("main h2, main h3").forEach(function (h) {
+    addNotePill(h);
     h.addEventListener("click", function (e) {
-      if (e.target.closest(".preview-btn")) return;
+      /* The words belong to the editor; the pill files the note. */
+      if (!e.target.closest(".note-pill")) return;
       var section = h.closest("section");
       var anchor = h.id || (section && section.id) || "";
       var title = h.childNodes[0] ? h.childNodes[0].textContent.trim() : h.textContent.trim();
@@ -718,6 +932,873 @@
     });
   });
 /*@/EXPORT-DROP*/
+
+  /* ================= Reorder: drag the contents =================
+     The contents are the interface: each top-level entry wraps with its
+     subsections into one draggable group. While a group is held, only
+     the contents rearrange, so the reader previews the destination
+     without the page moving under them; the document follows on
+     release, sliding rather than jumping. The arrangement persists in
+     this browser and is reapplied on every open, so keeping an order
+     costs nothing. The committed file never changes from the browser.
+
+     Rearranging is for the people who maintain the manual, so an export
+     does not carry it. What an export keeps is the grouping below and
+     the compact menu, which are how the contents are read rather than
+     how they are changed.
+
+     Pointer events, not HTML5 drag-and-drop: the entries are links, and
+     a browser turns a dragged link into a native link-drag that fights
+     for the gesture. Pointers also let the held entry track the cursor
+     exactly and let every motion stay interruptible. */
+  var roNav = document.querySelector("nav.toc");
+
+  /* Wrap each top-level link and its .sub links into one group, so a
+     section's entry never separates from its subsections.
+
+     This much is structure rather than interaction, and it survives
+     export: the compact menu is built by walking these groups, and the
+     menu is how every narrow or short window reads the contents. The
+     handle is the part that does not survive, so it is fenced on its
+     own; an export gets the grouping and no grab point. */
+  (function () {
+    var current = null;
+    Array.prototype.slice.call(roNav.querySelectorAll("a")).forEach(function (a) {
+      a.draggable = false;
+      if (a.classList.contains("sub")) {
+        if (current) current.appendChild(a);
+        return;
+      }
+      var g = document.createElement("div");
+      g.className = "toc-group";
+      g.dataset.sec = (a.getAttribute("href") || "").replace(/^#/, "");
+      a.parentNode.insertBefore(g, a);
+/*@EXPORT-DROP*/
+      var handle = document.createElement("span");
+      handle.className = "toc-handle";
+      handle.setAttribute("aria-hidden", "true");
+      g.appendChild(handle);
+/*@/EXPORT-DROP*/
+      g.appendChild(a);
+      current = g;
+    });
+  })();
+  function roGroups() {
+    return Array.prototype.slice.call(roNav.querySelectorAll(".toc-group"));
+  }
+
+/*@EXPORT-DROP*/
+  var roMain = document.querySelector("main");
+  /* Both are absent from an export, which carries no write-back. */
+  var roActions = document.getElementById("ro-actions");
+
+  /* Keyed by path: an arrangement belongs to the reader who made it. */
+  var RO_KEY = "living-manual:order:" + location.pathname;
+  /* The panel serves two kinds of uncommitted work now: a changed
+     order, and changed words. Either one summons it, and each brings
+     only its own button. */
+  /* Pressing a commit button hands that work off, so the button goes.
+     The next change of its kind arms it again. */
+  var orderHandedOff = false;
+  var copyHandedOff = false;
+
+  /* A commit button offers to carry the gap between what this browser
+     has saved and what the file says. No saved preference, or one that
+     matches the file, means there is nothing to carry and no button. */
+  function orderDiffersFromCode() {
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(RO_KEY) || "null"); } catch (e) {}
+    if (!stored || !stored.length) return false;
+    return stored.join() !== RO_AUTHORED.join();
+  }
+
+  function refreshActions() {
+    var showOrder = orderDiffersFromCode() && !orderHandedOff;
+    var showCopy = typeof copyDiffersFromCode === "function"
+      && copyDiffersFromCode() && !copyHandedOff;
+    var oc = document.getElementById("ro-copy");
+    if (oc) oc.hidden = !showOrder;
+    var cc = document.getElementById("copy-commit");
+    if (cc) cc.hidden = !showCopy;
+    var rp = document.getElementById("ro-payload");
+    var cp = document.getElementById("copy-payload");
+    var payloadShown = (rp && !rp.hidden) || (cp && !cp.hidden);
+    if (roActions) {
+      roActions.classList.toggle("showing", showOrder || showCopy || payloadShown);
+    }
+  }
+
+  /* Hand a payload to the clipboard, say so under the button, and let
+     both go after a beat. The payload only appears when the clipboard
+     refuses it, and then it stays: text nobody has read should not
+     dissolve. */
+  function roHandOff(payload, slotId, saidId, preId, mark) {
+    var slot = document.getElementById(slotId);
+    var said = document.getElementById(saidId);
+    var pre = document.getElementById(preId);
+    function announce(text) {
+      said.textContent = text;
+      said.hidden = false;
+      void said.offsetWidth;
+      said.classList.add("showing");
+    }
+    function settle() {
+      announce("Prompt copied");
+      setTimeout(function () {
+        slot.classList.add("leaving");
+        setTimeout(function () {
+          said.classList.remove("showing");
+          said.hidden = true;
+          slot.classList.remove("leaving");
+          mark();
+          refreshActions();
+        }, 220);
+      }, 2000);
+    }
+    function fallback() {
+      pre.textContent = payload;
+      pre.hidden = false;
+      var range = document.createRange();
+      range.selectNodeContents(pre);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      if (ok) { pre.hidden = true; settle(); }
+      else { announce("Copy the text below"); }
+      refreshActions();
+    }
+    /* The clipboard promise can hang rather than reject, which a page
+       that is not focused will do, so it is raced against a deadline.
+       Whichever answers first wins, and the reader always hears back. */
+    var answered = false;
+    function once(fn) {
+      return function () { if (answered) return; answered = true; fn(); };
+    }
+    var yes = once(settle), no = once(fallback);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).then(yes, no);
+      setTimeout(no, 800);
+    } else { no(); }
+  }
+
+  function roSections() {
+    return Array.prototype.filter.call(roMain.children, function (el) {
+      return el.tagName === "SECTION" && el.id;
+    });
+  }
+  function roOrder() { return roSections().map(function (s) { return s.id; }); }
+  var RO_AUTHORED = roOrder();
+
+  function roGroupOrder() {
+    return roGroups().map(function (g) { return g.dataset.sec; });
+  }
+
+  /* FLIP: capture, mutate, invert, play. Interrupting mid-slide is fine.
+     The capture reads live positions, so the next slide starts from
+     wherever an element actually is rather than snapping first. */
+  function roFlip(els, mutate, dur) {
+    var first = els.map(function (el) { return [el, el.getBoundingClientRect()]; });
+    mutate();
+    var moved = [];
+    first.forEach(function (pair) {
+      var el = pair[0], f = pair[1], l = el.getBoundingClientRect();
+      var dx = f.left - l.left, dy = f.top - l.top;
+      if (!dx && !dy) return;
+      el.style.transition = "none";
+      el.style.transform = "translate(" + dx + "px," + dy + "px)";
+      moved.push(el);
+    });
+    if (!moved.length) return;
+    void document.body.offsetHeight;
+    moved.forEach(function (el) {
+      el.style.transition = "transform " + dur + "ms ease";
+      el.style.transform = "";
+      el.addEventListener("transitionend", function done() {
+        el.style.transition = "";
+        el.removeEventListener("transitionend", done);
+      });
+    });
+  }
+
+  function roApplyGroups(order, animate) {
+    var by = {};
+    roGroups().forEach(function (g) { by[g.dataset.sec] = g; });
+    var mutate = function () {
+      order.forEach(function (id) {
+        if (by[id]) roNav.insertBefore(by[id], roActions);
+      });
+    };
+    if (animate) roFlip(roGroups(), mutate, 200); else mutate();
+  }
+
+  function roApplySections(order, animate) {
+    var by = {};
+    roSections().forEach(function (s) { by[s.id] = s; });
+    var mutate = function () {
+      order.forEach(function (id) { if (by[id]) roMain.appendChild(by[id]); });
+    };
+    if (animate) roFlip(roSections(), mutate, 260); else mutate();
+    roAfterChange();
+  }
+
+  function roChanged() {
+    var now = roOrder();
+    for (var i = 0; i < now.length; i++) {
+      if (now[i] !== RO_AUTHORED[i]) return true;
+    }
+    return false;
+  }
+
+  function roAfterChange() {
+    orderHandedOff = false;
+    var changed = roChanged();
+    try {
+      if (changed) localStorage.setItem(RO_KEY, JSON.stringify(roOrder()));
+      else localStorage.removeItem(RO_KEY);
+    } catch (e) { /* private mode: the order lives for this session */ }
+    refreshActions();
+    if (!changed) {
+      var pre = document.getElementById("ro-payload");
+      if (pre) pre.hidden = true;
+    }
+  }
+
+  /* Reapply this reader's saved arrangement before first interaction.
+     Sections added since (ids the saved order never saw) keep their
+     authored position after the ones it knows. */
+  (function () {
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(RO_KEY) || "null"); } catch (e) {}
+    if (!stored || !stored.length || typeof stored.slice !== "function") return;
+    var have = roOrder();
+    var known = stored.filter(function (id) { return have.indexOf(id) !== -1; });
+    if (!known.length) return;
+    var merged = known.concat(have.filter(function (id) {
+      return known.indexOf(id) === -1;
+    }));
+    roApplyGroups(merged, false);
+    roApplySections(merged, false);
+  })();
+
+  var roDrag = null;
+  var RO_THRESHOLD = 4;
+
+  /* The handle's visibility is driven here rather than by :hover, for
+     two reasons. A group that moves under a resting cursor keeps a
+     stale hover state until the pointer moves again, which left the
+     entry just dropped still showing its handle. And a handle small
+     enough to stay out of the way disappears under the grab cursor
+     that hovering it summons, so it has to answer to proximity rather
+     than contact: it lights as the pointer comes near, while there is
+     still clear space between them, and the nearest one wins so only
+     ever one is lit.
+
+     Proximity stops at the words. A pointer over an entry's text is
+     reaching for the link; only one to its left, out in the margin, is
+     reaching for the handle. */
+  var RO_NEAR = 26;
+  var roLit = null;
+  function roLightHandle(h) {
+    if (roLit === h) return;
+    if (roLit) roLit.classList.remove("on");
+    if (h) h.classList.add("on");
+    roLit = h;
+  }
+  function roNearestHandle(x, y) {
+    var best = null, bestD = RO_NEAR;
+    roGroups().forEach(function (g) {
+      var h = g.querySelector(".toc-handle");
+      var a = g.querySelector("a");
+      if (!h || !a) return;
+      if (x >= a.getBoundingClientRect().left) return;
+      var r = h.getBoundingClientRect();
+      var dx = x < r.left ? r.left - x : (x > r.right ? x - r.right : 0);
+      var dy = y < r.top ? r.top - y : (y > r.bottom ? y - r.bottom : 0);
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < bestD) { bestD = d; best = h; }
+    });
+    return best;
+  }
+  roNav.addEventListener("pointermove", function (e) {
+    if (roDrag && roDrag.held) return;
+    roLightHandle(roNearestHandle(e.clientX, e.clientY));
+  });
+  roNav.addEventListener("pointerleave", function () {
+    if (!(roDrag && roDrag.held)) roLightHandle(null);
+  });
+
+  roNav.addEventListener("pointerdown", function (e) {
+    /* The handle is the grab point, so a click anywhere on an entry is
+       still just a link. */
+    if (e.button !== 0 || !e.target.closest(".toc-handle")) return;
+    var g = e.target.closest(".toc-group");
+    if (!g) return;
+    roDrag = { el: g, id: e.pointerId, startY: e.clientY, held: false, dy: 0,
+               grab: e.clientY - g.getBoundingClientRect().top };
+  });
+
+  window.addEventListener("pointermove", function (e) {
+    var d = roDrag;
+    if (!d || e.pointerId !== d.id) return;
+    if (!d.held) {
+      /* Below the threshold this is still a click, and the entry must
+         keep working as a link. */
+      if (Math.abs(e.clientY - d.startY) < RO_THRESHOLD) return;
+      d.held = true;
+      try { d.el.setPointerCapture(d.id); } catch (err) {}
+      d.el.classList.add("dragging");
+      document.body.classList.add("ro-dragging");
+      roLightHandle(d.el.querySelector(".toc-handle"));
+    }
+    e.preventDefault();
+    var el = d.el;
+    var wantTop = e.clientY - d.grab;
+    function track() {
+      var layoutTop = el.getBoundingClientRect().top - d.dy;
+      d.dy = wantTop - layoutTop;
+      el.style.transform = "translateY(" + d.dy + "px)";
+    }
+    track();
+    /* Where would it land? Compare the held entry's centre against the
+       others and slide them aside as the answer changes. */
+    var centre = wantTop + el.offsetHeight / 2;
+    var others = roGroups().filter(function (g) { return g !== el; });
+    var ref = null;
+    for (var i = 0; i < others.length; i++) {
+      var r = others[i].getBoundingClientRect();
+      if (centre < r.top + r.height / 2) { ref = others[i]; break; }
+    }
+    var target = ref || roActions;
+    if (el.nextElementSibling !== target) {
+      roFlip(others, function () { roNav.insertBefore(el, target); }, 160);
+      /* The move changed the held entry's layout position; re-track so
+         it stays under the cursor rather than jumping. */
+      track();
+    }
+  });
+
+  function roRelease(commit) {
+    var d = roDrag;
+    if (!d) return;
+    roDrag = null;
+    if (!d.held) return;
+    var el = d.el;
+    document.body.classList.remove("ro-dragging");
+    try { el.releasePointerCapture(d.id); } catch (err) {}
+    /* Settle into the slot rather than snapping to it. */
+    el.style.transition = "transform 0.18s ease";
+    el.style.transform = "";
+    var settled = false;
+    function done() {
+      if (settled) return;
+      settled = true;
+      el.style.transition = "";
+      el.classList.remove("dragging");
+      el.removeEventListener("transitionend", done);
+      /* The dropped entry lets go of its handle rather than holding it
+         lit; a nudge of the mouse brings back whichever one is under
+         the cursor. */
+      roLightHandle(null);
+    }
+    el.addEventListener("transitionend", done);
+    setTimeout(done, 300);
+    if (commit) {
+      var pending = roGroupOrder();
+      if (pending.join() !== roOrder().join()) roApplySections(pending, true);
+    } else {
+      roApplyGroups(roOrder(), true);
+    }
+  }
+  window.addEventListener("pointerup", function (e) {
+    if (roDrag && e.pointerId === roDrag.id) roRelease(true);
+  });
+  window.addEventListener("pointercancel", function (e) {
+    if (roDrag && e.pointerId === roDrag.id) roRelease(false);
+  });
+  /* Escape abandons a drag in progress: the contents slide back to the
+     document rather than snapping. */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && roDrag && roDrag.held) roRelease(false);
+  });
+
+  /* Write-back, optional: a reader's arrangement already persists in
+     their browser with no step at all. This is for making it the order
+     everyone opens. The payload crosses the browser-to-repo boundary
+     through a Claude Code session, because a page cannot write to the
+     repository and a git hook cannot read a browser's storage. */
+  var roCopyBtn = document.getElementById("ro-copy");
+  var roPayloadEl = document.getElementById("ro-payload");
+  roCopyBtn.addEventListener("click", function () {
+    var payload = [
+      "/living-manual:manual reorder", "",
+      "<reorder>",
+      "manual: " + MANUAL_PATH,
+      "order: " + roOrder().join(", "),
+      "</reorder>", "",
+      "The reader rearranged the manual's sections from the contents panel.",
+      "Apply this order to the committed manual with scripts/reorder.py,",
+      "which moves the sections and their TOC entries. Prose is untouched;",
+      "verify must print OK."
+    ].join("\n");
+    roHandOff(payload, "slot-order", "said-order", "ro-payload", function () {
+      orderHandedOff = true;
+    });
+  });
+/*@/EXPORT-DROP*/
+
+/*@EXPORT-DROP*/
+  /* ================= Editing the copy =================
+     Every piece of prose is editable in place: click a word and the
+     block you clicked becomes a text field with the caret where you
+     put it. Enter stages the change and leaves; Shift+Enter breaks a
+     line; Escape abandons the block. Dragging across text still
+     selects, because a click and a drag are told apart by whether the
+     pointer moved and whether it left a selection behind.
+
+     Edits live in this browser and survive a refresh. The file does
+     not change until Commit copy hands them to a session, the same
+     bargain the contents panel makes with its order.
+
+     Editing is a pointer's job, so it is offered only in the sidebar
+     layout; a phone gets the manual to read. */
+  var EDITABLE = "p, li, h2, h3, td, th, h1, .tagpill";
+  var EDIT_SKIP = ".note-pill, .preview-btn, .mock, a, button, pre, code, kbd";
+  var COPY_KEY = "living-manual:copy:" + location.pathname;
+  var copyOriginals = {};
+  var copyOuter = {};
+  /* Keys are fixed once, at load. They count position among siblings,
+     and emptying a block removes one, so recomputing later would
+     rename every block after it and orphan its edit. */
+  var copyKeys = new Map();
+  var copyEdits = {};
+  var editing = null;
+  var editHint = document.getElementById("edit-hint");
+
+  function editRoots() {
+    return [document.querySelector("main"), document.querySelector(".hero")]
+      .filter(Boolean);
+  }
+  function editableElements() {
+    var out = [];
+    editRoots().forEach(function (root) {
+      Array.prototype.forEach.call(root.querySelectorAll(EDITABLE), function (el) {
+        if (el.closest(EDIT_SKIP)) return;
+        out.push(el);
+      });
+    });
+    return out;
+  }
+
+  /* The stored form is the file's form: no note pills, which the script
+     adds, and no glossary spans, which it also adds. What is kept is
+     what a person wrote. */
+  function copySerialize(el) {
+    var c = el.cloneNode(true);
+    Array.prototype.forEach.call(c.querySelectorAll(".note-pill"), function (p) {
+      p.parentNode.removeChild(p);
+    });
+    Array.prototype.forEach.call(c.querySelectorAll(".term"), function (t) {
+      t.parentNode.replaceChild(document.createTextNode(t.textContent), t);
+    });
+    return c.innerHTML;
+  }
+
+  /* The whole block as the file holds it, for the case where a reader
+     empties one and it should go rather than stand there blank. */
+  function copySerializeOuter(el) {
+    var c = el.cloneNode(true);
+    Array.prototype.forEach.call(c.querySelectorAll(".note-pill"), function (p) {
+      p.parentNode.removeChild(p);
+    });
+    Array.prototype.forEach.call(c.querySelectorAll(".term"), function (t) {
+      t.parentNode.replaceChild(document.createTextNode(t.textContent), t);
+    });
+    return c.outerHTML;
+  }
+
+  function copyIsEmpty(el) {
+    return el.textContent.replace(/\s|\u00a0/g, "") === ""
+      && !el.querySelector("img, .preview-btn");
+  }
+
+  function copyKeyFor(el) { return copyKeys.get(el); }
+
+  function copyPersist() {
+    copyHandedOff = false;
+    try {
+      if (Object.keys(copyEdits).length) {
+        localStorage.setItem(COPY_KEY, JSON.stringify(copyEdits));
+      } else {
+        localStorage.removeItem(COPY_KEY);
+      }
+    } catch (e) { /* private mode: the edits live for this session */ }
+    refreshActions();
+  }
+
+  /* Record what the file says before anything is restored on top of it,
+     so a committed payload can name the exact text it replaces. */
+  editableElements().forEach(function (el) {
+    var host = el.closest("section[id]") || el.closest(".hero") || document.body;
+    var hostKey = host.id || (host.className.indexOf("hero") !== -1 ? "hero" : "root");
+    var sameTag = Array.prototype.slice.call(host.getElementsByTagName(el.tagName));
+    var k = hostKey + "|" + el.tagName.toLowerCase() + "|" + sameTag.indexOf(el);
+    copyKeys.set(el, k);
+    copyOriginals[k] = copySerialize(el);
+    copyOuter[k] = copySerializeOuter(el);
+  });
+
+  (function restoreCopy() {
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(COPY_KEY) || "null"); } catch (e) {}
+    if (!stored) return;
+    var applied = 0, stale = 0;
+    editableElements().forEach(function (el) {
+      var k = copyKeyFor(el);
+      var entry = stored[k];
+      if (!entry || typeof entry.edited !== "string") return;
+      /* Only restore onto the text the edit was made against. When the
+         manual itself has moved on, the local edit is out of date and
+         the file's words win rather than being silently overwritten. */
+      if (entry.remove) {
+        if (entry.original !== copyOuter[k]) { stale++; return; }
+        el.parentNode.removeChild(el);
+        copyEdits[k] = entry;
+        applied++;
+        return;
+      }
+      if (entry.original !== copyOriginals[k]) { stale++; return; }
+      el.innerHTML = entry.edited;
+      if (el.tagName === "H2" || el.tagName === "H3") addNotePill(el);
+      copyEdits[k] = entry;
+      applied++;
+    });
+    if (applied) refreshActions();
+    if (stale) {
+      try { localStorage.setItem(COPY_KEY, JSON.stringify(copyEdits)); } catch (e) {}
+    }
+  })();
+
+  /* What this browser has saved against what the file holds. An entry
+     matching the file counts for nothing, so a round trip back to the
+     original wording puts the button away. */
+  function copyDiffersFromCode() {
+    if (!copyOriginals) return false;
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(COPY_KEY) || "null"); } catch (e) {}
+    if (!stored) return false;
+    return Object.keys(stored).some(function (k) {
+      var e = stored[k];
+      if (!e) return false;
+      if (e.remove) return e.original === copyOuter[k];
+      return typeof e.edited === "string" && e.edited !== copyOriginals[k];
+    });
+  }
+
+  function editEnabled() { return window.innerWidth > MENU_WIDTH; }
+
+  function caretAt(x, y) {
+    if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+    if (document.caretPositionFromPoint) {
+      var p = document.caretPositionFromPoint(x, y);
+      if (!p) return null;
+      var r = document.createRange();
+      r.setStart(p.offsetNode, p.offset);
+      r.collapse(true);
+      return r;
+    }
+    return null;
+  }
+
+  function beginEdit(el, x, y) {
+    if (editing === el) return;
+    if (editing) endEdit(true);
+    editing = el;
+    el.dataset.editBefore = copySerialize(el);
+    el.contentEditable = "true";
+    el.spellcheck = false;
+    el.focus();
+    var r = caretAt(x, y);
+    if (r) {
+      var s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    }
+    if (editHint) {
+      /* Under the contents, in the same column, so it reads as an aside
+         to the panel rather than a banner over the page. */
+      var col = roNav.getBoundingClientRect();
+      editHint.style.left = Math.round(col.left) + "px";
+      editHint.style.width = Math.round(col.width) + "px";
+      editHint.hidden = false;
+      void editHint.offsetWidth;
+      editHint.classList.add("showing");
+    }
+  }
+
+  function endEdit(stage) {
+    var el = editing;
+    if (!el) return;
+    editing = null;
+    el.contentEditable = "false";
+    if (!stage && typeof el.dataset.editBefore === "string") {
+      el.innerHTML = el.dataset.editBefore;
+      if (el.tagName === "H2" || el.tagName === "H3") addNotePill(el);
+    }
+    delete el.dataset.editBefore;
+    if (editHint) {
+      editHint.classList.remove("showing");
+      setTimeout(function () {
+        if (!editHint.classList.contains("showing")) editHint.hidden = true;
+      }, 220);
+    }
+    var k = copyKeyFor(el);
+    if (stage && copyIsEmpty(el)) {
+      /* Emptied on purpose: the block goes rather than sitting there as
+         a blank gap, and what was above and below closes up. */
+      copyEdits[k] = { original: copyOuter[k], edited: "", remove: true };
+      if (el.parentNode) el.parentNode.removeChild(el);
+      copyPersist();
+      return;
+    }
+    var now = copySerialize(el);
+    if (now === copyOriginals[k]) delete copyEdits[k];
+    else copyEdits[k] = { original: copyOriginals[k], edited: now };
+    copyPersist();
+    if (el.blur) el.blur();
+  }
+
+  var editDownX = 0, editDownY = 0, editDownOn = null;
+  function editableFrom(t) {
+    if (!t || !t.closest) return null;
+    if (t.closest(EDIT_SKIP)) return null;
+    var el = t.closest(EDITABLE);
+    if (!el) return null;
+    return el.closest("main") || el.closest(".hero") ? el : null;
+  }
+
+  document.addEventListener("mousedown", function (e) {
+    editDownX = e.clientX;
+    editDownY = e.clientY;
+    editDownOn = editableFrom(e.target);
+    if (editing && editableFrom(e.target) !== editing) endEdit(true);
+  });
+
+  document.addEventListener("mouseup", function (e) {
+    if (!editEnabled() || e.button !== 0) return;
+    var el = editableFrom(e.target);
+    if (!el || el !== editDownOn || el === editing) return;
+    /* A pointer that travelled, or a selection left behind, is someone
+       selecting text rather than asking to change it. */
+    if (Math.abs(e.clientX - editDownX) > 3 || Math.abs(e.clientY - editDownY) > 3) return;
+    var sel = window.getSelection();
+    if (sel && !sel.isCollapsed) return;
+    beginEdit(el, e.clientX, e.clientY);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (!editing) return;
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      endEdit(true);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      endEdit(false);
+    }
+  }, true);
+
+  /* Pasted text arrives as text, never as someone else's markup. */
+  document.addEventListener("paste", function (e) {
+    if (!editing) return;
+    e.preventDefault();
+    var t = (e.clipboardData || window.clipboardData).getData("text/plain");
+    document.execCommand("insertText", false, t);
+  }, true);
+
+  var copyCommitBtn = document.getElementById("copy-commit");
+  var copyPayloadEl = document.getElementById("copy-payload");
+  if (copyCommitBtn) {
+    copyCommitBtn.addEventListener("click", function () {
+      if (editing) endEdit(true);
+      var edits = Object.keys(copyEdits).map(function (k) {
+        var e = { key: k, original: copyEdits[k].original, new: copyEdits[k].edited };
+        if (copyEdits[k].remove) e.remove = true;
+        return e;
+      });
+      var payload = [
+        "/living-manual:manual recopy", "",
+        "<recopy>",
+        "manual: " + MANUAL_PATH,
+        "edits: " + edits.length,
+        "</recopy>", "",
+        "```json",
+        JSON.stringify({ edits: edits }, null, 1),
+        "```", "",
+        "The reader revised the manual's prose in the browser. Write the",
+        "JSON above to a file and apply it with scripts/recopy.py, which",
+        "replaces each original with its replacement and refuses any that",
+        "no longer matches the file. Do not retype the prose by hand.",
+        "Then verify must print OK."
+      ].join("\n");
+      roHandOff(payload, "slot-copy", "said-copy", "copy-payload", function () {
+        copyHandedOff = true;
+      });
+    });
+  }
+/*@/EXPORT-DROP*/
+
+  /* ================= Compact navigation =================
+     The contents panel is only worth its space when it can be read
+     whole. Below the sidebar layout, or in a frame too short to show
+     every entry, it fades out before the window can cut it off and
+     hands over to a menu button. The menu it opens is built for a
+     thumb: full-width rows with generous targets, a background frozen
+     rather than scrolling behind the sheet, and no affordance that
+     depends on hovering. */
+  var menuBtn = document.getElementById("menu-btn");
+  var menuOverlay = document.getElementById("menu-overlay");
+  var menuSheet = document.getElementById("menu-sheet");
+  var MENU_WIDTH = 880;
+  var navStowed = null;
+  var menuScrollY = 0;
+
+  /* The height the contents want, measured without the ceiling that
+     would otherwise cap the answer. */
+  function navNaturalHeight() {
+    var prev = roNav.style.maxHeight;
+    roNav.style.maxHeight = "none";
+    var h = roNav.scrollHeight;
+    roNav.style.maxHeight = prev;
+    return h;
+  }
+  function shouldStow() {
+    if (window.innerWidth <= MENU_WIDTH) return true;
+    return navNaturalHeight() > window.innerHeight * 0.8 - 28;
+  }
+
+  function setStowed(on, instant) {
+    if (on === navStowed) return;
+    navStowed = on;
+    if (on) {
+      function land() {
+        if (!navStowed) return;
+        roNav.classList.add("stowed");
+        menuBtn.classList.add("present");
+        document.body.classList.add("nav-compact");
+        /* Commit the display change with a forced layout rather than
+           waiting for a frame. A window resized while this tab sits in
+           the background paints nothing, and a queued frame would leave
+           the button invisible until someone looked at it again. */
+        void menuBtn.offsetWidth;
+        menuBtn.classList.add("visible");
+        menuBtnTint();
+      }
+      if (instant) { land(); return; }
+      roNav.classList.add("fading");
+      setTimeout(land, 260);
+    } else {
+      closeMenu();
+      menuBtn.classList.remove("visible");
+      document.body.classList.remove("nav-compact");
+      setTimeout(function () {
+        if (!navStowed) menuBtn.classList.remove("present");
+      }, 260);
+      roNav.classList.remove("stowed");
+      if (instant) { roNav.classList.remove("fading"); return; }
+      void roNav.offsetWidth;
+      roNav.classList.remove("fading");
+    }
+  }
+
+  /* Built at open time from the current order, so the menu always lists
+     the manual as it now reads. */
+  function buildMenu() {
+    menuSheet.textContent = "";
+    var title = document.createElement("div");
+    title.className = "menu-title";
+    title.textContent = "Contents";
+    menuSheet.appendChild(title);
+    roGroups().forEach(function (g) {
+      Array.prototype.forEach.call(g.querySelectorAll("a"), function (a) {
+        var link = document.createElement("a");
+        link.href = a.getAttribute("href");
+        link.textContent = a.textContent;
+        if (a.classList.contains("sub")) link.className = "sub";
+        menuSheet.appendChild(link);
+      });
+    });
+  }
+
+  function openMenu() {
+    if (!menuOverlay.hidden) return;
+    buildMenu();
+    /* Freeze the page where it stands. Pinning the body and offsetting
+       it by the scroll position holds the background still even where
+       overflow alone would not. */
+    menuScrollY = window.scrollY;
+    document.body.style.top = (-menuScrollY) + "px";
+    document.body.classList.add("menu-open");
+    menuOverlay.hidden = false;
+    menuBtn.setAttribute("aria-expanded", "true");
+    void menuOverlay.offsetWidth;
+    menuOverlay.classList.add("showing");
+  }
+
+  function closeMenu(goTo) {
+    if (menuOverlay.hidden) return;
+    menuOverlay.classList.remove("showing");
+    menuBtn.setAttribute("aria-expanded", "false");
+    setTimeout(function () {
+      if (!menuOverlay.classList.contains("showing")) menuOverlay.hidden = true;
+    }, 240);
+    document.body.classList.remove("menu-open");
+    document.body.style.top = "";
+    window.scrollTo(0, menuScrollY);
+    if (goTo) {
+      var el = document.getElementById(goTo);
+      if (el) setTimeout(function () {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 0);
+    }
+  }
+
+  /* The button carries no plate, so its lines take their colour from
+     whatever is behind them: white over the hero, ink over the page. */
+  function menuBtnTint() {
+    var hero = document.querySelector(".hero");
+    if (!hero || !menuBtn) return;
+    menuBtn.classList.toggle("on-dark",
+      hero.getBoundingClientRect().bottom > menuBtn.getBoundingClientRect().bottom);
+  }
+
+  if (menuBtn && menuOverlay && menuSheet) {
+    window.addEventListener("scroll", menuBtnTint, { passive: true });
+    menuBtn.addEventListener("click", function () {
+      if (menuOverlay.hidden) openMenu(); else closeMenu();
+    });
+    menuSheet.addEventListener("click", function (e) {
+      var a = e.target.closest("a");
+      if (!a) return;
+      /* Navigate after the freeze lifts, so the destination is reached
+         from a page that can scroll. */
+      e.preventDefault();
+      closeMenu((a.getAttribute("href") || "").replace(/^#/, ""));
+    });
+    menuOverlay.addEventListener("click", function (e) {
+      if (e.target === menuOverlay) closeMenu();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeMenu();
+    });
+    var menuResize = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(menuResize);
+      menuResize = setTimeout(function () { setStowed(shouldStow()); }, 120);
+    });
+    setStowed(shouldStow(), true);
+  }
 
   /* ================= Concept glossary =================
      At most one alert per concept, on its first instance, and only when
@@ -782,7 +1863,7 @@
   var tip = document.createElement("div");
   tip.className = "term-tip";
   document.body.appendChild(tip);
-  var tipSpan = null, overTerm = false, overTip = false, tipTimer = null;
+  var tipSpan = null, overTerm = false, overTip = false;
   function positionTip(span) {
     var r = span.getBoundingClientRect();
     var tw = tip.offsetWidth, th = tip.offsetHeight;
@@ -793,7 +1874,6 @@
     tip.style.top = top + "px";
   }
   function showTip(span) {
-    clearTimeout(tipTimer);
     tipSpan = span;
     var t = TERMS[span.dataset.term];
     tip.textContent = "";
@@ -804,21 +1884,22 @@
     tip.classList.add("visible");
     positionTip(span);
   }
-  function hideTipSoon() {
-    clearTimeout(tipTimer);
-    tipTimer = setTimeout(function () {
-      if (!overTerm && !overTip) {
-        tip.classList.remove("visible");
-        tipSpan = null;
-      }
-    }, 3000);
+  /* The dissolve begins the moment the cursor leaves the word. Moving
+     onto the alert catches it and reverses the fade from wherever it
+     had reached, rather than restarting it. */
+  function hideTip() {
+    if (overTerm || overTip) return;
+    tip.classList.remove("visible");
   }
   termRoot.querySelectorAll(".term").forEach(function (span) {
     span.addEventListener("mouseenter", function () { overTerm = true; showTip(span); });
-    span.addEventListener("mouseleave", function () { overTerm = false; hideTipSoon(); });
+    span.addEventListener("mouseleave", function () { overTerm = false; hideTip(); });
   });
-  tip.addEventListener("mouseenter", function () { overTip = true; clearTimeout(tipTimer); });
-  tip.addEventListener("mouseleave", function () { overTip = false; hideTipSoon(); });
+  tip.addEventListener("mouseenter", function () {
+    overTip = true;
+    if (tipSpan) tip.classList.add("visible");
+  });
+  tip.addEventListener("mouseleave", function () { overTip = false; hideTip(); });
   window.addEventListener("scroll", function () {
     if (tipSpan && tip.classList.contains("visible")) positionTip(tipSpan);
   }, true);

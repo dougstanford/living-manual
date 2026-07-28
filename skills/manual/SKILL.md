@@ -1,14 +1,17 @@
 ---
 name: manual
-description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", or when the pre-push guard reports the manual is stale.
+description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", when the pre-push guard reports the manual is stale, or when a <reorder> or <recopy> payload from the manual needs applying.
 ---
 
 # The living manual
 
 One HTML file, self-contained, brand-styled, interactive: clickable
 headings file notes that become tickets, roadmap previews show planned
-changes, a glossary explains novel concepts on first use. This skill
-builds it once, then keeps it matched to the released code.
+changes, a glossary explains novel concepts on first use, and readers
+rearrange the manual by dragging its contents or correct its prose in
+place. The browser keeps a reader's order and their edits; an optional
+payload makes either one committed. This skill builds it once, then
+keeps it matched to the released code.
 
 All prose you generate follows `reference/writing-style.md` in this
 plugin. Read it before writing any manual content. It is binding.
@@ -234,7 +237,15 @@ Default destination is the manual's path with `_prod.html` in place of
 queue (`TICKETS` and `QUEUE_SYNC` travel inside the file, so a
 distributed copy carrying them would publish the backlog and name the
 tracker), and the roadmap previews, which describe work that has not
-shipped. The glossary and all prose stay.
+shipped. It also drops the two surfaces that write back to the repo:
+editing the prose and rearranging the contents. An outside reader has
+no repo to commit to, and an affordance that cannot finish what it
+starts is worse than none.
+
+The glossary and all prose stay, and so does the responsive layout: a
+distributed copy still moves between the sidebar and the compact menu
+with the window, because that is how it is read rather than how it is
+changed.
 
 Never hand-edit an export, and never commit one: it is a build artifact
 regenerated from the manual, and the maintained manual is the only
@@ -245,6 +256,50 @@ The pre-push hook calls this flow by name
 (`claude -p "/living-manual:manual update"`), so keep the update path
 non-interactive: no questions unless the diff is genuinely ambiguous,
 and then fail with a clear message rather than guessing.
+
+## Revising the copy
+
+The manual's prose is editable in the browser. A reader's edits live in
+their own storage until they press Commit copy, which produces a
+`<recopy>` block naming the manual, followed by a fenced JSON payload
+of `{"edits": [{"key", "original", "new"}]}`. Write that JSON to a file
+and apply it:
+
+```
+python3 $LM/scripts/recopy.py <manual_path> payload.json
+```
+
+It replaces each passage by exact match and writes nothing unless every
+entry checks out, so a payload lands whole or not at all. Never retype
+the prose by hand; the script exists so the edit that lands is the one
+the reader made. Then `verify.py` must print OK. Do not re-stamp the
+base and do not add a What's new entry: the reader changed wording, not
+behaviour.
+
+A refusal is information, not a failure to work around. "No longer in
+the file" means the manual moved on after the edit, so the reader
+should redo it against current wording. "Appears more than once" means
+the passage is not distinctive enough to place. Surface either message
+rather than guessing which paragraph was meant.
+
+## Reordering sections
+
+A reader rearranges the manual by dragging entries in its contents
+panel; the browser persists their order with no further step. Making
+an order the committed one is the optional path: the copy affordance
+produces a `<reorder>` payload naming the manual and the ordered
+section ids. Applying it is mechanical:
+
+```
+python3 $LM/scripts/reorder.py <manual_path> <id ...>
+```
+
+The script moves the section blocks and their TOC link groups and
+touches nothing else. Then `verify.py` must print OK. Do not re-stamp
+the base and do not add a What's new entry: no code moved and no prose
+changed, only the order of whole sections. The script refuses an id
+set that does not match the manual's sections; surface its message
+rather than guessing.
 
 ## Rules
 

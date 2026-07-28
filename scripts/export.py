@@ -13,6 +13,11 @@ What comes out:
   - no note-filing path, and no affordance advertising one
   - no TICKETS and no QUEUE_SYNC, in any form
   - no roadmap previews (they describe work that has not shipped)
+  - no editing and no rearranging: both write back to a repository the
+    outside reader does not have, so the export keeps neither the
+    caret nor the contents handle
+  - the responsive layout intact, sidebar and compact menu both, so a
+    distributed copy reads on whatever it is opened on
   - the glossary intact, because it generates nothing and only makes
     the document easier to read
   - one manual-export comment naming the version and source commit,
@@ -184,8 +189,8 @@ def main():
     open(dest, "w").write(src)
     ensure_ignored(dest, manual)
     print("exported:", dest)
-    print("  removed: note filing, queue, roadmap previews")
-    print("  kept:    glossary, navigation, all prose")
+    print("  removed: note filing, queue, roadmap previews, editing, reordering")
+    print("  kept:    glossary, responsive navigation, all prose")
     print("Static copy. Regenerate it rather than editing it.")
 
 if __name__ == "__main__":
