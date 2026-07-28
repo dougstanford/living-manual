@@ -1425,6 +1425,57 @@
 
   function copyKeyFor(el) { return copyKeys.get(el); }
 
+  /* ---- the contents follow the headings ----
+     A table of contents entry is a pointer to a heading, so renaming
+     the heading renames the entry. That makes it a copy edit and never
+     a reorder: the section keeps its place and its id, and only the
+     label changes, so Commit TOC stays out of it.
+
+     An entry drops the heading's trailing period, which is the
+     convention the authored contents already follow. */
+  var copyTocOriginals = {};
+
+  function headingAnchor(el) {
+    if (el.tagName === "H3") return el.id || null;
+    if (el.tagName === "H2") {
+      var s = el.closest("section[id]");
+      return s ? s.id : null;
+    }
+    return null;
+  }
+  /* Matched by attribute rather than by selector: an id is authored
+     text, and a selector would have to escape it correctly. */
+  function tocLinkFor(anchor) {
+    if (!anchor || !roNav) return null;
+    var links = roNav.querySelectorAll("a"), want = "#" + anchor;
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].getAttribute("href") === want) return links[i];
+    }
+    return null;
+  }
+  function tocLabelFor(el) {
+    var c = el.cloneNode(true);
+    Array.prototype.forEach.call(
+      c.querySelectorAll(".note-pill, .preview-btn"), function (n) {
+        n.parentNode.removeChild(n);
+      });
+    return c.textContent.replace(/\s+/g, " ").trim().replace(/\.+$/, "");
+  }
+  /* The entry becomes a function of the heading, so calling this after
+     any exit from edit mode is enough: staged edits carry through, and
+     an abandoned one reverts with the words it reverted to. An empty
+     label is refused rather than blanking the entry. */
+  function syncTocFor(el) {
+    if (el.tagName !== "H2" && el.tagName !== "H3") return null;
+    var anchor = headingAnchor(el);
+    var link = tocLinkFor(anchor);
+    if (!link) return null;
+    var label = tocLabelFor(el);
+    if (!label) return null;
+    if (link.textContent !== label) link.textContent = label;
+    return { anchor: anchor, label: label };
+  }
+
   function copyPersist() {
     copyHandedOff = false;
     try {
@@ -1447,6 +1498,8 @@
     copyKeys.set(el, k);
     copyOriginals[k] = copySerialize(el);
     copyOuter[k] = copySerializeOuter(el);
+    var anchor = headingAnchor(el), link = tocLinkFor(anchor);
+    if (link) copyTocOriginals[anchor] = link.textContent;
   });
 
   (function restoreCopy() {
@@ -1470,7 +1523,12 @@
       }
       if (entry.original !== copyOriginals[k]) { stale++; return; }
       el.innerHTML = entry.edited;
-      if (el.tagName === "H2" || el.tagName === "H3") addNotePill(el);
+      if (el.tagName === "H2" || el.tagName === "H3") {
+        addNotePill(el);
+        /* A restored heading brings its entry with it, so a reopened
+           manual reads the same as the one that was left. */
+        syncTocFor(el);
+      }
       copyEdits[k] = entry;
       applied++;
     });
@@ -1563,8 +1621,20 @@
       return;
     }
     var now = copySerialize(el);
+    var toc = syncTocFor(el);
     if (now === copyOriginals[k]) delete copyEdits[k];
-    else copyEdits[k] = { original: copyOriginals[k], edited: now };
+    else {
+      var entry = { original: copyOriginals[k], edited: now };
+      /* Carried alongside the heading's own edit, so the file's entry
+         is renamed by the same commit that renames the heading. */
+      if (toc && typeof copyTocOriginals[toc.anchor] === "string"
+          && copyTocOriginals[toc.anchor] !== toc.label) {
+        entry.toc = { anchor: toc.anchor,
+                      original: copyTocOriginals[toc.anchor],
+                      edited: toc.label };
+      }
+      copyEdits[k] = entry;
+    }
     copyPersist();
     if (el.blur) el.blur();
   }
@@ -1625,6 +1695,7 @@
       var edits = Object.keys(copyEdits).map(function (k) {
         var e = { key: k, original: copyEdits[k].original, new: copyEdits[k].edited };
         if (copyEdits[k].remove) e.remove = true;
+        if (copyEdits[k].toc) e.toc = copyEdits[k].toc;
         return e;
       });
       var payload = [
@@ -1640,6 +1711,9 @@
         "JSON above to a file and apply it with scripts/recopy.py, which",
         "replaces each original with its replacement and refuses any that",
         "no longer matches the file. Do not retype the prose by hand.",
+        "An edit carrying a toc field renamed a heading; the script",
+        "renames that contents entry in the same pass. Section order is",
+        "untouched, so do not run reorder.py for it.",
         "Then verify must print OK."
       ].join("\n");
       roHandOff(payload, "slot-copy", "said-copy", "copy-payload", function () {
