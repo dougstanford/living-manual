@@ -45,9 +45,12 @@
   .hero .asof { margin-top: 30px; font-size: 0.8rem; opacity: 0.75; }
   .frame { max-width: 1020px; margin: 0 auto; padding: 0 48px; }
   .layout { display: flex; gap: 56px; align-items: flex-start; padding-top: 56px; }
-  nav.toc { position: sticky; top: 28px; width: 218px; flex-shrink: 0;
+  /* Rides along in flow until scrolling would carry it past a fifth of
+     the way down the frame, then holds there. The height allows for the
+     offset so a long contents list still ends on screen. */
+  nav.toc { position: sticky; top: 20vh; width: 218px; flex-shrink: 0;
     font-size: 0.84rem; border: 1px solid var(--line); border-radius: 16px;
-    padding: 18px 20px; max-height: calc(100vh - 56px); overflow-y: auto; }
+    padding: 18px 20px; max-height: calc(80vh - 28px); overflow-y: auto; }
   nav.toc .toc-title { font-size: 0.68rem; text-transform: uppercase;
     letter-spacing: 0.09em; color: var(--muted); margin-bottom: 10px; }
   nav.toc a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
