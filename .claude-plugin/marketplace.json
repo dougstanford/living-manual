@@ -7,7 +7,7 @@
     {
       "name": "living-manual",
       "source": "./",
-      "description": "Branded, interactive, self-maintaining user's manuals with a note-to-ticket pipeline and optional Jira or GitHub Issues sync."
+      "description": "Branded, interactive user's manuals that stay true to the code. Headings file notes that become developer tickets, optionally synced to Jira or GitHub Issues. Readers drag the contents to reorder sections and edit the prose in place, with both kept in their browser until a payload writes them back to the file. Roadmap previews show planned changes, a glossary explains new concepts on first use, and a push-time guard blocks releases that would leave the manual behind."
     }
   ]
 }
