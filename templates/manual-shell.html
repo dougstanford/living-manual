@@ -322,7 +322,8 @@
      network call when opened, so a reader is always looking at the last
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
-  var QUEUE_SYNC = { at: "", provider: "none" };
+  /* Keys quoted: verify.py reads this block as JSON. */
+  var QUEUE_SYNC = { "at": "", "provider": "none" };
   /*@/QUEUESYNC*/
 
   /*@TICKETS*/

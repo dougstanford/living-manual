@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: cb224f8 -->
+<!-- manual-base: 2444eea -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
-     a98fc76b3cc2f875327995d62953085fa955fe9c skills/
-     fbeb243c4a93dec172742d8eca3d00d91c1ce142 scripts/
-     38231b65877c016bf0c65f6f9d4e1b279dd43d3b templates/
+     2207defa2a0b8a140f1220c287179a37257fe5be skills/
+     2b7216ae8e11dcf724fd64846b70b7e18dae3175 scripts/
+     e936f7db76d25c953b68edacfefd090889d78ca8 templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -232,7 +232,7 @@
     <div class="lockup"><span>living-manual</span></div>
     <h1>A user's manual that stays true to the code.</h1>
     <span class="tagpill">One file · Interactive · Never stale</span>
-    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">July 27, 2026 (v0.3.0)</span></div>
+    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">July 27, 2026</span></div>
   </div>
 </header>
 
@@ -277,8 +277,11 @@
 
   <section id="get-the-plugin">
     <h2>Get the plugin.</h2>
-    <p>living-manual runs inside Claude Code. Clone the repo, then point a
-    session at it:</p>
+    <p>living-manual runs inside Claude Code. Add the repo as a marketplace
+    and install:</p>
+    <pre class="cmd">/plugin marketplace add dougstanford/living-manual
+/plugin install living-manual@living-manual</pre>
+    <p>Or clone the repo and point a session at the checkout:</p>
     <pre class="cmd">git clone https://github.com/dougstanford/living-manual.git
 claude --plugin-dir /path/to/living-manual</pre>
     <p>In any repo you want documented, run
@@ -710,6 +713,24 @@ claude --plugin-dir /path/to/living-manual</pre>
     <h2>What's new.</h2>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
     <div class="release">
+      <div class="date">v0.3.1 · July 27, 2026</div>
+      <p>The first run now ends the way setup says it does: with a manual
+      that verifies. A freshly scaffolded manual carried a queue stamp
+      written in a form the verifier would not read, so the last step of
+      setup reported a finding in a file the user had not touched. Repos
+      that already ran setup never saw it; the first queue rebuild rewrote
+      the stamp correctly, which is why this repo's own manual hid the
+      fault. New scaffolds now verify as built.</p>
+      <p>Setup's glossary payload works as documented. The instructions
+      said <code>summary</code>; the sync script demanded a different key
+      and stopped with an error when given the documented one. It now
+      accepts both. A malformed defining-context entry also reads as one
+      clear finding naming the mistake, where before it dissolved into a
+      cascade of nonsense findings, one per character.</p>
+      <p class="small muted">Also in this release: install by marketplace
+      command, above, and the license names its author.</p>
+    </div>
+    <div class="release">
       <div class="date">v0.3.0 · July 27, 2026</div>
       <p>The manual can now be handed out. Everything that makes it useful to
       the people maintaining the code — notes on every heading, the queue, the
@@ -904,8 +925,8 @@ claude --plugin-dir /path/to/living-manual</pre>
 <script>
 (function () {
   "use strict";
-  var MANUAL_VERSION = "July 27, 2026 (v0.3.0)";
-  var MANUAL_BASE = "cb224f8";
+  var MANUAL_VERSION = "July 27, 2026";
+  var MANUAL_BASE = "2444eea";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -920,7 +941,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 01:24 UTC",
+  "at": "2026-07-28 02:06 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/

@@ -183,8 +183,8 @@ Choose them from the inventory; confirm with the user.
 - Build the data payload as JSON and apply it:
   `python3 $LM/scripts/sync-index.py <manual_path> payload.json` with
   `glossary` (novel concepts: id, label, pattern, flags, summary),
-  `defined` (each concept's defining context: `sec:<id>` or
-  `h3:<id-or-heading-slug>`), `previews` (roadmapped work from the
+  `defined` (each concept's id mapped to a **list** of defining
+  contexts, each `sec:<id>` or `h3:<id-or-heading-slug>`), `previews` (roadmapped work from the
   project's plans, with `.preview-btn` icons placed inline where each
   applies), `tickets` (empty at first), and `asof`.
 - Verify: `python3 $LM/scripts/verify.py <manual_path>` must print OK.

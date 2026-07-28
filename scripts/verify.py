@@ -134,6 +134,12 @@ def main():
         for k, ctxs in defined.items():
             if gloss_ids and k not in gloss_ids:
                 f.append("DEFINED_IN key %s has no glossary entry" % k)
+            if not isinstance(ctxs, list):
+                # A bare string would iterate per character below and
+                # bury the real mistake under nonsense findings.
+                f.append("DEFINED_IN %s: value must be a list of contexts, "
+                         "got %s" % (k, type(ctxs).__name__))
+                continue
             for c in ctxs:
                 if not (c.startswith("sec:") or c.startswith("h3:")):
                     f.append("DEFINED_IN %s: bad context %s" % (k, c))
