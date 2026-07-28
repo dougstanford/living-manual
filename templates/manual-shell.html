@@ -74,7 +74,7 @@
     background-size: 10px 1.5px; background-repeat: no-repeat;
     background-origin: content-box; background-clip: content-box;
     background-position: 0 0, 0 3.25px, 0 6.5px; }
-  .toc-handle:hover { color: var(--accent); opacity: 1; }
+  .toc-handle.on { color: var(--accent); opacity: 1; }
   /* Held, not ghosted: the entry the reader is moving is the real one,
      lifted above the rest while they choose where it lands. */
   .toc-group.dragging { z-index: 5;
@@ -82,6 +82,8 @@
     box-shadow: 0 8px 22px rgba(0,0,0,0.16); }
   .toc-group.dragging .toc-handle { cursor: grabbing; opacity: 1; }
   body.ro-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+/*@EXPORT-DROP*/
+  /* The commit affordance, which no export carries. */
   .ro-actions { overflow: hidden; max-height: 0; opacity: 0;
     transition: max-height 0.25s ease, opacity 0.25s ease; }
   .ro-actions.showing { max-height: 260px; opacity: 1; }
@@ -97,6 +99,7 @@
     border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px;
     margin-top: 8px; max-height: 160px; overflow: auto; white-space: pre-wrap;
     user-select: text; -webkit-user-select: text; }
+/*@/EXPORT-DROP*/
   main { flex: 1; min-width: 0; padding-bottom: 96px; }
   section { margin-bottom: 64px; }
   h2 { font-weight: 300; font-size: 1.9rem; margin-bottom: 18px; scroll-margin-top: 24px; }
@@ -289,14 +292,13 @@
   <div class="toc-title">Contents</div>
   <div class="toc-hint">Drag a handle to rearrange the manual.</div>
   <!-- SLOT: TOC — one <a href="#id"> per section, .sub for subsections -->
-  <div class="ro-actions" id="ro-actions">
-    <button type="button" class="ro-btn" id="ro-reset">Restore authored order</button>
 <!--@EXPORT-DROP-->
-    <button type="button" class="ro-btn primary" id="ro-copy">Make this the committed order</button>
+  <div class="ro-actions" id="ro-actions">
+    <button type="button" class="ro-btn primary" id="ro-copy">Commit TOC</button>
     <pre class="ro-pre" id="ro-payload" hidden></pre>
-<!--@/EXPORT-DROP-->
     <div class="ro-note" id="ro-note"></div>
   </div>
+<!--@/EXPORT-DROP-->
 </nav>
 
 <main>
@@ -814,8 +816,8 @@
      exactly and let every motion stay interruptible. */
   var roNav = document.querySelector("nav.toc");
   var roMain = document.querySelector("main");
+  /* Both are absent from an export, which carries no write-back. */
   var roActions = document.getElementById("ro-actions");
-  var roResetBtn = document.getElementById("ro-reset");
   var roNoteEl = document.getElementById("ro-note");
   /* Keyed by path, not by a maintained-copy variable: exports persist a
      reader's arrangement the same way. */
@@ -920,11 +922,9 @@
       if (changed) localStorage.setItem(RO_KEY, JSON.stringify(roOrder()));
       else localStorage.removeItem(RO_KEY);
     } catch (e) { /* private mode: the order lives for this session */ }
-    roActions.classList.toggle("showing", changed);
-    if (changed) {
-      roNoteEl.textContent = "Saved in this browser; applies every time you open the manual.";
-    } else {
-      roNoteEl.textContent = "";
+    if (roActions) roActions.classList.toggle("showing", changed);
+    if (!changed) {
+      if (roNoteEl) roNoteEl.textContent = "";
       var pre = document.getElementById("ro-payload");
       if (pre) pre.hidden = true;
     }
@@ -950,6 +950,27 @@
   var roDrag = null;
   var RO_THRESHOLD = 4;
 
+  /* The handle's visibility is driven here rather than by :hover. A
+     group that moves under a resting cursor keeps a stale hover state
+     until the pointer moves again, which left the entry just dropped
+     still showing its handle. Tracking movement instead has no such
+     gap: the drop darkens every handle, and the next movement lights
+     whichever one the cursor is genuinely over. */
+  var roLit = null;
+  function roLightHandle(h) {
+    if (roLit === h) return;
+    if (roLit) roLit.classList.remove("on");
+    if (h) h.classList.add("on");
+    roLit = h;
+  }
+  roNav.addEventListener("pointermove", function (e) {
+    if (roDrag && roDrag.held) return;
+    roLightHandle(e.target.closest(".toc-handle"));
+  });
+  roNav.addEventListener("pointerleave", function () {
+    if (!(roDrag && roDrag.held)) roLightHandle(null);
+  });
+
   roNav.addEventListener("pointerdown", function (e) {
     /* The handle is the grab point, so a click anywhere on an entry is
        still just a link. */
@@ -971,6 +992,7 @@
       try { d.el.setPointerCapture(d.id); } catch (err) {}
       d.el.classList.add("dragging");
       document.body.classList.add("ro-dragging");
+      roLightHandle(d.el.querySelector(".toc-handle"));
     }
     e.preventDefault();
     var el = d.el;
@@ -1017,6 +1039,10 @@
       el.style.transition = "";
       el.classList.remove("dragging");
       el.removeEventListener("transitionend", done);
+      /* The dropped entry lets go of its handle rather than holding it
+         lit; a nudge of the mouse brings back whichever one is under
+         the cursor. */
+      roLightHandle(null);
     }
     el.addEventListener("transitionend", done);
     setTimeout(done, 300);
@@ -1037,11 +1063,6 @@
      document rather than snapping. */
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && roDrag && roDrag.held) roRelease(false);
-  });
-
-  roResetBtn.addEventListener("click", function () {
-    roApplyGroups(RO_AUTHORED, true);
-    roApplySections(RO_AUTHORED, true);
   });
 
 /*@EXPORT-DROP*/
