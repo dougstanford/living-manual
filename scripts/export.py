@@ -135,6 +135,15 @@ def notice(src):
         src = src.replace("<main>", "<main>\n" + block, 1)
     return src
 
+def inside(path, root):
+    """True when path is under root. Both are resolved first, so a
+    symlinked temp dir is not mistaken for a path outside the tree."""
+    path, root = os.path.realpath(path), os.path.realpath(root)
+    try:
+        return os.path.commonpath([path, root]) == root
+    except ValueError:  # different drives, or otherwise incomparable
+        return False
+
 def ensure_ignored(dest, manual):
     """Keep the export out of git.
 
@@ -142,6 +151,12 @@ def ensure_ignored(dest, manual):
     document to keep current, and the point is that there is only ever
     one. Says nothing when git already ignores it, however that was
     arranged, so a repo with its own rule is not second-guessed.
+
+    Does nothing at all for an export written outside the working tree.
+    git will never see that file, so .gitignore has no say over it, and
+    check-ignore's "not ignored" answer there means "not in this repo"
+    rather than "no rule yet" — acting on it appends a rule the repo
+    already has, every time anyone exports elsewhere.
     """
     repo = os.path.dirname(os.path.abspath(manual)) or "."
     top = subprocess.run(["git", "-C", repo, "rev-parse", "--show-toplevel"],
@@ -149,12 +164,21 @@ def ensure_ignored(dest, manual):
     if top.returncode != 0:
         return
     root = top.stdout.strip()
+    if not inside(os.path.abspath(dest), root):
+        return
     ignored = subprocess.run(["git", "-C", root, "check-ignore", "-q",
                               os.path.abspath(dest)], capture_output=True)
     if ignored.returncode == 0:
         return
     path = os.path.join(root, ".gitignore")
     rule = "*_prod.html"
+    try:
+        with open(path) as fh:
+            if any(line.strip() == rule for line in fh):
+                return  # the rule is there; check-ignore declined for
+                        # some other reason (a later negation, say)
+    except OSError:
+        pass  # no .gitignore yet; the append below creates one
     with open(path, "a") as fh:
         fh.write("\n# living-manual: static exports are build artifacts,\n"
                  "# regenerated at release rather than committed.\n%s\n" % rule)
