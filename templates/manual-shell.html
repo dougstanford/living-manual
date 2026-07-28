@@ -219,7 +219,13 @@
   .note-pill:hover { color: var(--accent); border-color: var(--accent); }
   /* No frame around the block being edited. The blinking caret is the
      signal; a border would only fence off the words being read. The
-     hint sits under the contents in plain body type, no box. */
+     browser draws its own focus ring on an editable block, which is
+     the blue box, and it only shows while the window has focus, so it
+     has to be turned off explicitly rather than merely not added. */
+  [contenteditable="true"], [contenteditable="true"]:focus,
+  [contenteditable="true"]:focus-visible {
+    outline: none; box-shadow: none; }
+  /* The hint sits under the contents in plain body type, no box. */
   .edit-hint { position: fixed; bottom: 5vh; z-index: 45;
     font-size: 0.84rem; line-height: 1.5; color: var(--muted);
     pointer-events: none; opacity: 0; transition: opacity 0.16s ease; }
