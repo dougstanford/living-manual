@@ -92,6 +92,9 @@
     color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 0.74rem;
     font-family: inherit; cursor: pointer; margin-top: 8px;
     transition: border-color 0.25s ease, color 0.25s ease; }
+  /* An author display wins over the hidden attribute, so a button
+     marked hidden kept rendering and both were showing at once. */
+  .ro-btn[hidden] { display: none; }
   .ro-btn:hover { border-color: var(--accent); color: var(--accent); }
   .ro-btn.primary { border-color: var(--accent); color: var(--accent); }
   .ro-slot { transition: opacity 0.2s ease; }
