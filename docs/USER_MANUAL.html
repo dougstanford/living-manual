@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 2dde2ca -->
+<!-- manual-base: c1102c0 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
-     a21607205c6f9b36d4c4a6d7175b1bbf97030b4b skills/
+     060c8a411815129bbcecf5e38788484071db165b skills/
      32bd78521ebe1fafbea5e305b0bd049366092ec8 scripts/
-     3d95da59ea617d1a537a8a59a8d85f7140470aa4 templates/
+     a622a2299cb770f58937833aaa1b158ae1116d0f templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -59,35 +59,44 @@
   nav.toc a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
   nav.toc a:hover { color: var(--accent); }
   nav.toc a.sub { padding-left: 14px; color: var(--muted); font-size: 0.8rem; }
-  /* ---- reorder mode: the TOC becomes a drag list. Styled with its own
-     classes (not .btn) because reordering survives in exports and the
-     .btn styles do not. ---- */
-  .ro-toggle { display: block; width: 100%; margin: 0 0 10px; border: 1px solid var(--line);
-    background: transparent; color: var(--muted); border-radius: 999px;
-    padding: 4px 12px; font-size: 0.74rem; font-family: inherit; cursor: pointer;
-    transition: border-color 0.25s ease, color 0.25s ease; }
-  .ro-toggle:hover, nav.toc.reordering .ro-toggle { border-color: var(--accent); color: var(--accent); }
-  nav.toc.reordering > a { display: none; }
-  .ro-list, .ro-actions { display: none; }
-  nav.toc.reordering .ro-list, nav.toc.reordering .ro-actions { display: block; }
-  .ro-item { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line);
-    border-radius: 10px; padding: 6px 10px; margin-bottom: 6px; font-size: 0.8rem;
-    background: var(--surface); cursor: grab; user-select: none; -webkit-user-select: none; }
-  .ro-item.dragging { opacity: 0.45; }
-  .ro-handle { color: var(--muted); font-size: 0.9rem; }
-  .ro-label { flex: 1; }
-  .ro-arrows { display: flex; flex-direction: column; gap: 2px; }
-  .ro-arrow { border: 1px solid var(--line); background: transparent; color: var(--muted);
-    border-radius: 6px; font-size: 0.55rem; line-height: 1; padding: 2px 5px;
-    cursor: pointer; font-family: inherit; }
-  .ro-arrow:hover { color: var(--accent); border-color: var(--accent); }
+  /* ---- reorder: the contents are the drag surface. A top-level entry
+     and its subsections wrap into a .toc-group at load; drag the group
+     and the manual follows on release. Styled with its own classes (not
+     .btn) because reordering survives in exports and .btn does not. ---- */
+  .toc-hint { font-size: 0.62rem; color: var(--muted); opacity: 0.8;
+    margin: -6px 0 10px; }
+  .toc-group { position: relative; border-radius: 8px; padding-left: 16px; }
+  /* Three lines, and the only grab point. It fades in for its own hover
+     only, so reading the contents never lights anything up. The box is
+     padded well past the lines: the target stays easy to catch inside
+     the gutter while the drawn icon stays small. */
+  .toc-handle { position: absolute; left: -2px; top: 3px; width: 10px; height: 8px;
+    box-sizing: content-box; padding: 6px 4px;
+    color: var(--muted); opacity: 0; cursor: grab; touch-action: none;
+    transition: opacity 0.4s ease, color 0.2s ease;
+    background-image: linear-gradient(currentColor, currentColor),
+                      linear-gradient(currentColor, currentColor),
+                      linear-gradient(currentColor, currentColor);
+    background-size: 10px 1.5px; background-repeat: no-repeat;
+    background-origin: content-box; background-clip: content-box;
+    background-position: 0 0, 0 3.25px, 0 6.5px; }
+  .toc-handle:hover { color: var(--accent); opacity: 1; }
+  /* Held, not ghosted: the entry the reader is moving is the real one,
+     lifted above the rest while they choose where it lands. */
+  .toc-group.dragging { z-index: 5;
+    background: color-mix(in srgb, var(--ink) 8%, var(--surface));
+    box-shadow: 0 8px 22px rgba(0,0,0,0.16); }
+  .toc-group.dragging .toc-handle { cursor: grabbing; opacity: 1; }
+  body.ro-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+  .ro-actions { overflow: hidden; max-height: 0; opacity: 0;
+    transition: max-height 0.25s ease, opacity 0.25s ease; }
+  .ro-actions.showing { max-height: 260px; opacity: 1; }
   .ro-btn { display: block; width: 100%; border: 1px solid var(--line); background: transparent;
     color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 0.74rem;
     font-family: inherit; cursor: pointer; margin-top: 8px;
     transition: border-color 0.25s ease, color 0.25s ease; }
   .ro-btn:hover { border-color: var(--accent); color: var(--accent); }
   .ro-btn.primary { border-color: var(--accent); color: var(--accent); }
-  .ro-btn:disabled { opacity: 0.45; cursor: default; pointer-events: none; }
   .ro-note { font-size: 0.7rem; color: var(--muted); margin-top: 8px; }
   .ro-pre { font-family: ui-monospace, Menlo, monospace; font-size: 0.62rem;
     line-height: 1.5; background: color-mix(in srgb, var(--ink) 6%, transparent);
@@ -176,11 +185,15 @@
 
   .term { text-decoration: underline dotted color-mix(in srgb, var(--ink) 38%, transparent);
     text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: help; }
+  /* Quick in, soft out: the dissolve starts the instant the cursor
+     leaves the term, and re-entering reverses it from wherever it is. */
   .term-tip { position: fixed; z-index: 60; max-width: 340px; background: var(--deep);
     color: var(--surface); border-radius: 12px; padding: 11px 15px;
     font-size: 0.82rem; line-height: 1.55; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    opacity: 0; visibility: hidden; transition: opacity 0.15s ease, visibility 0.15s ease; }
-  .term-tip.visible { opacity: 1; visibility: visible; }
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+  .term-tip.visible { opacity: 1; visibility: visible;
+    transition: opacity 0.12s ease, visibility 0s; }
   .term-tip b { display: block; margin-bottom: 3px; font-size: 0.72rem;
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
     color: var(--caution); }
@@ -189,11 +202,15 @@
   .overlay { position: fixed; inset: 0; z-index: 50;
     background: color-mix(in srgb, var(--deep) 55%, transparent);
     display: flex; align-items: flex-start; justify-content: center;
-    padding: 11vh 24px 24px; overflow-y: auto; }
+    padding: 11vh 24px 24px; overflow-y: auto;
+    opacity: 0; transition: opacity 0.18s ease; }
+  .overlay.showing { opacity: 1; }
   .overlay[hidden] { display: none; }
   .modal { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
     border-radius: 18px; width: 560px; max-width: 100%; padding: 26px 30px 24px;
-    box-shadow: 0 18px 50px rgba(0,0,0,0.3); }
+    box-shadow: 0 18px 50px rgba(0,0,0,0.3);
+    transform: translateY(8px) scale(0.985); transition: transform 0.18s ease; }
+  .overlay.showing .modal { transform: none; }
   .modal-label { font-size: 0.68rem; text-transform: uppercase;
     letter-spacing: 0.09em; color: var(--muted); margin-bottom: 6px; }
   .modal h3 { margin: 0 0 14px; font-weight: 600; font-size: 1.12rem; }
@@ -258,6 +275,10 @@
     nav.toc { position: static; width: 100%; max-height: none; }
     .frame, .hero { padding-left: 24px; padding-right: 24px; }
   }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    html { scroll-behavior: auto; }
+  }
 </style>
 </head>
 <body>
@@ -276,17 +297,7 @@
 
 <nav class="toc">
   <div class="toc-title">Contents</div>
-  <button type="button" class="ro-toggle" id="ro-toggle"
-    title="Drag the sections into a new order; the manual follows as you go.">⇅ Reorder sections</button>
-  <div class="ro-list" id="ro-list"></div>
-  <div class="ro-actions">
-    <button type="button" class="ro-btn" id="ro-reset" disabled>Restore authored order</button>
-<!--@EXPORT-DROP-->
-    <button type="button" class="ro-btn primary" id="ro-copy" disabled>Copy new order for Claude Code</button>
-    <pre class="ro-pre" id="ro-payload" hidden></pre>
-<!--@/EXPORT-DROP-->
-    <div class="ro-note" id="ro-note"></div>
-  </div>
+  <div class="toc-hint">Drag a handle to rearrange the manual.</div>
   <a href="#get-the-plugin">Get the plugin</a>
   <a href="#the-manual">One file that stays true</a>
   <a class="sub" href="#reorder">Arrange it your way</a>
@@ -305,6 +316,14 @@
   <a class="sub" href="#ci-check">The same check on the server</a>
   <a href="#reference">Reference</a>
   <a href="#whats-new">What's new</a>
+  <div class="ro-actions" id="ro-actions">
+    <button type="button" class="ro-btn" id="ro-reset">Restore authored order</button>
+<!--@EXPORT-DROP-->
+    <button type="button" class="ro-btn primary" id="ro-copy">Make this the committed order</button>
+    <pre class="ro-pre" id="ro-payload" hidden></pre>
+<!--@/EXPORT-DROP-->
+    <div class="ro-note" id="ro-note"></div>
+  </div>
 </nav>
 
 <main>
@@ -316,9 +335,10 @@
     bug against that section. A ▶ icon marks a feature with roadmapped
     changes; click it to preview the planned state. Terms with a dotted
     underline show a short definition on hover, once, before the manual
-    explains them in full. <span class="pill">⇅ Reorder sections</span> in
-    the contents panel rearranges the manual live; copy the result to make
-    it the committed order.</p>
+    explains them in full. Every entry in the contents panel has a handle
+    in its left margin, which appears when your cursor reaches it; drag
+    the handle to rearrange the manual, and your browser keeps that order
+    for every visit.</p>
     <p class="small" style="margin-bottom:0">Notes copy as a payload for a
     Claude Code session, which writes the developer ticket. Nothing leaves
     this file until you paste.</p>
@@ -362,21 +382,26 @@ claude --plugin-dir /path/to/living-manual</pre>
 
     <h3 id="reorder">Arrange it your way.</h3>
     <p>The order a manual is written in is one author's best guess at how it
-    should be read. Reorder mode lets a reader test a better one. Click
-    <span class="pill">⇅ Reorder sections</span> in the contents panel and
-    every top-level section becomes a card in one list, the whole index
-    visible at once. Drag a card, or step it with the arrows, and the manual
-    follows as you move: the sections travel, the contents follow, and
-    nothing waits for a save.</p>
-    <p>The file itself never changes from the browser. When the new order
-    reads better than the authored one, copy it: the payload names the
-    manual and the section order, and a Claude Code session applies it to
-    the committed file with <code>scripts/reorder.py</code>, which moves
-    whole sections and their contents entries and touches nothing else.
-    Restore authored order abandons the experiment.</p>
-    <p class="small muted">Exports keep reorder mode without the copy
-    button. An outside reader has no repo to write to, so their arrangement
-    lasts for the reading session.</p>
+    should be read. The contents panel lets you test a better one. Each
+    entry has a handle in its left margin, three short lines that fade in
+    when your cursor reaches them and stay out of the way the rest of the
+    time. Drag the handle and the entry moves with its subsections; the
+    contents show where it will land while the page holds still, and the
+    manual glides into the new arrangement when you let go. Change your
+    mind mid-drag and press Escape: everything slides back.</p>
+    <p>An arrangement keeps itself. Your browser stores the order and
+    reapplies it every time you open the manual, so there is nothing to
+    save and nothing to paste. Restore authored order, offered whenever
+    your order differs from the file's, puts everything back and clears
+    the stored arrangement.</p>
+    <p>The committed file never changes from the browser. To make your
+    order the one everyone opens, copy it: the payload hands the section
+    order to a Claude Code session, and <code>scripts/reorder.py</code>
+    moves whole sections and their contents entries in the file, touching
+    nothing else.</p>
+    <p class="small muted">Exports keep the drag and the browser-side
+    persistence, and lose the copy button. An outside reader has no repo
+    to write to.</p>
 
     <h3 id="export">Handing it out.</h3>
     <p>Everything above is built for the people who maintain the code. To
@@ -785,19 +810,25 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
     <div class="release">
       <div class="date">v0.4.0 · July 27, 2026</div>
-      <p>The manual's section order is now the reader's to challenge.
-      Reorder mode turns the contents panel into a drag list: every
-      top-level section as a card, the whole index in view at once, so an
-      ordering can be judged as a whole rather than one move at a time.
-      Drag a card and the real sections move with it, live, contents
-      included. Nothing waits for a save and nothing changes on disk.</p>
-      <p>An order worth keeping gets written back the way notes become
-      tickets: copy it, paste it into a Claude Code session, and the
-      session moves the sections in the committed file mechanically. Whole
-      blocks travel; prose is untouched; an order naming the wrong
-      sections is refused rather than guessed at. Exports keep the drag
-      and lose the copy button, since an outside reader has no repo to
-      write to.</p>
+      <p>The manual's section order is now the reader's to change. Each
+      entry in the contents panel has a handle in its left margin, which
+      fades in when the cursor reaches it; drag it and the entry moves
+      with its subsections. While you hold it the contents preview where
+      it will land and the page stays still, so nothing shifts under you
+      mid-decision. Release, and the sections glide into the new
+      arrangement. Movement is softened throughout:
+      sections slide instead of jumping, dialogs dissolve in and out, and
+      a glossary definition begins fading the moment the cursor leaves its
+      term. Interrupt any of it, with Escape or by moving back, and it
+      returns from wherever it had reached rather than snapping.</p>
+      <p>An arrangement needs no saving. The browser stores it and
+      reapplies it on every open. The committed file still never changes
+      from the browser: making an order everyone's takes the copy
+      affordance, which hands the order to a Claude Code session, and
+      <code>scripts/reorder.py</code> moves whole sections and their
+      contents entries, refusing an order that does not match the manual.
+      Exports keep the drag and the persistence and lose the copy
+      button.</p>
     </div>
     <div class="release">
       <div class="date">v0.3.1 · July 27, 2026</div>
@@ -1013,7 +1044,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 27, 2026";
-  var MANUAL_BASE = "2dde2ca";
+  var MANUAL_BASE = "c1102c0";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1028,7 +1059,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 02:37 UTC",
+  "at": "2026-07-28 03:06 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
@@ -1081,6 +1112,21 @@ claude --plugin-dir /path/to/living-manual</pre>
   /*@/DEFINED*/
 
 /*@EXPORT-DROP*/
+  /* Overlays dissolve in and out; a close during the fade-in reverses
+     it from wherever it is. hidden lands only after the fade finishes,
+     and only if nothing reopened meanwhile. */
+  function showOverlay(ov) {
+    ov.hidden = false;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { ov.classList.add("showing"); });
+    });
+  }
+  function hideOverlay(ov) {
+    ov.classList.remove("showing");
+    setTimeout(function () {
+      if (!ov.classList.contains("showing")) ov.hidden = true;
+    }, 200);
+  }
   function wireOverlay(overlay, onClose) {
     var began = false;
     overlay.addEventListener("mousedown", function (e) { began = e.target === overlay; });
@@ -1273,10 +1319,10 @@ claude --plugin-dir /path/to/living-manual</pre>
     revCopied = false;
     revCopyBtn.textContent = "Copy for Claude Code";
     revCopyAgain.hidden = true;
-    revOverlay.hidden = false;
+    showOverlay(revOverlay);
     revSummary.focus();
   }
-  function closeRev() { if (!revOverlay.hidden) revOverlay.hidden = true; }
+  function closeRev() { if (!revOverlay.hidden) hideOverlay(revOverlay); }
   wireOverlay(revOverlay, closeRev);
   document.getElementById("rev-cancel").addEventListener("click", closeRev);
 
@@ -1405,9 +1451,9 @@ claude --plugin-dir /path/to/living-manual</pre>
       (p.status === "In progress" ? "warn" : "accent") + "\">" + p.status + "</span>";
     prevBody.innerHTML = p.body;
     prevSrc.textContent = "Source: " + p.source;
-    prevOverlay.hidden = false;
+    showOverlay(prevOverlay);
   }
-  function closePrev() { if (!prevOverlay.hidden) prevOverlay.hidden = true; }
+  function closePrev() { if (!prevOverlay.hidden) hideOverlay(prevOverlay); }
   wireOverlay(prevOverlay, closePrev);
   document.getElementById("prev-close").addEventListener("click", closePrev);
   document.querySelectorAll(".preview-btn").forEach(function (btn) {
@@ -1457,168 +1503,258 @@ claude --plugin-dir /path/to/living-manual</pre>
   });
 /*@/EXPORT-DROP*/
 
-  /* ================= Reorder sections =================
-     The TOC becomes the drag surface: one card per top-level section,
-     the whole index visible at once. Moving a card moves the real
-     section as you drag, and the TOC links follow, so the result is
-     always live. The file itself never changes from the browser; the
-     copy button hands the order to a session that rewrites the file. */
+  /* ================= Reorder: drag the contents =================
+     The contents are the interface: each top-level entry wraps with its
+     subsections into one draggable group. While a group is held, only
+     the contents rearrange, so the reader previews the destination
+     without the page moving under them; the document follows on
+     release, sliding rather than jumping. The arrangement persists in
+     this browser and is reapplied on every open, so keeping an order
+     costs nothing. The committed file never changes from the browser.
+
+     Pointer events, not HTML5 drag-and-drop: the entries are links, and
+     a browser turns a dragged link into a native link-drag that fights
+     for the gesture. Pointers also let the held entry track the cursor
+     exactly and let every motion stay interruptible. */
   var roNav = document.querySelector("nav.toc");
-  var roToggle = document.getElementById("ro-toggle");
-  var roListEl = document.getElementById("ro-list");
+  var roMain = document.querySelector("main");
+  var roActions = document.getElementById("ro-actions");
   var roResetBtn = document.getElementById("ro-reset");
   var roNoteEl = document.getElementById("ro-note");
-  var roMain = document.querySelector("main");
+  /* Keyed by path, not by a maintained-copy variable: exports persist a
+     reader's arrangement the same way. */
+  var RO_KEY = "living-manual:order:" + location.pathname;
 
   function roSections() {
     return Array.prototype.filter.call(roMain.children, function (el) {
       return el.tagName === "SECTION" && el.id;
     });
   }
-  var RO_AUTHORED = roSections().map(function (s) { return s.id; });
+  function roOrder() { return roSections().map(function (s) { return s.id; }); }
+  var RO_AUTHORED = roOrder();
 
-  function roLabel(sec) {
-    var h = sec.querySelector("h2");
-    if (!h) return sec.id;
-    var t = h.childNodes[0] ? h.childNodes[0].textContent : h.textContent;
-    return t.trim().replace(/\.\s*$/, "");
-  }
-
-  /* TOC links group as: one top-level <a> plus its following .sub links. */
-  function roTocGroups() {
-    var groups = {}, current = null;
-    Array.prototype.forEach.call(roNav.querySelectorAll("a"), function (a) {
+  /* Wrap each top-level link and its .sub links into one group, so a
+     section's entry never separates from its subsections. */
+  (function () {
+    var current = null;
+    Array.prototype.slice.call(roNav.querySelectorAll("a")).forEach(function (a) {
+      a.draggable = false;
       if (a.classList.contains("sub")) {
-        if (current) current.els.push(a);
+        if (current) current.appendChild(a);
         return;
       }
-      var id = (a.getAttribute("href") || "").replace(/^#/, "");
-      current = { id: id, els: [a] };
-      groups[id] = current;
+      var g = document.createElement("div");
+      g.className = "toc-group";
+      g.dataset.sec = (a.getAttribute("href") || "").replace(/^#/, "");
+      var handle = document.createElement("span");
+      handle.className = "toc-handle";
+      handle.setAttribute("aria-hidden", "true");
+      a.parentNode.insertBefore(g, a);
+      g.appendChild(handle);
+      g.appendChild(a);
+      current = g;
     });
-    return groups;
+  })();
+  function roGroups() {
+    return Array.prototype.slice.call(roNav.querySelectorAll(".toc-group"));
+  }
+  function roGroupOrder() {
+    return roGroups().map(function (g) { return g.dataset.sec; });
   }
 
-  function roOrder() { return roSections().map(function (s) { return s.id; }); }
+  /* FLIP: capture, mutate, invert, play. Interrupting mid-slide is fine.
+     The capture reads live positions, so the next slide starts from
+     wherever an element actually is rather than snapping first. */
+  function roFlip(els, mutate, dur) {
+    var first = els.map(function (el) { return [el, el.getBoundingClientRect()]; });
+    mutate();
+    var moved = [];
+    first.forEach(function (pair) {
+      var el = pair[0], f = pair[1], l = el.getBoundingClientRect();
+      var dx = f.left - l.left, dy = f.top - l.top;
+      if (!dx && !dy) return;
+      el.style.transition = "none";
+      el.style.transform = "translate(" + dx + "px," + dy + "px)";
+      moved.push(el);
+    });
+    if (!moved.length) return;
+    void document.body.offsetHeight;
+    moved.forEach(function (el) {
+      el.style.transition = "transform " + dur + "ms ease";
+      el.style.transform = "";
+      el.addEventListener("transitionend", function done() {
+        el.style.transition = "";
+        el.removeEventListener("transitionend", done);
+      });
+    });
+  }
 
-  function roApply(order) {
+  function roApplyGroups(order, animate) {
+    var by = {};
+    roGroups().forEach(function (g) { by[g.dataset.sec] = g; });
+    var mutate = function () {
+      order.forEach(function (id) {
+        if (by[id]) roNav.insertBefore(by[id], roActions);
+      });
+    };
+    if (animate) roFlip(roGroups(), mutate, 200); else mutate();
+  }
+
+  function roApplySections(order, animate) {
     var by = {};
     roSections().forEach(function (s) { by[s.id] = s; });
-    order.forEach(function (id) { if (by[id]) roMain.appendChild(by[id]); });
-    var groups = roTocGroups();
-    order.forEach(function (id) {
-      var g = groups[id];
-      if (g) g.els.forEach(function (a) { roNav.appendChild(a); });
-    });
-    roUpdateActions();
+    var mutate = function () {
+      order.forEach(function (id) { if (by[id]) roMain.appendChild(by[id]); });
+    };
+    if (animate) roFlip(roSections(), mutate, 260); else mutate();
+    roAfterChange();
   }
 
   function roChanged() {
     var now = roOrder();
-    if (now.length !== RO_AUTHORED.length) return true;
     for (var i = 0; i < now.length; i++) {
       if (now[i] !== RO_AUTHORED[i]) return true;
     }
     return false;
   }
 
-  function roUpdateActions() {
+  function roAfterChange() {
     var changed = roChanged();
-    roResetBtn.disabled = !changed;
-    var copyBtn = document.getElementById("ro-copy");
-    if (copyBtn) copyBtn.disabled = !changed;
-    if (!changed) {
+    try {
+      if (changed) localStorage.setItem(RO_KEY, JSON.stringify(roOrder()));
+      else localStorage.removeItem(RO_KEY);
+    } catch (e) { /* private mode: the order lives for this session */ }
+    roActions.classList.toggle("showing", changed);
+    if (changed) {
+      roNoteEl.textContent = "Saved in this browser; applies every time you open the manual.";
+    } else {
       roNoteEl.textContent = "";
       var pre = document.getElementById("ro-payload");
       if (pre) pre.hidden = true;
     }
   }
 
-  function roBuildList() {
-    roListEl.textContent = "";
-    roSections().forEach(function (sec) {
-      var item = document.createElement("div");
-      item.className = "ro-item";
-      item.draggable = true;
-      item.dataset.sec = sec.id;
-      var handle = document.createElement("span");
-      handle.className = "ro-handle";
-      handle.textContent = "≡";
-      var label = document.createElement("span");
-      label.className = "ro-label";
-      label.textContent = roLabel(sec);
-      var arrows = document.createElement("span");
-      arrows.className = "ro-arrows";
-      [["▲", -1], ["▼", 1]].forEach(function (def) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.className = "ro-arrow";
-        b.textContent = def[0];
-        b.addEventListener("click", function () {
-          var sib = def[1] < 0 ? item.previousElementSibling : item.nextElementSibling;
-          if (!sib) return;
-          roListEl.insertBefore(item, def[1] < 0 ? sib : sib.nextElementSibling);
-          roApply(roListOrder());
-        });
-        arrows.appendChild(b);
-      });
-      item.appendChild(handle);
-      item.appendChild(label);
-      item.appendChild(arrows);
-      roListEl.appendChild(item);
-    });
-  }
+  /* Reapply this reader's saved arrangement before first interaction.
+     Sections added since (ids the saved order never saw) keep their
+     authored position after the ones it knows. */
+  (function () {
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(RO_KEY) || "null"); } catch (e) {}
+    if (!stored || !stored.length || typeof stored.slice !== "function") return;
+    var have = roOrder();
+    var known = stored.filter(function (id) { return have.indexOf(id) !== -1; });
+    if (!known.length) return;
+    var merged = known.concat(have.filter(function (id) {
+      return known.indexOf(id) === -1;
+    }));
+    roApplyGroups(merged, false);
+    roApplySections(merged, false);
+  })();
 
-  function roListOrder() {
-    return Array.prototype.map.call(roListEl.children, function (el) {
-      return el.dataset.sec;
-    });
-  }
+  var roDrag = null;
+  var RO_THRESHOLD = 4;
 
-  var roDragged = null;
-  roListEl.addEventListener("dragstart", function (e) {
-    var item = e.target.closest(".ro-item");
-    if (!item) return;
-    roDragged = item;
-    item.classList.add("dragging");
-    e.dataTransfer.effectAllowed = "move";
-    try { e.dataTransfer.setData("text/plain", item.dataset.sec); } catch (err) {}
+  roNav.addEventListener("pointerdown", function (e) {
+    /* The handle is the grab point, so a click anywhere on an entry is
+       still just a link. */
+    if (e.button !== 0 || !e.target.closest(".toc-handle")) return;
+    var g = e.target.closest(".toc-group");
+    if (!g) return;
+    roDrag = { el: g, id: e.pointerId, startY: e.clientY, held: false, dy: 0,
+               grab: e.clientY - g.getBoundingClientRect().top };
   });
-  roListEl.addEventListener("dragover", function (e) {
-    if (!roDragged) return;
+
+  window.addEventListener("pointermove", function (e) {
+    var d = roDrag;
+    if (!d || e.pointerId !== d.id) return;
+    if (!d.held) {
+      /* Below the threshold this is still a click, and the entry must
+         keep working as a link. */
+      if (Math.abs(e.clientY - d.startY) < RO_THRESHOLD) return;
+      d.held = true;
+      try { d.el.setPointerCapture(d.id); } catch (err) {}
+      d.el.classList.add("dragging");
+      document.body.classList.add("ro-dragging");
+    }
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    var over = e.target.closest(".ro-item");
-    if (!over || over === roDragged) return;
-    var r = over.getBoundingClientRect();
-    var after = e.clientY > r.top + r.height / 2;
-    roListEl.insertBefore(roDragged, after ? over.nextElementSibling : over);
-    /* The document follows the drag, not the drop: results are live. */
-    roApply(roListOrder());
+    var el = d.el;
+    var wantTop = e.clientY - d.grab;
+    function track() {
+      var layoutTop = el.getBoundingClientRect().top - d.dy;
+      d.dy = wantTop - layoutTop;
+      el.style.transform = "translateY(" + d.dy + "px)";
+    }
+    track();
+    /* Where would it land? Compare the held entry's centre against the
+       others and slide them aside as the answer changes. */
+    var centre = wantTop + el.offsetHeight / 2;
+    var others = roGroups().filter(function (g) { return g !== el; });
+    var ref = null;
+    for (var i = 0; i < others.length; i++) {
+      var r = others[i].getBoundingClientRect();
+      if (centre < r.top + r.height / 2) { ref = others[i]; break; }
+    }
+    var target = ref || roActions;
+    if (el.nextElementSibling !== target) {
+      roFlip(others, function () { roNav.insertBefore(el, target); }, 160);
+      /* The move changed the held entry's layout position; re-track so
+         it stays under the cursor rather than jumping. */
+      track();
+    }
   });
-  roListEl.addEventListener("drop", function (e) { e.preventDefault(); });
-  roListEl.addEventListener("dragend", function () {
-    if (roDragged) roDragged.classList.remove("dragging");
-    roDragged = null;
+
+  function roRelease(commit) {
+    var d = roDrag;
+    if (!d) return;
+    roDrag = null;
+    if (!d.held) return;
+    var el = d.el;
+    document.body.classList.remove("ro-dragging");
+    try { el.releasePointerCapture(d.id); } catch (err) {}
+    /* Settle into the slot rather than snapping to it. */
+    el.style.transition = "transform 0.18s ease";
+    el.style.transform = "";
+    var settled = false;
+    function done() {
+      if (settled) return;
+      settled = true;
+      el.style.transition = "";
+      el.classList.remove("dragging");
+      el.removeEventListener("transitionend", done);
+    }
+    el.addEventListener("transitionend", done);
+    setTimeout(done, 300);
+    if (commit) {
+      var pending = roGroupOrder();
+      if (pending.join() !== roOrder().join()) roApplySections(pending, true);
+    } else {
+      roApplyGroups(roOrder(), true);
+    }
+  }
+  window.addEventListener("pointerup", function (e) {
+    if (roDrag && e.pointerId === roDrag.id) roRelease(true);
+  });
+  window.addEventListener("pointercancel", function (e) {
+    if (roDrag && e.pointerId === roDrag.id) roRelease(false);
+  });
+  /* Escape abandons a drag in progress: the contents slide back to the
+     document rather than snapping. */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && roDrag && roDrag.held) roRelease(false);
   });
 
   roResetBtn.addEventListener("click", function () {
-    roApply(RO_AUTHORED);
-    roBuildList();
-  });
-
-  roToggle.addEventListener("click", function () {
-    var on = roNav.classList.toggle("reordering");
-    if (on) roBuildList();
-    roToggle.textContent = on ? "✓ Done reordering" : "⇅ Reorder sections";
-    roUpdateActions();
+    roApplyGroups(RO_AUTHORED, true);
+    roApplySections(RO_AUTHORED, true);
   });
 
 /*@EXPORT-DROP*/
-  /* Write-back: the new order becomes a payload for a Claude Code
-     session, which moves the sections in the committed file. Dropped
-     from exports along with the button: an outside reader has no repo
-     to write to, so their arrangement lives for the reading session. */
+  /* Write-back, optional: a reader's arrangement already persists in
+     their browser with no step at all. This is for making it the order
+     everyone opens. The payload crosses the browser-to-repo boundary
+     through a Claude Code session, because a page cannot write to the
+     repository and a git hook cannot read a browser's storage. Dropped
+     from exports: an outside reader has no repo to write to. */
   var roCopyBtn = document.getElementById("ro-copy");
   var roPayloadEl = document.getElementById("ro-payload");
   roCopyBtn.addEventListener("click", function () {
@@ -1628,14 +1764,14 @@ claude --plugin-dir /path/to/living-manual</pre>
       "manual: " + MANUAL_PATH,
       "order: " + roOrder().join(", "),
       "</reorder>", "",
-      "The reader rearranged the manual's sections in reorder mode.",
+      "The reader rearranged the manual's sections from the contents panel.",
       "Apply this order to the committed manual with scripts/reorder.py,",
       "which moves the sections and their TOC entries. Prose is untouched;",
       "verify must print OK."
     ].join("\n");
     roPayloadEl.textContent = payload;
     roPayloadEl.hidden = false;
-    roNoteEl.textContent = "Copied. Paste it into your Claude Code session to make this the committed order.";
+    roNoteEl.textContent = "Copied. Paste it into a Claude Code session to make this the committed order.";
     function roFallback() {
       var range = document.createRange();
       range.selectNodeContents(roPayloadEl);
@@ -1713,7 +1849,7 @@ claude --plugin-dir /path/to/living-manual</pre>
   var tip = document.createElement("div");
   tip.className = "term-tip";
   document.body.appendChild(tip);
-  var tipSpan = null, overTerm = false, overTip = false, tipTimer = null;
+  var tipSpan = null, overTerm = false, overTip = false;
   function positionTip(span) {
     var r = span.getBoundingClientRect();
     var tw = tip.offsetWidth, th = tip.offsetHeight;
@@ -1724,7 +1860,6 @@ claude --plugin-dir /path/to/living-manual</pre>
     tip.style.top = top + "px";
   }
   function showTip(span) {
-    clearTimeout(tipTimer);
     tipSpan = span;
     var t = TERMS[span.dataset.term];
     tip.textContent = "";
@@ -1735,21 +1870,22 @@ claude --plugin-dir /path/to/living-manual</pre>
     tip.classList.add("visible");
     positionTip(span);
   }
-  function hideTipSoon() {
-    clearTimeout(tipTimer);
-    tipTimer = setTimeout(function () {
-      if (!overTerm && !overTip) {
-        tip.classList.remove("visible");
-        tipSpan = null;
-      }
-    }, 3000);
+  /* The dissolve begins the moment the cursor leaves the word. Moving
+     onto the alert catches it and reverses the fade from wherever it
+     had reached, rather than restarting it. */
+  function hideTip() {
+    if (overTerm || overTip) return;
+    tip.classList.remove("visible");
   }
   termRoot.querySelectorAll(".term").forEach(function (span) {
     span.addEventListener("mouseenter", function () { overTerm = true; showTip(span); });
-    span.addEventListener("mouseleave", function () { overTerm = false; hideTipSoon(); });
+    span.addEventListener("mouseleave", function () { overTerm = false; hideTip(); });
   });
-  tip.addEventListener("mouseenter", function () { overTip = true; clearTimeout(tipTimer); });
-  tip.addEventListener("mouseleave", function () { overTip = false; hideTipSoon(); });
+  tip.addEventListener("mouseenter", function () {
+    overTip = true;
+    if (tipSpan) tip.classList.add("visible");
+  });
+  tip.addEventListener("mouseleave", function () { overTip = false; hideTip(); });
   window.addEventListener("scroll", function () {
     if (tipSpan && tip.classList.contains("visible")) positionTip(tipSpan);
   }, true);
