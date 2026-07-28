@@ -322,7 +322,15 @@
        long command in a code block would drag the whole page past the
        edge of the screen. */
     .layout { flex-direction: column; gap: 24px; align-items: stretch; }
-    nav.toc { position: static; width: 100%; max-height: none; }
+    /* The contents never render inline at this width. Left to the
+       script alone they would first land full-width above the body copy
+       and only then collapse, and that intermediate step reads as a
+       layout glitch. CSS takes them out on the same frame the width
+       changes, so the panel goes straight from its full size to the
+       menu, and the button is here from the first paint rather than
+       waiting for a measurement. */
+    nav.toc { display: none; }
+    .menu-btn { display: flex; opacity: 1; }
     .frame, .hero { padding-left: 24px; padding-right: 24px; }
     main { width: 100%; }
     /* Commands wrap instead of widening the page; a wide table scrolls
