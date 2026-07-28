@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# Static exports are build artifacts, regenerated at release. Committing
+# one would create a second document to keep current, and the whole
+# point is that there is only ever one.
+*_prod.html

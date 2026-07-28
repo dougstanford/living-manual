@@ -59,6 +59,28 @@ The pre-push hook blocks pushes whose user-facing commits postdate the
 manual's base commit, so the next dev always opens a manual that
 matches the release. Bypass once with `git push --no-verify`.
 
+## Handing the manual out
+
+The manual is built for the people who maintain the code. To distribute
+a release more widely, export a static copy:
+
+```bash
+python3 scripts/export.py docs/USER_MANUAL.html
+```
+
+That writes `docs/USER_MANUAL_prod.html` with the note-filing path gone,
+along with the affordances that advertise it, and the roadmap previews,
+which describe work that has not shipped. The glossary and all prose
+stay — they generate nothing and only make the document easier to read.
+
+The queue matters most here. `TICKETS` and `QUEUE_SYNC` live *inside*
+the file, so a distributed manual that kept them would publish your
+backlog and name your issue tracker to anyone who views source. The
+export carries neither, and verification fails if one survives.
+
+Exports are build artifacts: `.gitignore`d and regenerated at release,
+so there is only ever one document to keep current.
+
 ## The same guard in CI
 
 The hook lives in a clone, so it never sees a merge performed on
@@ -71,7 +93,7 @@ the plugin publishes itself as a composite action:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0        # the manual's base commit is usually far back
-- uses: dougstanford/living-manual@v0.2.9
+- uses: dougstanford/living-manual@v0.3.0
 ```
 
 The action reads `.living-manual.json` for the paths it needs; pass
@@ -89,7 +111,8 @@ skills/manual/    the builder and updater
 skills/ticket/    note → ticket (+ tracker sync)
 scripts/          state, inventory, staleness, hook install, ticket
                   numbering, tickets-index rebuild, data-block sync,
-                  scaffolding, static verification, the CI entry point
+                  scaffolding, static verification, the CI entry point,
+                  static export
 templates/        the interactive manual shell, CLAUDE.md snippet, and
                   the CI workflow setup installs
 reference/        writing style (binding) + maintenance checklist +

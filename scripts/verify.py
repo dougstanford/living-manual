@@ -38,10 +38,20 @@ def main():
     src = open(sys.argv[1]).read()
     f = []
 
+    # A static export declares itself, so verification applies the rules
+    # that fit what it is rather than faulting it for what was removed on
+    # purpose. The file carries the declaration rather than the caller
+    # passing a flag: the file outlives the command that made it, and a
+    # copy verified a year from now should still be judged correctly.
+    export = re.search(r"<!-- manual-export:[^>]*-->", src[:MARKER_BYTES])
+
     base = re.search(r"manual-base: ([0-9a-f]{6,})", src[:MARKER_BYTES])
-    if not base:
+    if not base and not export:
         f.append("no manual-base marker in the first %d bytes" % MARKER_BYTES)
-    elif shutil.which("git"):
+    elif base and export:
+        f.append("carries both a manual-export and a manual-base marker; an "
+                 "export must not keep the guard's marker")
+    elif base and shutil.which("git"):
         # The marker is a sha frozen in the file; amending or rebasing
         # after stamping orphans it and the guard breaks silently.
         repo_dir = os.path.dirname(os.path.abspath(sys.argv[1]))
@@ -79,13 +89,26 @@ def main():
 
     # Optional: manuals scaffolded before the queue stamp existed have
     # no such block, and that is not a fault. A present one must parse.
-    if "/*@/QUEUESYNC*/" in src:
+    if "/*@/QUEUESYNC*/" in src and not export:
         qsync, e = json_block(src, "QUEUESYNC", "QUEUE_SYNC"); f += e
         if qsync is not None and "provider" not in qsync:
             f.append("QUEUE_SYNC missing provider")
 
-    previews, e = json_block(src, "PREVIEWS", "PREVIEWS"); f += e
-    tickets, e = json_block(src, "TICKETS", "TICKETS"); f += e
+    # An export drops these three on purpose (queue data must not travel,
+    # and previews describe work that has not shipped). Their absence is
+    # the point, not a finding — but a damaged one still is.
+    if export:
+        previews = json_block(src, "PREVIEWS", "PREVIEWS")[0] if "/*@/PREVIEWS*/" in src else None
+        tickets = json_block(src, "TICKETS", "TICKETS")[0] if "/*@/TICKETS*/" in src else None
+        for name, present in (("TICKETS", tickets is not None),
+                              ("PREVIEWS", previews is not None),
+                              ("QUEUESYNC", "/*@/QUEUESYNC*/" in src)):
+            if present:
+                f.append("export still carries the %s block; it must not "
+                         "travel with a distributed copy" % name)
+    else:
+        previews, e = json_block(src, "PREVIEWS", "PREVIEWS"); f += e
+        tickets, e = json_block(src, "TICKETS", "TICKETS"); f += e
     defined, e = json_block(src, "DEFINED", "DEFINED_IN"); f += e
     gb = block(src, "GLOSSARY")
     if gb is None:

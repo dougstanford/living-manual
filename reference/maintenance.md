@@ -28,6 +28,11 @@ checklist form, for review before reporting done.
    previews open, note payload copies.
 9. Prose passes reference/writing-style.md. Em-dash count in new prose:
    zero.
+10. If a static copy goes out with this release, regenerate it:
+    `python3 $LM/scripts/export.py <manual_path>`. Never edit an export;
+    it is a build artifact, and the maintained manual is the only
+    document anyone keeps current. Regenerate after step 7, so the copy
+    carries the release's stamps rather than the previous one's.
 
 ## Enforcement principle
 
