@@ -399,7 +399,7 @@
 <header class="hero">
   <div class="hero-inner">
     <div class="lockup"><span>living-manual</span></div>
-    <h1>A user's manual that stays true to the code.</h1>
+    <h1>A user's manual and product oriented design platform.</h1>
     <span class="tagpill">One file · Interactive · Never stale</span>
     <div class="asof">User's manual · Reflects the app as of <span id="asof-date">2026-07-28</span></div>
   </div>
@@ -415,16 +415,16 @@
   <a class="sub" href="#edit-copy">Edit in the manual</a>
   <a class="sub" href="#reorder">Arrange it your way</a>
   <a class="sub" href="#export">Distribution</a>
-  <a href="#notes">Notes become tickets</a>
-  <a class="sub" href="#make-a-note">Making a note</a>
-  <a class="sub" href="#queue-check">The queue check</a>
-  <a href="#previews">Roadmap previews</a>
-  <a href="#glossary">The concept glossary</a>
-  <a href="#ticket-skill">The ticket skill</a>
-  <a class="sub" href="#completeness-gate">The completeness gate</a>
   <a href="#flows">Setup and updates</a>
   <a class="sub" href="#first-run">First run</a>
   <a class="sub" href="#update-flow">Every run after</a>
+  <a href="#previews">Roadmap previews</a>
+  <a href="#notes">Make a note</a>
+  <a class="sub" href="#make-a-note">Leaving feedback</a>
+  <a class="sub" href="#queue-check">The work queue</a>
+  <a href="#ticket-skill">The ticket skill</a>
+  <a class="sub" href="#completeness-gate">The completeness gate</a>
+  <a href="#glossary">The concept glossary</a>
   <a href="#guard">The staleness guard</a>
   <a class="sub" href="#ci-check">The same check on the server</a>
   <a href="#reference">Reference</a>
@@ -451,17 +451,10 @@
   <div class="callout tip manual-meta">
     <p><b>This manual is interactive.</b> Hover any heading and click
     <span class="pill">✎ make a note</span> to file an idea, feedback, or
-    a bug against that section. Click a ▶ icon to preview the planned
+    a bug against that section. Click any ▶ icon to preview the planned
     state of a feature with roadmapped changes. Hover a term with a
-    dotted underline to see a short definition, shown once, before the
-    manual explains it in full. Drag the handle in a contents entry's
-    left margin to rearrange the manual, and your browser keeps that
-    order for every visit. Click into any line of prose to correct it,
-    then press Enter to save your edit. On a screen too small to hold the
-    contents, tap the menu button in the upper left to reach them.</p>
-    <p class="small" style="margin-bottom:0">Notes copy as a payload for a
-    Claude Code session, which writes the developer ticket. Nothing leaves
-    this file until you paste.</p>
+    dotted underline to see a short definition. Drag the handles in the table of contents to rearrange the manual. Click into any line of copy to correct it,
+    then press Enter to save your edit. Edits are local to your workstation until you commit the copy and/or TOC ordering with the generated prompt in a fresh Claude Code session.</p>
   </div>
 
   <section id="get-the-plugin">
@@ -565,47 +558,88 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p>Run this to strip the interactive functionality and export for
     production:</p>
     <pre class="cmd">python3 scripts/export.py docs/USER_MANUAL.html</pre>
-    <p>That writes a second file, <code>USER_MANUAL_prod.html</code>, with the
-    note-filing path removed along with the affordances that advertise it.
-    Headings stop offering notes rather than offering them and doing nothing.
-    Roadmap previews go too, because they describe work that has not shipped
-    and that is rarely what you want to hand outside the team. The glossary
-    and every word of prose stay: the glossary generates nothing, and removing
-    it would only make the copy harder to read.</p>
-    <p>The export drops editing and rearranging too. Both end at a
-    payload for a Claude Code session with this repo checked out, which
-    a reader outside the team does not have. An exported copy carries no
-    caret and no handle in the contents.</p>
-    <p>The responsive layout survives. An export shows the sidebar at
-    full width and swaps it for the menu button when the window is too
-    narrow or too short to hold the contents whole.</p>
-    <p>The queue is not drawn from a server; it lives inside the file. A
-    distributed manual that kept it would publish your backlog and name
-    your issue tracker to anyone who opened the source, whether or not
-    anything on screen showed it. The export carries no ticket and no
-    tracker name, and verification fails if any survived.</p>
-    <p>In place of the base marker, an export carries a line naming the
-    version and commit it was built from. That line is how verification
-    recognises an export and applies the right rules to it. The guard's
-    marker is left out: an export is not kept current, so a staleness
-    answer it cannot maintain would be wrong rather than missing.</p>
+    <p>This creates a second file, <code>USER_MANUAL_prod.html</code>, with note-filing and TOC reordering removed.
+The glossary, roadmap, and responsive design are preserved in the exported manual. In place of the base marker, an export contains a version line.</p>
     <p class="small muted">Exports are build artifacts. Git ignores them
     and they are regenerated at release, so only the maintained manual
     has to be kept true.</p>
   </section>
 
+  <section id="flows">
+    <h2>Setup and updates.</h2>
+
+    <h3 id="first-run">First run.</h3>
+    <p>Install the plugin (<code>claude --plugin-dir /path/to/living-manual</code>,
+    or add the repo as a marketplace) and run
+    <code>/living-manual:manual</code> in your repo. Setup walks six steps,
+    each landing on disk, so an interrupted run resumes where it stopped:</p>
+    <ol>
+      <li>Orientation: the codebase is inventoried and the full feature
+        map is printed in the reply for you to read. You confirm or
+        correct what's on screen before a word of the manual is
+        written.</li>
+      <li>Brand: palette, type, and voice are read from your brand assets.
+        Without any, a neutral palette stands in and is noted for a later
+        pass.</li>
+      <li>Tracker: optional. Setup detects the usable providers (Jira via
+        the Atlassian MCP, GitHub Issues via the gh CLI), prints your
+        project's existing labels, milestones, and issue types, and
+        proposes a mapping built from them. Nothing new is created without
+        your confirmation.</li>
+      <li>Config: <code>.living-manual.json</code> at the repo root records
+        all of it.</li>
+      <li>Wiring: the pre-push guard installs, CLAUDE.md gains the update
+        instruction, and the tickets directory is created.</li>
+      <li>Build: the shell is scaffolded, the prose written, and the result
+        verified before it's reported done.</li>
+    </ol>
+
+    <h3 id="update-flow">Every run after.</h3>
+    <p><code>/living-manual:manual update</code> diffs reality against the
+    manual: it lists the user-facing commits since the base marker, revises
+    only the sections those changes touch, appends a dated entry to What's
+    new, and re-stamps the marker. A manual already matching the code says so
+    and stops.</p>
+    <p>Shipped roadmap items lose their previews; the content moves into the
+    section and What's new. New concepts enter the glossary with their
+    defining passage recorded.</p>
+
+    <h3 id="config-file">The config file.</h3>
+    <p><code>.living-manual.json</code> holds the product identity, paths,
+    brand, and tracker settings. The <code>user_facing_paths</code> list decides
+    which commits count against freshness: changes elsewhere (CI, tests,
+    internal tooling) never block a push. Config keys, under Reference,
+    lists every key.</p>
+  </section>
+
+  <section id="previews">
+    <h2>Roadmap previews.</h2>
+    <p>A preview shows the planned state of a feature whose current shape
+    is already being replaced, so a note files against the plan rather
+    than behavior that is on its way out.</p>
+    <p>A <button type="button" class="preview-btn" data-preview="demo-preview" data-demo="1" aria-label="Open the demonstration preview"><svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M1 0l8 5-8 5z" fill="currentColor"/></svg></button>
+    icon sits wherever a plan exists. Click it (the one in this sentence
+    works) to see the planned state, its status, and the roadmap source it
+    comes from.</p>
+    <p>A note on a previewed item files against the plan. The note modal
+    says so and scopes the payload accordingly. An icon inside a heading locks that whole section to
+    its plan. An icon inline in a sentence offers its item as an optional
+    target.</p>
+    <p class="muted small">This repo has no roadmapped work today, so the icon
+    above opens a demonstration and doesn't rescope notes on this section.</p>
+  </section>
+
   <section id="notes">
-    <h2>Notes become tickets.</h2>
-    <p>Every heading is a feedback surface. A note filed from a heading
-    carries that heading's section, anchor, and code commit into the
+    <h2>Make a note.</h2>
+    <p>You can provide feedback on the design of a feature, report a bug, or submit an idea by making a note on any header in the manual. A note filed from a heading
+    includes that heading's section, anchor, and code commit into the
     ticket written from it.</p>
 
-    <h3 id="make-a-note">Making a note.</h3>
+    <h3 id="make-a-note">Leaving feedback.</h3>
     <p>Hover any heading and click <span class="pill">✎ make a note</span>.
     Pick a type: an idea for something new, feedback on how a feature behaves,
     or a bug. Write one line on what should change, and as much detail as you
-    have. The placeholder text tells you what a useful report of that type
-    contains.</p>
+    have.</p>
     <p>Press <span class="pill accent">Copy for Claude Code</span> to
     build a structured payload: your note plus the section, its anchor,
     the manual version, the commit the manual reflects, and instructions
@@ -615,7 +649,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     session in this repo and the session writes the ticket. Nothing is
     sent anywhere; the manual only copies text to your clipboard.</p>
 
-    <h3 id="queue-check">The queue check.</h3>
+    <h3 id="queue-check">The work queue.</h3>
     <p>The note modal lists the tickets already queued for the section you are
     annotating, with the rest of the queue one click deeper. If you
     recognize your request in the list, mark it as yours. The payload then
@@ -623,7 +657,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     its requirements absorb the new information, and no twin is
     created.</p>
     <p>The queue is not only what's on disk. An issue can exist at the tracker
-    with no ticket file behind it: filed straight in the web UI, or written on
+    with no ticket file locally: filed straight in the web UI, or written on
     a branch that never merged. The index asks the configured tracker for its
     open issues and folds in any the local files don't reference, marked
     <em>at the tracker, no local ticket yet</em>. Filing against one of those
@@ -665,34 +699,6 @@ claude --plugin-dir /path/to/living-manual</pre>
     answers first; a thin note is never padded into false precision.</p>
     <p>Tickets land in <code>docs/tickets/</code>, and the queue index in this
     file updates so the next reader's queue check sees them.</p>
-  </section>
-
-  <section id="previews">
-    <h2>Roadmap previews.</h2>
-    <p>A preview shows the planned state of a feature whose current shape
-    is already being replaced, so a note files against the plan rather
-    than behavior that is on its way out.</p>
-    <p>A <button type="button" class="preview-btn" data-preview="demo-preview" data-demo="1" aria-label="Open the demonstration preview"><svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M1 0l8 5-8 5z" fill="currentColor"/></svg></button>
-    icon sits wherever a plan exists. Click it (the one in this sentence
-    works) to see the planned state, its status, and the roadmap source it
-    comes from.</p>
-    <p>A note on a previewed item files against the plan. The note modal
-    says so and scopes the payload accordingly. An icon inside a heading locks that whole section to
-    its plan. An icon inline in a sentence offers its item as an optional
-    target.</p>
-    <p class="muted small">This repo has no roadmapped work today, so the icon
-    above opens a demonstration and doesn't rescope notes on this section.</p>
-  </section>
-
-  <section id="glossary">
-    <h2>The concept glossary.</h2>
-    <p>Product-novel terms carry a dotted underline and a hover definition
-    the first time they appear.</p>
-    <p>One alert fires per concept, on its first instance only, and only
-    when that instance falls before the passage that defines the concept
-    in full. Once the manual has explained a term, the alerts stop.</p>
-    <p>Each entry records where its definition lives, so when prose moves
-    during an update, the alert boundary moves with it.</p>
   </section>
 
   <section id="ticket-skill">
@@ -754,51 +760,15 @@ claude --plugin-dir /path/to/living-manual</pre>
     against it.</p>
   </section>
 
-  <section id="flows">
-    <h2>Setup and updates.</h2>
-
-    <h3 id="first-run">First run.</h3>
-    <p>Install the plugin (<code>claude --plugin-dir /path/to/living-manual</code>,
-    or add the repo as a marketplace) and run
-    <code>/living-manual:manual</code> in your repo. Setup walks six steps,
-    each landing on disk, so an interrupted run resumes where it stopped:</p>
-    <ol>
-      <li>Orientation: the codebase is inventoried and the full feature
-        map is printed in the reply for you to read. You confirm or
-        correct what's on screen before a word of the manual is
-        written.</li>
-      <li>Brand: palette, type, and voice are read from your brand assets.
-        Without any, a neutral palette stands in and is noted for a later
-        pass.</li>
-      <li>Tracker: optional. Setup detects the usable providers (Jira via
-        the Atlassian MCP, GitHub Issues via the gh CLI), prints your
-        project's existing labels, milestones, and issue types, and
-        proposes a mapping built from them. Nothing new is created without
-        your confirmation.</li>
-      <li>Config: <code>.living-manual.json</code> at the repo root records
-        all of it.</li>
-      <li>Wiring: the pre-push guard installs, CLAUDE.md gains the update
-        instruction, and the tickets directory is created.</li>
-      <li>Build: the shell is scaffolded, the prose written, and the result
-        verified before it's reported done.</li>
-    </ol>
-
-    <h3 id="update-flow">Every run after.</h3>
-    <p><code>/living-manual:manual update</code> diffs reality against the
-    manual: it lists the user-facing commits since the base marker, revises
-    only the sections those changes touch, appends a dated entry to What's
-    new, and re-stamps the marker. A manual already matching the code says so
-    and stops.</p>
-    <p>Shipped roadmap items lose their previews; the content moves into the
-    section and What's new. New concepts enter the glossary with their
-    defining passage recorded.</p>
-
-    <h3 id="config-file">The config file.</h3>
-    <p><code>.living-manual.json</code> holds the product identity, paths,
-    brand, and tracker settings. The <code>user_facing_paths</code> list decides
-    which commits count against freshness: changes elsewhere (CI, tests,
-    internal tooling) never block a push. Config keys, under Reference,
-    lists every key.</p>
+  <section id="glossary">
+    <h2>The concept glossary.</h2>
+    <p>Product-novel terms carry a dotted underline and a hover definition
+    the first time they appear.</p>
+    <p>One alert fires per concept, on its first instance only, and only
+    when that instance falls before the passage that defines the concept
+    in full. Once the manual has explained a term, the alerts stop.</p>
+    <p>Each entry records where its definition lives, so when prose moves
+    during an update, the alert boundary moves with it.</p>
   </section>
 
   <section id="guard">
@@ -856,7 +826,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     behind HEAD, and a shallow checkout reports a good marker as broken.
     The check recognises that case and says so rather than sending you to
     re-stamp a marker that was fine.</p>
-    <p>A failure names the offending commits and the command that fixes
+    <p>A failure identifies the offending commits and the command that fixes
     them. The scripts need no model, so the server can find the problem;
     writing the manual still happens in a session.</p>
     <div class="callout">
