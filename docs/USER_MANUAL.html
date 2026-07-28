@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: c24d84c -->
+<!-- manual-base: f2a7456 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
-     deb946e6f85372206a758e6b3fd3355d466658c0 skills/
-     1d9f796bf67382743902beaca8664b3f96a5a521 scripts/
-     1b32b0d1a4096f4ef57da510c9b425105941f185 templates/
+     26f8f05298901415174839f2febe816332964e63 skills/
+     3fdad69d05c0846ff70d41fc5a003ed9f8d9fb18 scripts/
+     df25b49111d92e4147cbca11ac62fe23e25a0890 templates/
      5815883b88becd59d5fe274f3ff895531961cd88 reference/
 -->
 <!--
@@ -411,7 +411,7 @@
   <a href="#the-manual">One file that stays true</a>
   <a class="sub" href="#edit-copy">Fix a line as you read it</a>
   <a class="sub" href="#reorder">Arrange it your way</a>
-  <a class="sub" href="#export">Handing it out</a>
+  <a class="sub" href="#export">Distribution</a>
   <a href="#notes">Notes become tickets</a>
   <a class="sub" href="#make-a-note">Making a note</a>
   <a class="sub" href="#queue-check">The queue check</a>
@@ -511,6 +511,13 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p>Filing a note is the pill's job, not the whole heading's, so the
     words of a heading can be corrected without a modal opening over
     them.</p>
+    <p>Renaming a heading renames its entry in the table of contents.
+    The entry is a pointer to the heading, so it follows when you leave
+    edit mode, dropping the trailing period the contents already omit.
+    This counts as a copy edit. The section keeps its place and its id,
+    so <span class="pill">Commit TOC</span> stays out of it, and
+    committing the copy renames the entry in the file alongside the
+    heading.</p>
     <p>Edits keep themselves in your browser and survive a refresh, and
     they change nothing in the file. When the wording is worth keeping
     for everyone, <span class="pill">Commit copy</span> appears beneath
@@ -1016,6 +1023,10 @@ claude --plugin-dir /path/to/living-manual</pre>
       <p>The table of contents now opens level with the callout beside
       it, and still anchors a fifth of the way down the window once
       scrolling carries it there.</p>
+      <p>Renaming a heading now renames its contents entry. The entry
+      follows the heading out of edit mode and is committed with it, as
+      a copy edit rather than a rearrangement, so a renamed section
+      keeps its place and its id.</p>
       <p>The style guide the plugin writes to now names its register. A
       manual is reference documentation, so the prose explains how
       something works, never narrates the reader or the document, and
@@ -1277,7 +1288,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "2026-07-28";
-  var MANUAL_BASE = "c24d84c";
+  var MANUAL_BASE = "f2a7456";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -2238,6 +2249,57 @@ claude --plugin-dir /path/to/living-manual</pre>
 
   function copyKeyFor(el) { return copyKeys.get(el); }
 
+  /* ---- the contents follow the headings ----
+     A table of contents entry is a pointer to a heading, so renaming
+     the heading renames the entry. That makes it a copy edit and never
+     a reorder: the section keeps its place and its id, and only the
+     label changes, so Commit TOC stays out of it.
+
+     An entry drops the heading's trailing period, which is the
+     convention the authored contents already follow. */
+  var copyTocOriginals = {};
+
+  function headingAnchor(el) {
+    if (el.tagName === "H3") return el.id || null;
+    if (el.tagName === "H2") {
+      var s = el.closest("section[id]");
+      return s ? s.id : null;
+    }
+    return null;
+  }
+  /* Matched by attribute rather than by selector: an id is authored
+     text, and a selector would have to escape it correctly. */
+  function tocLinkFor(anchor) {
+    if (!anchor || !roNav) return null;
+    var links = roNav.querySelectorAll("a"), want = "#" + anchor;
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].getAttribute("href") === want) return links[i];
+    }
+    return null;
+  }
+  function tocLabelFor(el) {
+    var c = el.cloneNode(true);
+    Array.prototype.forEach.call(
+      c.querySelectorAll(".note-pill, .preview-btn"), function (n) {
+        n.parentNode.removeChild(n);
+      });
+    return c.textContent.replace(/\s+/g, " ").trim().replace(/\.+$/, "");
+  }
+  /* The entry becomes a function of the heading, so calling this after
+     any exit from edit mode is enough: staged edits carry through, and
+     an abandoned one reverts with the words it reverted to. An empty
+     label is refused rather than blanking the entry. */
+  function syncTocFor(el) {
+    if (el.tagName !== "H2" && el.tagName !== "H3") return null;
+    var anchor = headingAnchor(el);
+    var link = tocLinkFor(anchor);
+    if (!link) return null;
+    var label = tocLabelFor(el);
+    if (!label) return null;
+    if (link.textContent !== label) link.textContent = label;
+    return { anchor: anchor, label: label };
+  }
+
   function copyPersist() {
     copyHandedOff = false;
     try {
@@ -2260,6 +2322,8 @@ claude --plugin-dir /path/to/living-manual</pre>
     copyKeys.set(el, k);
     copyOriginals[k] = copySerialize(el);
     copyOuter[k] = copySerializeOuter(el);
+    var anchor = headingAnchor(el), link = tocLinkFor(anchor);
+    if (link) copyTocOriginals[anchor] = link.textContent;
   });
 
   (function restoreCopy() {
@@ -2283,7 +2347,12 @@ claude --plugin-dir /path/to/living-manual</pre>
       }
       if (entry.original !== copyOriginals[k]) { stale++; return; }
       el.innerHTML = entry.edited;
-      if (el.tagName === "H2" || el.tagName === "H3") addNotePill(el);
+      if (el.tagName === "H2" || el.tagName === "H3") {
+        addNotePill(el);
+        /* A restored heading brings its entry with it, so a reopened
+           manual reads the same as the one that was left. */
+        syncTocFor(el);
+      }
       copyEdits[k] = entry;
       applied++;
     });
@@ -2376,8 +2445,20 @@ claude --plugin-dir /path/to/living-manual</pre>
       return;
     }
     var now = copySerialize(el);
+    var toc = syncTocFor(el);
     if (now === copyOriginals[k]) delete copyEdits[k];
-    else copyEdits[k] = { original: copyOriginals[k], edited: now };
+    else {
+      var entry = { original: copyOriginals[k], edited: now };
+      /* Carried alongside the heading's own edit, so the file's entry
+         is renamed by the same commit that renames the heading. */
+      if (toc && typeof copyTocOriginals[toc.anchor] === "string"
+          && copyTocOriginals[toc.anchor] !== toc.label) {
+        entry.toc = { anchor: toc.anchor,
+                      original: copyTocOriginals[toc.anchor],
+                      edited: toc.label };
+      }
+      copyEdits[k] = entry;
+    }
     copyPersist();
     if (el.blur) el.blur();
   }
@@ -2438,6 +2519,7 @@ claude --plugin-dir /path/to/living-manual</pre>
       var edits = Object.keys(copyEdits).map(function (k) {
         var e = { key: k, original: copyEdits[k].original, new: copyEdits[k].edited };
         if (copyEdits[k].remove) e.remove = true;
+        if (copyEdits[k].toc) e.toc = copyEdits[k].toc;
         return e;
       });
       var payload = [
@@ -2453,6 +2535,9 @@ claude --plugin-dir /path/to/living-manual</pre>
         "JSON above to a file and apply it with scripts/recopy.py, which",
         "replaces each original with its replacement and refuses any that",
         "no longer matches the file. Do not retype the prose by hand.",
+        "An edit carrying a toc field renamed a heading; the script",
+        "renames that contents entry in the same pass. Section order is",
+        "untouched, so do not run reorder.py for it.",
         "Then verify must print OK."
       ].join("\n");
       roHandOff(payload, "slot-copy", "said-copy", "copy-payload", function () {
