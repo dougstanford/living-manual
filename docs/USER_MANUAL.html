@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: f30e676 -->
+<!-- manual-base: c24d84c -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      deb946e6f85372206a758e6b3fd3355d466658c0 skills/
      1d9f796bf67382743902beaca8664b3f96a5a521 scripts/
      1b32b0d1a4096f4ef57da510c9b425105941f185 templates/
-     35831b3152bef0f79d4c420be8048b4e2cb69281 reference/
+     5815883b88becd59d5fe274f3ff895531961cd88 reference/
 -->
 <!--
   Maintained by the living-manual plugin. Do not hand-edit the script's
@@ -473,9 +473,9 @@
     <pre class="cmd">git clone https://github.com/dougstanford/living-manual.git
 claude --plugin-dir /path/to/living-manual</pre>
     <p>In any repo you want documented, run
-    <code>/living-manual:manual</code> and answer the setup questions. You
-    get a page like this one: your product, your brand, your code. The rest
-    of this manual explains what that page does.</p>
+    <code>/living-manual:manual</code> and answer the setup questions. The
+    result is a page like this one, carrying your product, your brand, and
+    your code.</p>
     <p class="small muted">Requires git and python3. Tracker sync needs the
     Atlassian MCP (Jira) or the gh CLI (GitHub Issues).</p>
   </section>
@@ -489,28 +489,26 @@ claude --plugin-dir /path/to/living-manual</pre>
     no external assets: it opens in any browser and travels with the repo.
     This copy lives at <code>docs/USER_MANUAL.html</code> and documents the
     plugin itself, built by the plugin.</p>
-    <p>Three parts keep it honest. A base marker records the commit the manual
-    last matched. A pre-push guard blocks releases that would leave the manual
-    behind. And an update flow reads only what changed since the marker and
-    revises only the sections those changes touched.</p>
-    <p>Reading it is also writing it. Headings take notes that become
-    developer tickets. Features with planned changes carry roadmap previews,
-    so feedback lands on the plan instead of the past. A queue check shows
-    what's already filed, so duplicates become additions. The rest of this
-    manual walks each of those surfaces.</p>
+    <p>Three parts hold the manual to the code. A base marker records the
+    commit the manual last matched. A pre-push guard blocks releases that
+    would leave the manual behind. An update flow reads only what changed
+    since the marker and revises only the sections those changes
+    touched.</p>
+    <p>The manual is also a feedback surface. Headings take notes that
+    become developer tickets. Features with planned changes carry roadmap
+    previews, so feedback lands on the plan instead of the past. A queue
+    check shows what is already filed, so duplicates become
+    additions.</p>
 
     <h3 id="edit-copy">Fix a line as you read it.</h3>
-    <p>Wrong words are easiest to fix at the moment you notice them.
-    Click into any paragraph, heading, list item, or the title itself,
-    and the block you clicked becomes editable with the caret where you
-    put it. Press Enter to keep the change and step back out;
-    Shift+Enter breaks a line inside the block; Escape abandons the
+    <p>Click into any paragraph, heading, list item, or the title
+    itself, and the block you clicked becomes editable with the caret
+    where you put it. Enter keeps the change and steps back out.
+    Shift+Enter breaks a line inside the block. Escape abandons the
     block and restores what it said. Dragging across the words still
-    selects them, as it should: a click and a drag are told apart by
-    whether the pointer moved and whether it left a selection
-    behind.</p>
-    <p>The heading affordance moved out of the way to make room. Filing
-    a note is now the pill's job rather than the whole heading's, so the
+    selects them: a click and a drag are told apart by whether the
+    pointer moved and whether it left a selection behind.</p>
+    <p>Filing a note is the pill's job, not the whole heading's, so the
     words of a heading can be corrected without a modal opening over
     them.</p>
     <p>Edits keep themselves in your browser and survive a refresh, and
@@ -524,17 +522,12 @@ claude --plugin-dir /path/to/living-manual</pre>
     that applies them with <code>scripts/recopy.py</code>. That script
     replaces each passage by exact match, so it can prove it is changing
     the text you were looking at, and refuses an edit whose original has
-    since changed or appears in more than one place. The button's
-    presence is the signal that this browser is holding words the file
-    does not have yet.</p>
-    <p class="small muted">Editing is offered in the sidebar layout
-    only. Placing a caret is a pointer's task, and a phone is given the
-    manual to read.</p>
+    since changed or appears in more than one place.</p>
+    <p class="small muted">Editing is offered in the desktop layout
+    only.</p>
 
     <h3 id="reorder">Arrange it your way.</h3>
-    <p>The order a manual is written in is one author's best guess at how it
-    should be read. The contents panel lets you test a better one. Each
-    entry has a handle in its left margin, three short lines that fade in
+    <p>Each table of contents entry has a handle in its left margin, three short lines that fade in
     as your cursor comes near and stay out of the way the rest of the
     time. They answer to proximity rather than contact, so a handle is
     already showing by the time you reach it instead of hiding under the
@@ -544,10 +537,9 @@ claude --plugin-dir /path/to/living-manual</pre>
     contents show where it will land while the page holds still, and the
     manual glides into the new arrangement when you let go. Change your
     mind mid-drag and press Escape: everything slides back.</p>
-    <p>An arrangement keeps itself. Your browser stores the order and
-    reapplies it every time you open the manual, so there is nothing to
-    save and nothing to paste. Dragging an entry back where it started
-    clears the stored order the same way it set one.</p>
+    <p>Your browser stores the order and reapplies it every time you
+    open the manual, so there is nothing to save and nothing to paste.
+    Dragging an entry back where it started clears the stored order.</p>
     <p>The committed file never changes from the browser. To make your
     order the one everyone opens, <span class="pill">Commit TOC</span>
     appears under the contents whenever your order differs from the
@@ -555,25 +547,18 @@ claude --plugin-dir /path/to/living-manual</pre>
     Claude Code session and <code>scripts/reorder.py</code> moves whole
     sections and their contents entries in the file, touching nothing
     else.</p>
-    <p>The contents only earn their place when they can be read whole.
-    In a frame too short to show every entry, or too narrow for a
-    sidebar, they fade out before the window can cut them off and three
-    flat lines take their place in the upper left. Tapping them dims the
-    page, holds it still where it stands, and floats the contents in the
-    middle of the screen, set large enough to aim at with a thumb. Tap an
-    entry and the menu closes on the way to that section; tap anywhere
-    outside it and the menu closes leaving the page where it was.
-    Rearranging stays with the panel, because dragging a small handle is
-    work for a pointer rather than a thumb.</p>
-    <p class="small muted">Exports lose the rearranging altogether, the
-    drag and the stored order alike, and they lose the editing with it.
-    Both write back to a repository an outside reader does not have.
-    What an export keeps is the reading: the contents still move between
-    the sidebar and the menu with the window.</p>
+    <p>In a frame too short or too narrow to display the TOC in full, it
+    collapses down to a menu in the upper left corner of the screen.
+    Tapping that menu dims the page, holds it still where it stands, and
+    floats the contents in the middle of the screen, set large enough to
+    aim at with a thumb. Tap an entry and the menu closes on the way to
+    that section; tap anywhere outside it and the menu closes leaving the
+    page where it was. Rearranging is available in the desktop layout
+    only.</p>
 
-    <h3 id="export">Handing it out.</h3>
-    <p>Everything above is built for the people who maintain the code. To
-    give a release to a wider audience, export a static copy:</p>
+    <h3 id="export">Distribution.</h3>
+    <p>To strip the interactive functionality and export for
+    production:</p>
     <pre class="cmd">python3 scripts/export.py docs/USER_MANUAL.html</pre>
     <p>That writes a second file, <code>USER_MANUAL_prod.html</code>, with the
     note-filing path removed along with the affordances that advertise it.
@@ -582,38 +567,33 @@ claude --plugin-dir /path/to/living-manual</pre>
     and that is rarely what you want to hand outside the team. The glossary
     and every word of prose stay: the glossary generates nothing, and removing
     it would only make the copy harder to read.</p>
-    <p>Editing and rearranging go the same way, and for the same reason.
-    Both end at a payload for a Claude Code session working in this repo,
-    and an outside reader has neither. The export carries no caret and no
-    handle in the contents, so nothing on the page offers a gesture the
-    file cannot finish.</p>
-    <p>The layout is not part of that. A static copy still reads on
-    whatever it is opened on: the sidebar at full width, the menu button
-    when the window is too narrow or too short to hold the contents
-    whole. That is how the document is read rather than how it is
-    changed, so it travels.</p>
-    <p>The part worth knowing is what was never visible. The queue is not
-    drawn from a server; it lives inside the file. A distributed manual that
-    kept it would publish your backlog and name your issue tracker to anyone
-    who opened the source, whether or not anything on screen showed it. The
-    export carries no ticket and no tracker name, and verification fails if
-    any survived.</p>
+    <p>The export drops editing and rearranging too. Both end at a
+    payload for a Claude Code session with this repo checked out, which
+    a reader outside the team does not have. An exported copy carries no
+    caret and no handle in the contents.</p>
+    <p>The responsive layout survives. An export shows the sidebar at
+    full width and swaps it for the menu button when the window is too
+    narrow or too short to hold the contents whole.</p>
+    <p>The queue is not drawn from a server; it lives inside the file. A
+    distributed manual that kept it would publish your backlog and name
+    your issue tracker to anyone who opened the source, whether or not
+    anything on screen showed it. The export carries no ticket and no
+    tracker name, and verification fails if any survived.</p>
     <p>In place of the base marker, an export carries a line naming the
-    version and commit it was built from. That is provenance for a file that
-    will outlive its release, and it is also how verification recognises an
-    export and judges it by the right rules. The guard's marker is left out
-    on purpose: this copy is not the one being kept current, and a staleness
-    answer nobody maintains is worse than none.</p>
-    <p class="small muted">Exports are build artifacts. They are ignored by
-    git and regenerated at release, so there is only ever one document anyone
-    has to keep true.</p>
+    version and commit it was built from. That line is how verification
+    recognises an export and applies the right rules to it. The guard's
+    marker is left out: an export is not kept current, so a staleness
+    answer it cannot maintain would be wrong rather than missing.</p>
+    <p class="small muted">Exports are build artifacts. Git ignores them
+    and they are regenerated at release, so only the maintained manual
+    has to be kept true.</p>
   </section>
 
   <section id="notes">
     <h2>Notes become tickets.</h2>
-    <p>Every heading here is a feedback surface. The manual meets you at the
-    moment of reaction, then carries that reaction into the development loop
-    with its context intact.</p>
+    <p>Every heading is a feedback surface. A note filed from a heading
+    carries that heading's section, anchor, and code commit into the
+    ticket written from it.</p>
 
     <h3 id="make-a-note">Making a note.</h3>
     <p>Hover any heading and click <span class="pill">✎ make a note</span>.
@@ -647,8 +627,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p>The queue is a snapshot. This file makes no network call when you open
     it, so what you see is whatever was true at the last rebuild. That is why
     the queue carries its own age: beside the queue label, the modal shows
-    when it was last checked and against which tracker. A queue whose age is
-    visible misleads you less than one that only looks current.</p>
+    when it was last checked and against which tracker.</p>
     <p>Between rebuilds the tracker moves on, so the guard watches for it. On
     every push, and on every CI run, the drifted issues are named along with
     the command that rebuilds them. This one warns rather than blocking: a
@@ -684,16 +663,15 @@ claude --plugin-dir /path/to/living-manual</pre>
 
   <section id="previews">
     <h2>Roadmap previews.</h2>
-    <p>A feature with planned changes is a moving target, and feedback on its
-    current shape is often feedback on something already being replaced.
-    Previews fix the aim.</p>
+    <p>A preview shows the planned state of a feature whose current shape
+    is already being replaced, so a note files against the plan rather
+    than behavior that is on its way out.</p>
     <p>A <button type="button" class="preview-btn" data-preview="demo-preview" data-demo="1" aria-label="Open the demonstration preview"><svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M1 0l8 5-8 5z" fill="currentColor"/></svg></button>
     icon sits wherever a plan exists. Click it (the one in this sentence
     works) to see the planned state, its status, and the roadmap source it
     comes from.</p>
-    <p>The scope rule follows. A note on a previewed item files against the
-    plan, not the current behavior; the note modal says so and scopes the
-    payload accordingly. An icon inside a heading locks that whole section to
+    <p>A note on a previewed item files against the plan. The note modal
+    says so and scopes the payload accordingly. An icon inside a heading locks that whole section to
     its plan. An icon inline in a sentence offers its item as an optional
     target.</p>
     <p class="muted small">This repo has no roadmapped work today, so the icon
@@ -702,12 +680,11 @@ claude --plugin-dir /path/to/living-manual</pre>
 
   <section id="glossary">
     <h2>The concept glossary.</h2>
-    <p>Product-novel terms carry a dotted underline and a hover definition the
-    first time they appear. You have met several already in this manual.</p>
-    <p>The discipline: one alert per concept, on its first instance only, and
-    only when that instance falls before the passage that defines the concept
-    in full. Once the manual has explained a term, the reminders stop. A
-    document that keeps footnoting what you already read is noise.</p>
+    <p>Product-novel terms carry a dotted underline and a hover definition
+    the first time they appear.</p>
+    <p>One alert fires per concept, on its first instance only, and only
+    when that instance falls before the passage that defines the concept
+    in full. Once the manual has explained a term, the alerts stop.</p>
     <p>Each entry records where its definition lives, so when prose moves
     during an update, the alert boundary moves with it.</p>
   </section>
@@ -758,7 +735,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     label under a different name, it tells you what that label already
     means, so the compromise is yours to accept rather than yours to
     discover later. Nothing is created without your say-so.</p>
-    <p>A type can carry several labels, not just one, so the issues filed
+    <p>A type can carry several labels, so the issues filed
     here pick up whatever routing labels your project expects and look like
     the issues your team files by hand.</p>
     <p>Sync never invents taxonomy. A label or issue type named in the config
@@ -767,7 +744,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     with the rest and the missing one is named: losing a routing label is no
     reason to lose the issue.</p>
     <p class="muted small">This repo files to GitHub Issues at
-    dougstanford/living-manual, so the queue you see above is reconciled
+    dougstanford/living-manual, so the queue in this manual is reconciled
     against it.</p>
   </section>
 
@@ -814,8 +791,8 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p><code>.living-manual.json</code> holds the product identity, paths,
     brand, and tracker settings. The <code>user_facing_paths</code> list decides
     which commits count against freshness: changes elsewhere (CI, tests,
-    internal tooling) never block a push. The full key list is in the
-    reference below.</p>
+    internal tooling) never block a push. Config keys, under Reference,
+    lists every key.</p>
   </section>
 
   <section id="guard">
@@ -842,8 +819,8 @@ claude --plugin-dir /path/to/living-manual</pre>
     marker counts as stale rather than current, and verification flags it,
     since the usual cause is a history rewrite after stamping.</p>
     <p>Stamping the marker also records a content hash for each user-facing
-    path, and those outlive the commit. So a rewrite no longer costs you the
-    answer. If every hash still matches, nothing user-facing moved: the
+    path, and those outlive the commit, so a rewrite still leaves the guard
+    an answer. If every hash still matches, nothing user-facing moved: the
     manual's content is current and re-stamping the marker is the whole fix.
     If a hash differs, the guard names the paths that changed, which is the
     part a missing commit would otherwise have taken with it.</p>
@@ -869,18 +846,17 @@ claude --plugin-dir /path/to/living-manual</pre>
   with:
     fetch-depth: 0
 - uses: dougstanford/living-manual@v0.2.6</pre>
-    <p>Full history is the one thing to get right. The base commit is
-    usually far behind HEAD, and a shallow checkout would report a perfectly
-    good marker as broken. The check recognises that case and says so,
-    rather than sending you to re-stamp a marker that was fine.</p>
+    <p>Set <code>fetch-depth: 0</code>. The base commit is usually far
+    behind HEAD, and a shallow checkout reports a good marker as broken.
+    The check recognises that case and says so rather than sending you to
+    re-stamp a marker that was fine.</p>
     <p>A failure names the offending commits and the command that fixes
     them. The scripts need no model, so the server can find the problem;
     writing the manual still happens in a session.</p>
     <div class="callout">
       <b>Advisory until you say otherwise.</b> A red check does not stop a
       merge on its own. Adding it to the branch's required checks is a
-      repository setting, and the plugin does not write it: supplying the
-      signal is the plugin's job, deciding its force is yours.
+      repository setting, and the plugin does not write it.
     </div>
   </section>
 
@@ -983,30 +959,29 @@ claude --plugin-dir /path/to/living-manual</pre>
         <td>Closed without building. Kept as the record.</td></tr>
     </table>
 
-    <h3 id="prose-contract">How the prose is governed.</h3>
-    <p>Every word this plugin writes, in a manual section, a glossary
-    summary, a preview body, a ticket, or an issue at your tracker,
-    follows one file: <code>reference/writing-style.md</code>. Your own
-    brand voice layers on top of it and never overrides it.</p>
-    <p>The guide starts from who is reading. Someone opens a manual
-    mid-task, looking for one answer, and stops as soon as they have it,
-    so a section has to work for a reader who skipped the one above it
-    and put its answer in the first sentence. From there it sets two
-    obligations. Respect the reader, meaning no flattery, no
-    condescension such as calling a step easy, and no hedging written
-    to protect the writer. And make them
-    understand rather than merely comply, meaning name the mechanism,
-    state what breaks if the instruction is ignored, and reuse one term
-    for one thing instead of rotating synonyms.</p>
-    <p>Under that sit the mechanical rules: no em-dashes, active voice,
-    direct verbs, and a catalogue of words and patterns to cut. The last
-    rule is the one that binds the others. Every claim has to be
-    checkable against the code, so anything the writer cannot point at
-    does not get written.</p>
-    <p class="small muted">The catalogue of words and patterns to cut is
-    adapted from the <code>no-ai-slop</code> skill by Peter Yang, reused
-    and modified under the MIT License. The notice travels at the end of
-    the style guide.</p>
+    <h3 id="prose-contract">The prose contract.</h3>
+    <p><code>reference/writing-style.md</code> governs every word the
+    plugin writes: manual sections, glossary summaries, preview bodies,
+    ticket text, "What's new" entries, and the issue descriptions filed
+    at your tracker. Your brand voice layers on top of it and does not
+    override it.</p>
+    <p>A manual is reference documentation, so the prose explains how
+    something works rather than arguing that it is good. It carries no
+    personal journey, no thesis, no metaphor doing the explaining, and
+    no closing line reaching for significance.</p>
+    <p>The prose never narrates the reader, the document, or its own
+    structure. Each sentence adds the next layer of operational detail
+    instead of advancing an argument. Every claim is checkable against
+    the code, so anything the writer cannot point at does not get
+    written.</p>
+    <p>The rest is mechanical: no em-dashes, active voice, direct verbs,
+    one term reused for one thing, and a catalogue of words and patterns
+    to cut. Planned work stays in previews and is never written as
+    shipped.</p>
+    <p class="small muted">The catalogue is adapted from the
+    <code>no-ai-slop</code> skill by Peter Yang, reused and modified
+    under the MIT License. The notice sits at the end of the style
+    guide.</p>
 
     <p class="small muted">Requires git and python3. With node present,
     verification also syntax-checks the manual's script.</p>
@@ -1033,20 +1008,19 @@ claude --plugin-dir /path/to/living-manual</pre>
       original has moved since. Filing a note is now the pill's job
       rather than the whole heading's, so a heading can be corrected
       without a modal opening over it.</p>
-      <p>A static copy no longer carries either of those. Exports lose
-      the editing and the rearranging alike, because both end at a
-      payload for a session working in this repo, and an outside reader
-      has neither. What an export keeps is the reading: the contents
-      still move between the sidebar and the menu button as the window
-      changes size, on a phone as on a desktop.</p>
-      <p>The contents panel also opens level with the callout beside it
-      instead of sitting a little above it, and still anchors a fifth of
-      the way down the window once you scroll past that point.</p>
-      <p>The style guide behind every word the plugin writes is now a
-      voice rather than a list of tells. It starts from who is reading a
-      manual and when, and holds the writing to two obligations: respect
-      the reader, and leave them understanding the mechanism rather than
-      only the steps. Reference records what it asks for.</p>
+      <p>Exports drop editing and rearranging. Both end at a payload for
+      a session with this repo checked out, which a reader outside the
+      team does not have. The responsive layout still travels: an
+      exported copy moves between the desktop layout and the menu as the
+      window changes size.</p>
+      <p>The table of contents now opens level with the callout beside
+      it, and still anchors a fifth of the way down the window once
+      scrolling carries it there.</p>
+      <p>The style guide the plugin writes to now names its register. A
+      manual is reference documentation, so the prose explains how
+      something works, never narrates the reader or the document, and
+      adds operational detail instead of advancing an argument. The
+      prose contract under Reference records what it asks for.</p>
     </div>
     <div class="release">
       <div class="date">v0.4.0 · July 27, 2026</div>
@@ -1064,21 +1038,20 @@ claude --plugin-dir /path/to/living-manual</pre>
       a glossary definition begins fading the moment the cursor leaves its
       term. Interrupt any of it, with Escape or by moving back, and it
       returns from wherever it had reached rather than snapping.</p>
-      <p>An arrangement needs no saving. The browser stores it and
-      reapplies it on every open. The committed file still never changes
+      <p>The browser stores an arrangement and reapplies it on every
+      open, so there is nothing to save. The committed file still never changes
       from the browser: making an order everyone's takes
       <span class="pill">Commit TOC</span>, which appears under the
       contents once your order differs from the file's and hands that
       order to a Claude Code session.
       <code>scripts/reorder.py</code> then moves whole sections and their
       contents entries, refusing an order that does not match the manual.
-      Exports keep the drag and the persistence, and carry no commit
-      affordance at all.</p>
-      <p>Small screens get the contents as a menu. Rather than clipping
-      at the edge of a frame that cannot hold them, they fade out and
-      leave three flat lines in the upper left; tapping those dims the
-      page, freezes it, and floats the entries in the middle of the
-      screen at a size worth aiming at. The page itself now reflows to
+      In this release exports kept the drag and the stored order, and
+      carried no commit affordance. v0.5.0 removed both.</p>
+      <p>Small screens get the contents as a menu. In a frame too small
+      to hold them, the contents fade out and a menu takes their place in
+      the upper left; tapping it dims the page, freezes it, and floats the
+      entries in the middle of the screen at a size worth aiming at. The page itself now reflows to
       the frame it is given, so commands wrap and wide tables scroll
       inside their own edges instead of dragging the text off screen.</p>
     </div>
@@ -1108,15 +1081,14 @@ claude --plugin-dir /path/to/living-manual</pre>
       wider audience. One command now writes a static version with all of it
       removed, and with the affordances removed too, so no heading offers a
       note it cannot file.</p>
-      <p>The queue was the real reason. It was never fetched from a server; it
+      <p>The queue drove the change. It was never fetched from a server; it
       travels inside the file. A copy handed out with it intact would publish
       your backlog and name your issue tracker to anyone who viewed the source,
       whether or not anything on screen displayed it. A static copy carries
       neither, and verification refuses one that does.</p>
-      <p>The glossary survives, because it generates nothing and only makes the
-      document easier to read. Exports are build artifacts: ignored by git and
-      regenerated at release, so there is still only ever one manual anyone has
-      to keep true.</p>
+      <p>The glossary survives, because it generates nothing and only makes
+      the document easier to read. Exports are build artifacts: git ignores
+      them and they are regenerated at release.</p>
     </div>
     <div class="release">
       <div class="date">v0.2.9 · July 27, 2026</div>
@@ -1158,8 +1130,8 @@ claude --plugin-dir /path/to/living-manual</pre>
       nobody could say what had actually changed. The marker now carries a
       content hash for each user-facing path, and those survive the
       rewrite.</p>
-      <p>The result is a straight answer. Nothing user-facing moved, and the
-      guard says so: the content is current, and re-stamping the marker is
+      <p>The guard now gives a specific answer. Nothing user-facing moved,
+      and it says so: the content is current, and re-stamping the marker is
       the whole fix. Something did move, and the guard names which paths, so
       you know where to look without the commit. Both still stop a push, but
       they no longer tell you the same thing. A manual stamped before this
@@ -1182,8 +1154,8 @@ claude --plugin-dir /path/to/living-manual</pre>
     </div>
     <div class="release">
       <div class="date">v0.2.5 · July 26, 2026</div>
-      <p>The queue check now sees the tracker, not just the ticket folder.
-      An issue open at the tracker with no ticket file behind it appears in
+      <p>The queue check now reads the tracker as well as the ticket
+      folder. An issue open at the tracker with no ticket file behind it appears in
       the queue marked as such, so the modal can no longer tell you nothing
       is filed while the tracker holds two open issues. Filing against one
       writes the missing ticket file and updates that same issue.</p>
@@ -1305,7 +1277,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "2026-07-28";
-  var MANUAL_BASE = "f30e676";
+  var MANUAL_BASE = "c24d84c";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
