@@ -1,14 +1,16 @@
 ---
 name: manual
-description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", or when the pre-push guard reports the manual is stale.
+description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", when the pre-push guard reports the manual is stale, or when a <reorder> payload from the manual's reorder mode needs applying.
 ---
 
 # The living manual
 
 One HTML file, self-contained, brand-styled, interactive: clickable
 headings file notes that become tickets, roadmap previews show planned
-changes, a glossary explains novel concepts on first use. This skill
-builds it once, then keeps it matched to the released code.
+changes, a glossary explains novel concepts on first use, and reorder
+mode lets a reader drag the sections into a new order and hand that
+order back as a payload. This skill builds it once, then keeps it
+matched to the released code.
 
 All prose you generate follows `reference/writing-style.md` in this
 plugin. Read it before writing any manual content. It is binding.
@@ -245,6 +247,23 @@ The pre-push hook calls this flow by name
 (`claude -p "/living-manual:manual update"`), so keep the update path
 non-interactive: no questions unless the diff is genuinely ambiguous,
 and then fail with a clear message rather than guessing.
+
+## Reordering sections
+
+Reorder mode in the manual lets a reader drag the top-level sections
+into a new order and copy a `<reorder>` payload naming the manual and
+the ordered section ids. Applying it is mechanical:
+
+```
+python3 $LM/scripts/reorder.py <manual_path> <id ...>
+```
+
+The script moves the section blocks and their TOC link groups and
+touches nothing else. Then `verify.py` must print OK. Do not re-stamp
+the base and do not add a What's new entry: no code moved and no prose
+changed, only the order of whole sections. The script refuses an id
+set that does not match the manual's sections; surface its message
+rather than guessing.
 
 ## Rules
 

@@ -18,6 +18,10 @@ The manual is one self-contained HTML file:
   per concept, and only before the manual defines them.
 - **A queue check** in the note modal shows already-submitted tickets
   so duplicates become additions instead of twins.
+- **Reorder mode** turns the contents panel into a drag list: every
+  section a card, the whole index in view. Drag and the manual
+  rearranges live; copy the result and a Claude Code session makes it
+  the committed order.
 
 **See it demonstrate itself:** [docs/USER_MANUAL.html](docs/USER_MANUAL.html)
 is this plugin's own manual, built and maintained by the plugin. Open it
@@ -99,7 +103,7 @@ the plugin publishes itself as a composite action:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0        # the manual's base commit is usually far back
-- uses: dougstanford/living-manual@v0.3.1
+- uses: dougstanford/living-manual@v0.4.0
 ```
 
 The action reads `.living-manual.json` for the paths it needs; pass
@@ -118,7 +122,7 @@ skills/ticket/    note → ticket (+ tracker sync)
 scripts/          state, inventory, staleness, hook install, ticket
                   numbering, tickets-index rebuild, data-block sync,
                   scaffolding, static verification, the CI entry point,
-                  static export
+                  static export, section reorder
 templates/        the interactive manual shell, CLAUDE.md snippet, and
                   the CI workflow setup installs
 reference/        writing style (binding) + maintenance checklist +
