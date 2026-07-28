@@ -276,6 +276,13 @@ the reader made. Then `verify.py` must print OK. Do not re-stamp the
 base and do not add a What's new entry: the reader changed wording, not
 behaviour.
 
+An edit that renamed a heading carries a `toc` field naming the anchor,
+the label the file holds, and the label it should read. The script
+renames that contents entry in the same pass, because an entry is a
+pointer to its heading and the two must not drift. Section order is
+untouched, so this is a copy edit: do not run `reorder.py` for it, and
+do not treat it as a rearrangement.
+
 A refusal is information, not a failure to work around. "No longer in
 the file" means the manual moved on after the edit, so the reader
 should redo it against current wording. "Appears more than once" means

@@ -133,8 +133,8 @@ scripts/          state, inventory, staleness, hook install, ticket
                   static export, section reorder, prose write-back
 templates/        the interactive manual shell, CLAUDE.md snippet, and
                   the CI workflow setup installs
-reference/        writing style (binding) + maintenance checklist +
-                  tracker gateway contract
+reference/        writing style and documentation voice (binding) +
+                  maintenance checklist + tracker gateway contract
 ```
 
 Scripts do the mechanical work; the model spends tokens on content and
@@ -142,6 +142,17 @@ judgment only.
 
 Requires git and python3. node is optional; when present, verification
 also syntax-checks the manual's script.
+
+## Acknowledgements
+
+`reference/writing-style.md` is the binding style guide for every word
+this plugin generates. Its catalogue of words and patterns to cut is
+adapted from the `no-ai-slop` skill by Peter Yang, reused and modified
+under the MIT License, Copyright (c) 2026 Peter Yang. The full notice
+travels with the adapted text, at the end of that file.
+
+The rest of the guide, covering who reads a manual and what they need
+from it, is this project's own.
 
 ---
 
