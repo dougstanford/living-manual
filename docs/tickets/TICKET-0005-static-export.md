@@ -3,7 +3,7 @@ id: TICKET-0005
 title: Export a static copy of the manual for distribution outside the team
 type: idea
 target: current
-status: ready
+status: shipped
 section: One file that stays true (#the-manual)
 created: 2026-07-27
 issue: dougstanford/living-manual#10
@@ -229,6 +229,56 @@ Settled 2026-07-27, all four as proposed, with Q2's destination named
   ruleset applies, and both are the same fact. A file that declares its
   own kind beats a flag a caller has to remember, because the file
   outlives the command that made it.
+
+## Shipped
+
+v0.3.0, 2026-07-27. All fifteen requirements.
+
+**Removal is marker-driven, not selector-driven.** The shell now
+declares which regions do not survive, with
+`/*@EXPORT-DROP*/ ... /*@/EXPORT-DROP*/` and its `<!--@EXPORT-DROP-->`
+form in markup. Four regions: the heading-affordance and preview-button
+CSS, the overlay and modal CSS, the two overlay elements, and the
+interactive script from `wireOverlay` through the heading click handler.
+Guessing from selectors would have worked once and drifted forever;
+this way the shell and the export cannot disagree, and a future edit
+that adds machinery inside a marked region is removed for free.
+
+The script proved to be one contiguous region, and the glossary sits
+entirely after it and references nothing from it, which is what made
+D1's split cheap to implement rather than a rewrite.
+
+- FR-1, FR-13: `scripts/export.py`, deterministic, source untouched.
+- FR-2, FR-3: verified in a browser — hovering a heading produces no
+  affordance and clicking it does nothing.
+- FR-4: no ticket id, title, status, summary, tracker name, or
+  timestamp survives. `verify.py` now *fails* an export that kept any
+  of the three blocks, so the leak cannot return quietly.
+- FR-5: `PREVIEWS`, both overlays, the CSS, the script, and every
+  inline `.preview-btn` and `data-preview`. The buttons are scattered
+  through prose and cannot be marked, so those are matched directly.
+- FR-6: glossary intact; tooltip confirmed live in the export.
+- FR-7: `node --check` passes, no dangling identifier from the removed
+  code remains, every `getElementById` target still exists, and the
+  console is empty after a fresh load plus interaction.
+- FR-8: `_prod.html` by default; refuses the manual's own path, and
+  refuses re-exporting an export.
+- FR-9: the export adds `*_prod.html` to `.gitignore` when git does not
+  already ignore the destination, and says nothing when it does.
+- FR-10, FR-11, FR-12: one `manual-export` comment replaces the base
+  marker and fingerprints, and doubles as the identifier `verify.py`
+  keys on. The intro callout is replaced with the static-copy notice.
+- FR-14: `ci-check.sh` output is byte-identical with and without an
+  export present.
+- FR-15: `verify.py` keys on the file's own declaration rather than a
+  flag, and still reports damage to what remains.
+
+One wrinkle specific to this repo, worth recording because it will
+mislead someone otherwise: this manual's *subject* is the note-filing
+feature, so its prose still describes making notes even in the export.
+That is content, not a control, and no other project's manual will have
+it. Stripping prose by keyword was rejected — it would be fragile here
+and wrong everywhere else.
 
 ## Notes on sequencing
 
