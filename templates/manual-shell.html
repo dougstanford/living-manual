@@ -210,14 +210,24 @@
     font-size: 0.82rem; color: var(--muted); }
 
 /*@EXPORT-DROP*/
-  main h2, main h3 { cursor: pointer; }
-  main h2::after, main h3::after {
-    content: "✎ make a note"; font-size: 0.68rem; font-weight: 400;
+  /* A real element, not a pseudo-element: the heading's words are
+     editable now, so filing a note needs a target of its own. */
+  .note-pill { display: inline-block; font-size: 0.68rem; font-weight: 400;
     letter-spacing: 0.05em; color: var(--muted); border: 1px solid var(--line);
     border-radius: 999px; padding: 2px 10px; margin-left: 12px;
     vertical-align: middle; opacity: 0; transition: opacity 0.25s ease;
-    white-space: nowrap; }
-  main h2:hover::after, main h3:hover::after { opacity: 1; }
+    white-space: nowrap; cursor: pointer; user-select: none; }
+  main h2:hover .note-pill, main h3:hover .note-pill { opacity: 1; }
+  .note-pill:hover { color: var(--accent); border-color: var(--accent); }
+  .editing { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    outline-offset: 5px; border-radius: 3px; }
+  .edit-hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    z-index: 45; background: var(--deep); color: var(--surface);
+    border-radius: 999px; padding: 7px 16px; font-size: 0.76rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3); pointer-events: none;
+    opacity: 0; transition: opacity 0.2s ease; }
+  .edit-hint.showing { opacity: 1; }
+  .edit-hint[hidden] { display: none; }
 
   .preview-btn { display: inline-flex; align-items: center; justify-content: center;
     width: 20px; height: 20px; margin: 0 2px; vertical-align: middle;
@@ -368,8 +378,10 @@
   <!-- SLOT: TOC — one <a href="#id"> per section, .sub for subsections -->
 <!--@EXPORT-DROP-->
   <div class="ro-actions" id="ro-actions">
-    <button type="button" class="ro-btn primary" id="ro-copy">Commit TOC</button>
+    <button type="button" class="ro-btn primary" id="ro-copy" hidden>Commit TOC</button>
     <pre class="ro-pre" id="ro-payload" hidden></pre>
+    <button type="button" class="ro-btn primary" id="copy-commit" hidden>Commit copy</button>
+    <pre class="ro-pre" id="copy-payload" hidden></pre>
     <div class="ro-note" id="ro-note"></div>
   </div>
 <!--@/EXPORT-DROP-->
@@ -399,6 +411,9 @@
 
 <button type="button" class="menu-btn" id="menu-btn" aria-label="Contents"
   aria-expanded="false" aria-controls="menu-overlay"><i aria-hidden="true"></i></button>
+<!--@EXPORT-DROP-->
+<div class="edit-hint" id="edit-hint" hidden>Enter stages · Shift+Enter breaks a line · Esc discards</div>
+<!--@/EXPORT-DROP-->
 <div class="menu-overlay" id="menu-overlay" hidden>
   <nav class="menu-sheet" id="menu-sheet" aria-label="Contents"></nav>
 </div>
@@ -864,9 +879,19 @@
       else if (current) scopeFor(current).scoped.push(el.dataset.preview);
     });
   });
+  function addNotePill(h) {
+    if (h.querySelector(".note-pill")) return;
+    var pill = document.createElement("span");
+    pill.className = "note-pill";
+    pill.contentEditable = "false";
+    pill.textContent = "\u270e make a note";
+    h.appendChild(pill);
+  }
   document.querySelectorAll("main h2, main h3").forEach(function (h) {
+    addNotePill(h);
     h.addEventListener("click", function (e) {
-      if (e.target.closest(".preview-btn")) return;
+      /* The words belong to the editor; the pill files the note. */
+      if (!e.target.closest(".note-pill")) return;
       var section = h.closest("section");
       var anchor = h.id || (section && section.id) || "";
       var title = h.childNodes[0] ? h.childNodes[0].textContent.trim() : h.textContent.trim();
@@ -902,6 +927,19 @@
   /* Keyed by path, not by a maintained-copy variable: exports persist a
      reader's arrangement the same way. */
   var RO_KEY = "living-manual:order:" + location.pathname;
+  /* The panel serves two kinds of uncommitted work now: a changed
+     order, and changed words. Either one summons it, and each brings
+     only its own button. */
+  var copyDirty = false;
+  function refreshActions() {
+    var orderChanged = roChanged();
+    if (roActions) roActions.classList.toggle("showing", orderChanged || copyDirty);
+    var oc = document.getElementById("ro-copy");
+    if (oc) oc.hidden = !orderChanged;
+    var cc = document.getElementById("copy-commit");
+    if (cc) cc.hidden = !copyDirty;
+    if (roNoteEl && !orderChanged && !copyDirty) roNoteEl.textContent = "";
+  }
 
   function roSections() {
     return Array.prototype.filter.call(roMain.children, function (el) {
@@ -1002,9 +1040,8 @@
       if (changed) localStorage.setItem(RO_KEY, JSON.stringify(roOrder()));
       else localStorage.removeItem(RO_KEY);
     } catch (e) { /* private mode: the order lives for this session */ }
-    if (roActions) roActions.classList.toggle("showing", changed);
+    refreshActions();
     if (!changed) {
-      if (roNoteEl) roNoteEl.textContent = "";
       var pre = document.getElementById("ro-payload");
       if (pre) pre.hidden = true;
     }
@@ -1204,6 +1241,261 @@
       navigator.clipboard.writeText(payload).catch(roFallback);
     } else { roFallback(); }
   });
+/*@/EXPORT-DROP*/
+
+/*@EXPORT-DROP*/
+  /* ================= Editing the copy =================
+     Every piece of prose is editable in place: click a word and the
+     block you clicked becomes a text field with the caret where you
+     put it. Enter stages the change and leaves; Shift+Enter breaks a
+     line; Escape abandons the block. Dragging across text still
+     selects, because a click and a drag are told apart by whether the
+     pointer moved and whether it left a selection behind.
+
+     Edits live in this browser and survive a refresh. The file does
+     not change until Commit copy hands them to a session, the same
+     bargain the contents panel makes with its order.
+
+     Editing is a pointer's job, so it is offered only in the sidebar
+     layout; a phone gets the manual to read. */
+  var EDITABLE = "p, li, h2, h3, td, th, h1, .tagpill";
+  var EDIT_SKIP = ".note-pill, .preview-btn, .mock, a, button, pre, code, kbd";
+  var COPY_KEY = "living-manual:copy:" + location.pathname;
+  var copyOriginals = {};
+  var copyEdits = {};
+  var editing = null;
+  var editHint = document.getElementById("edit-hint");
+
+  function editRoots() {
+    return [document.querySelector("main"), document.querySelector(".hero")]
+      .filter(Boolean);
+  }
+  function editableElements() {
+    var out = [];
+    editRoots().forEach(function (root) {
+      Array.prototype.forEach.call(root.querySelectorAll(EDITABLE), function (el) {
+        if (el.closest(EDIT_SKIP)) return;
+        out.push(el);
+      });
+    });
+    return out;
+  }
+
+  /* The stored form is the file's form: no note pills, which the script
+     adds, and no glossary spans, which it also adds. What is kept is
+     what a person wrote. */
+  function copySerialize(el) {
+    var c = el.cloneNode(true);
+    Array.prototype.forEach.call(c.querySelectorAll(".note-pill"), function (p) {
+      p.parentNode.removeChild(p);
+    });
+    Array.prototype.forEach.call(c.querySelectorAll(".term"), function (t) {
+      t.parentNode.replaceChild(document.createTextNode(t.textContent), t);
+    });
+    return c.innerHTML;
+  }
+
+  function copyKeyFor(el) {
+    var host = el.closest("section[id]") || el.closest(".hero") || document.body;
+    var hostKey = host.id || (host.className.indexOf("hero") !== -1 ? "hero" : "root");
+    var sameTag = Array.prototype.slice.call(host.getElementsByTagName(el.tagName));
+    return hostKey + "|" + el.tagName.toLowerCase() + "|" + sameTag.indexOf(el);
+  }
+
+  function copyPersist() {
+    try {
+      if (Object.keys(copyEdits).length) {
+        localStorage.setItem(COPY_KEY, JSON.stringify(copyEdits));
+      } else {
+        localStorage.removeItem(COPY_KEY);
+      }
+    } catch (e) { /* private mode: the edits live for this session */ }
+    copyDirty = Object.keys(copyEdits).length > 0;
+    refreshActions();
+  }
+
+  /* Record what the file says before anything is restored on top of it,
+     so a committed payload can name the exact text it replaces. */
+  editableElements().forEach(function (el) {
+    copyOriginals[copyKeyFor(el)] = copySerialize(el);
+  });
+
+  (function restoreCopy() {
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(COPY_KEY) || "null"); } catch (e) {}
+    if (!stored) return;
+    var applied = 0, stale = 0;
+    editableElements().forEach(function (el) {
+      var k = copyKeyFor(el);
+      var entry = stored[k];
+      if (!entry || typeof entry.edited !== "string") return;
+      /* Only restore onto the text the edit was made against. When the
+         manual itself has moved on, the local edit is out of date and
+         the file's words win rather than being silently overwritten. */
+      if (entry.original !== copyOriginals[k]) { stale++; return; }
+      el.innerHTML = entry.edited;
+      if (el.tagName === "H2" || el.tagName === "H3") addNotePill(el);
+      copyEdits[k] = entry;
+      applied++;
+    });
+    if (applied) {
+      copyDirty = true;
+      refreshActions();
+    }
+    if (stale) {
+      try { localStorage.setItem(COPY_KEY, JSON.stringify(copyEdits)); } catch (e) {}
+    }
+  })();
+
+  function editEnabled() { return window.innerWidth > MENU_WIDTH; }
+
+  function caretAt(x, y) {
+    if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+    if (document.caretPositionFromPoint) {
+      var p = document.caretPositionFromPoint(x, y);
+      if (!p) return null;
+      var r = document.createRange();
+      r.setStart(p.offsetNode, p.offset);
+      r.collapse(true);
+      return r;
+    }
+    return null;
+  }
+
+  function beginEdit(el, x, y) {
+    if (editing === el) return;
+    if (editing) endEdit(true);
+    editing = el;
+    el.dataset.editBefore = copySerialize(el);
+    el.contentEditable = "true";
+    el.spellcheck = false;
+    el.classList.add("editing");
+    el.focus();
+    var r = caretAt(x, y);
+    if (r) {
+      var s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    }
+    if (editHint) {
+      editHint.hidden = false;
+      void editHint.offsetWidth;
+      editHint.classList.add("showing");
+    }
+  }
+
+  function endEdit(stage) {
+    var el = editing;
+    if (!el) return;
+    editing = null;
+    el.contentEditable = "false";
+    el.classList.remove("editing");
+    if (!stage && typeof el.dataset.editBefore === "string") {
+      el.innerHTML = el.dataset.editBefore;
+      if (el.tagName === "H2" || el.tagName === "H3") addNotePill(el);
+    }
+    delete el.dataset.editBefore;
+    if (editHint) {
+      editHint.classList.remove("showing");
+      setTimeout(function () {
+        if (!editHint.classList.contains("showing")) editHint.hidden = true;
+      }, 220);
+    }
+    var k = copyKeyFor(el);
+    var now = copySerialize(el);
+    if (now === copyOriginals[k]) delete copyEdits[k];
+    else copyEdits[k] = { original: copyOriginals[k], edited: now };
+    copyPersist();
+    if (el.blur) el.blur();
+  }
+
+  var editDownX = 0, editDownY = 0, editDownOn = null;
+  function editableFrom(t) {
+    if (!t || !t.closest) return null;
+    if (t.closest(EDIT_SKIP)) return null;
+    var el = t.closest(EDITABLE);
+    if (!el) return null;
+    return el.closest("main") || el.closest(".hero") ? el : null;
+  }
+
+  document.addEventListener("mousedown", function (e) {
+    editDownX = e.clientX;
+    editDownY = e.clientY;
+    editDownOn = editableFrom(e.target);
+    if (editing && editableFrom(e.target) !== editing) endEdit(true);
+  });
+
+  document.addEventListener("mouseup", function (e) {
+    if (!editEnabled() || e.button !== 0) return;
+    var el = editableFrom(e.target);
+    if (!el || el !== editDownOn || el === editing) return;
+    /* A pointer that travelled, or a selection left behind, is someone
+       selecting text rather than asking to change it. */
+    if (Math.abs(e.clientX - editDownX) > 3 || Math.abs(e.clientY - editDownY) > 3) return;
+    var sel = window.getSelection();
+    if (sel && !sel.isCollapsed) return;
+    beginEdit(el, e.clientX, e.clientY);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (!editing) return;
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      endEdit(true);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      endEdit(false);
+    }
+  }, true);
+
+  /* Pasted text arrives as text, never as someone else's markup. */
+  document.addEventListener("paste", function (e) {
+    if (!editing) return;
+    e.preventDefault();
+    var t = (e.clipboardData || window.clipboardData).getData("text/plain");
+    document.execCommand("insertText", false, t);
+  }, true);
+
+  var copyCommitBtn = document.getElementById("copy-commit");
+  var copyPayloadEl = document.getElementById("copy-payload");
+  if (copyCommitBtn) {
+    copyCommitBtn.addEventListener("click", function () {
+      if (editing) endEdit(true);
+      var edits = Object.keys(copyEdits).map(function (k) {
+        return { key: k, original: copyEdits[k].original, new: copyEdits[k].edited };
+      });
+      var payload = [
+        "/living-manual:manual recopy", "",
+        "<recopy>",
+        "manual: " + MANUAL_PATH,
+        "edits: " + edits.length,
+        "</recopy>", "",
+        "```json",
+        JSON.stringify({ edits: edits }, null, 1),
+        "```", "",
+        "The reader revised the manual's prose in the browser. Write the",
+        "JSON above to a file and apply it with scripts/recopy.py, which",
+        "replaces each original with its replacement and refuses any that",
+        "no longer matches the file. Do not retype the prose by hand.",
+        "Then verify must print OK."
+      ].join("\n");
+      copyPayloadEl.textContent = payload;
+      copyPayloadEl.hidden = false;
+      if (roNoteEl) roNoteEl.textContent = "Copied. Paste it into a Claude Code session to keep these words.";
+      function copyFallback() {
+        var range = document.createRange();
+        range.selectNodeContents(copyPayloadEl);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        try { document.execCommand("copy"); } catch (e) { /* stays selectable */ }
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(payload).catch(copyFallback);
+      } else { copyFallback(); }
+    });
+  }
 /*@/EXPORT-DROP*/
 
   /* ================= Compact navigation =================
