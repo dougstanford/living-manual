@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 94d1edb -->
+<!-- manual-base: f30e676 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      deb946e6f85372206a758e6b3fd3355d466658c0 skills/
      1d9f796bf67382743902beaca8664b3f96a5a521 scripts/
-     0279b1a4ed6bff344f0af1528faed80f524007fd templates/
-     453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
+     1b32b0d1a4096f4ef57da510c9b425105941f185 templates/
+     35831b3152bef0f79d4c420be8048b4e2cb69281 reference/
 -->
 <!--
   Maintained by the living-manual plugin. Do not hand-edit the script's
@@ -648,7 +648,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     it, so what you see is whatever was true at the last rebuild. That is why
     the queue carries its own age: beside the queue label, the modal shows
     when it was last checked and against which tracker. A queue whose age is
-    visible misleads you less than one that simply looks current.</p>
+    visible misleads you less than one that only looks current.</p>
     <p>Between rebuilds the tracker moves on, so the guard watches for it. On
     every push, and on every CI run, the drifted issues are named along with
     the command that rebuilds them. This one warns rather than blocking: a
@@ -983,6 +983,31 @@ claude --plugin-dir /path/to/living-manual</pre>
         <td>Closed without building. Kept as the record.</td></tr>
     </table>
 
+    <h3 id="prose-contract">How the prose is governed.</h3>
+    <p>Every word this plugin writes, in a manual section, a glossary
+    summary, a preview body, a ticket, or an issue at your tracker,
+    follows one file: <code>reference/writing-style.md</code>. Your own
+    brand voice layers on top of it and never overrides it.</p>
+    <p>The guide starts from who is reading. Someone opens a manual
+    mid-task, looking for one answer, and stops as soon as they have it,
+    so a section has to work for a reader who skipped the one above it
+    and put its answer in the first sentence. From there it sets two
+    obligations. Respect the reader, meaning no flattery, no
+    condescension such as calling a step easy, and no hedging written
+    to protect the writer. And make them
+    understand rather than merely comply, meaning name the mechanism,
+    state what breaks if the instruction is ignored, and reuse one term
+    for one thing instead of rotating synonyms.</p>
+    <p>Under that sit the mechanical rules: no em-dashes, active voice,
+    direct verbs, and a catalogue of words and patterns to cut. The last
+    rule is the one that binds the others. Every claim has to be
+    checkable against the code, so anything the writer cannot point at
+    does not get written.</p>
+    <p class="small muted">The catalogue of words and patterns to cut is
+    adapted from the <code>no-ai-slop</code> skill by Peter Yang, reused
+    and modified under the MIT License. The notice travels at the end of
+    the style guide.</p>
+
     <p class="small muted">Requires git and python3. With node present,
     verification also syntax-checks the manual's script.</p>
   </section>
@@ -1017,6 +1042,11 @@ claude --plugin-dir /path/to/living-manual</pre>
       <p>The contents panel also opens level with the callout beside it
       instead of sitting a little above it, and still anchors a fifth of
       the way down the window once you scroll past that point.</p>
+      <p>The style guide behind every word the plugin writes is now a
+      voice rather than a list of tells. It starts from who is reading a
+      manual and when, and holds the writing to two obligations: respect
+      the reader, and leave them understanding the mechanism rather than
+      only the steps. Reference records what it asks for.</p>
     </div>
     <div class="release">
       <div class="date">v0.4.0 · July 27, 2026</div>
@@ -1073,8 +1103,8 @@ claude --plugin-dir /path/to/living-manual</pre>
     <div class="release">
       <div class="date">v0.3.0 · July 27, 2026</div>
       <p>The manual can now be handed out. Everything that makes it useful to
-      the people maintaining the code — notes on every heading, the queue, the
-      roadmap previews — is either useless or unwanted in a copy given to a
+      the people maintaining the code (notes on every heading, the queue, the
+      roadmap previews) is either useless or unwanted in a copy given to a
       wider audience. One command now writes a static version with all of it
       removed, and with the affordances removed too, so no heading offers a
       note it cannot file.</p>
@@ -1210,7 +1240,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 </div>
 
 <footer>
-  <div class="frame">living-manual · This manual travels with the app — docs/USER_MANUAL.html<br>
+  <div class="frame">living-manual · This manual travels with the app: docs/USER_MANUAL.html<br>
   Built by <a href="https://dougstanford.com" style="color:inherit">Doug Stanford</a> · <a href="https://dougstanford.com" style="color:inherit">dougstanford.com</a> · <a href="https://www.linkedin.com/in/dougstanford/" style="color:inherit">LinkedIn</a></div>
 </footer>
 
@@ -1258,7 +1288,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 
 <div class="overlay" id="prev-overlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prev-title">
-    <div class="modal-label">Roadmap preview — how this changes</div>
+    <div class="modal-label">Roadmap preview: how this changes</div>
     <h3 id="prev-title">…</h3>
     <div id="prev-status" style="margin: -8px 0 14px"></div>
     <div id="prev-body"></div>
@@ -1275,7 +1305,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "2026-07-28";
-  var MANUAL_BASE = "94d1edb";
+  var MANUAL_BASE = "f30e676";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1290,7 +1320,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 05:50 UTC",
+  "at": "2026-07-28 06:08 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
