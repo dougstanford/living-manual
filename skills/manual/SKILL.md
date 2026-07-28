@@ -1,16 +1,16 @@
 ---
 name: manual
-description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", when the pre-push guard reports the manual is stale, or when a <reorder> payload from the manual's reorder mode needs applying.
+description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", when the pre-push guard reports the manual is stale, or when a <reorder> payload from the manual's contents panel needs applying.
 ---
 
 # The living manual
 
 One HTML file, self-contained, brand-styled, interactive: clickable
 headings file notes that become tickets, roadmap previews show planned
-changes, a glossary explains novel concepts on first use, and reorder
-mode lets a reader drag the sections into a new order and hand that
-order back as a payload. This skill builds it once, then keeps it
-matched to the released code.
+changes, a glossary explains novel concepts on first use, and readers
+rearrange the manual by dragging its contents. The browser keeps a
+reader's order; an optional payload makes it the committed one. This
+skill builds it once, then keeps it matched to the released code.
 
 All prose you generate follows `reference/writing-style.md` in this
 plugin. Read it before writing any manual content. It is binding.
@@ -250,9 +250,11 @@ and then fail with a clear message rather than guessing.
 
 ## Reordering sections
 
-Reorder mode in the manual lets a reader drag the top-level sections
-into a new order and copy a `<reorder>` payload naming the manual and
-the ordered section ids. Applying it is mechanical:
+A reader rearranges the manual by dragging entries in its contents
+panel; the browser persists their order with no further step. Making
+an order the committed one is the optional path: the copy affordance
+produces a `<reorder>` payload naming the manual and the ordered
+section ids. Applying it is mechanical:
 
 ```
 python3 $LM/scripts/reorder.py <manual_path> <id ...>

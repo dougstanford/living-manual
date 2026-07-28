@@ -18,10 +18,11 @@ The manual is one self-contained HTML file:
   per concept, and only before the manual defines them.
 - **A queue check** in the note modal shows already-submitted tickets
   so duplicates become additions instead of twins.
-- **Reorder mode** turns the contents panel into a drag list: every
-  section a card, the whole index in view. Drag and the manual
-  rearranges live; copy the result and a Claude Code session makes it
-  the committed order.
+- **Drag the contents to reorder**: each TOC entry has a handle in its
+  left margin; drag it (subsections riding along) and the manual slides
+  into the new order on release. The browser remembers the arrangement
+  on every open; an optional payload makes it the committed order for
+  everyone.
 
 **See it demonstrate itself:** [docs/USER_MANUAL.html](docs/USER_MANUAL.html)
 is this plugin's own manual, built and maintained by the plugin. Open it
