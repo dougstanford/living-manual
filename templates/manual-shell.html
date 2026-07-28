@@ -67,7 +67,7 @@
   .toc-handle { position: absolute; left: -2px; top: 3px; width: 10px; height: 8px;
     box-sizing: content-box; padding: 6px 4px;
     color: var(--muted); opacity: 0; cursor: grab; touch-action: none;
-    transition: opacity 0.4s ease, color 0.2s ease;
+    transition: opacity 0.8s ease, color 0.4s ease;
     background-image: linear-gradient(currentColor, currentColor),
                       linear-gradient(currentColor, currentColor),
                       linear-gradient(currentColor, currentColor);
@@ -958,8 +958,12 @@
      that hovering it summons, so it has to answer to proximity rather
      than contact: it lights as the pointer comes near, while there is
      still clear space between them, and the nearest one wins so only
-     ever one is lit. */
-  var RO_NEAR = 52;
+     ever one is lit.
+
+     Proximity stops at the words. A pointer over an entry's text is
+     reaching for the link; only one to its left, out in the margin, is
+     reaching for the handle. */
+  var RO_NEAR = 26;
   var roLit = null;
   function roLightHandle(h) {
     if (roLit === h) return;
@@ -971,7 +975,9 @@
     var best = null, bestD = RO_NEAR;
     roGroups().forEach(function (g) {
       var h = g.querySelector(".toc-handle");
-      if (!h) return;
+      var a = g.querySelector("a");
+      if (!h || !a) return;
+      if (x >= a.getBoundingClientRect().left) return;
       var r = h.getBoundingClientRect();
       var dx = x < r.left ? r.left - x : (x > r.right ? x - r.right : 0);
       var dy = y < r.top ? r.top - y : (y > r.bottom ? y - r.bottom : 0);
