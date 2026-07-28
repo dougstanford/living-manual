@@ -26,8 +26,14 @@ queue check are all live, and its What's new tracks this repo's releases.
 
 ## Install
 
-Add this repo as a marketplace and install, or point a session at it
-directly:
+Add this repo as a marketplace, then install the plugin:
+
+```
+/plugin marketplace add dougstanford/living-manual
+/plugin install living-manual@living-manual
+```
+
+Or point a session at a local checkout directly:
 
 ```bash
 claude --plugin-dir /path/to/living-manual
@@ -93,7 +99,7 @@ the plugin publishes itself as a composite action:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0        # the manual's base commit is usually far back
-- uses: dougstanford/living-manual@v0.3.0
+- uses: dougstanford/living-manual@v0.3.1
 ```
 
 The action reads `.living-manual.json` for the paths it needs; pass

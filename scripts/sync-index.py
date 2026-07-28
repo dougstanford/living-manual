@@ -8,7 +8,8 @@ markers: /*@NAME*/ ... /*@/NAME*/.
 Payload keys (all optional; present keys replace the whole block):
   tickets   -> var TICKETS = [...];
   previews  -> var PREVIEWS = {...};
-  glossary  -> var GLOSSARY = [...];   (entries: id,label,pattern,flags,s)
+  glossary  -> var GLOSSARY = [...];   (entries: id, label, pattern, flags,
+               summary; "s" accepted as a legacy alias for summary)
   defined   -> var DEFINED_IN = {...};
   asof      -> the hero "as of" date string
   base      -> the manual-base commit sha (short); stamped into both the
@@ -37,10 +38,13 @@ def glossary_js(entries):
     for e in entries:
         # A bare / inside a pattern would end the JS regex literal early.
         pattern = re.sub(r"(?<!\\)/", r"\\/", e["pattern"])
+        summary = e.get("summary", e.get("s"))
+        if summary is None:
+            sys.exit("glossary entry %s has no summary" % e.get("id", "?"))
         out.append(
             "    { id: %s, label: %s, re: /%s/%s,\n      s: %s }"
             % (json.dumps(e["id"]), json.dumps(e["label"]),
-               pattern, e.get("flags", "gi"), json.dumps(e["s"], ensure_ascii=False)))
+               pattern, e.get("flags", "gi"), json.dumps(summary, ensure_ascii=False)))
     return "[\n" + ",\n".join(out) + "\n  ]"
 
 FP_OPEN = "<!-- manual-fingerprint"

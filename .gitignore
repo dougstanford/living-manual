@@ -5,3 +5,6 @@ __pycache__/
 # one would create a second document to keep current, and the whole
 # point is that there is only ever one.
 *_prod.html
+
+# Per-user session permissions, never shared.
+.claude/settings.local.json
