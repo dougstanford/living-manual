@@ -32,6 +32,49 @@ belong in a manual:
 
 Write the operational fact. Let the reader decide what it is worth.
 
+## Knowledge and instruction
+
+The manual does two jobs. It explains how something works, and it tells
+the reader how to do something. Those take different postures, and
+writing an instruction in the explaining posture is what makes
+documentation feel mysterious.
+
+**Explaining takes the declarative.** The system is the subject and the
+reader is absent. "The guard compares the manual's base marker against
+the commits since it."
+
+**Instructing takes the imperative.** The reader is the subject,
+understood. Name the control, then the outcome, in that order.
+
+Wrong: "Enter keeps the change and steps back out. Shift+Enter breaks
+a line inside the block. Escape abandons the block and restores what it
+said."
+Right: "Press Enter to save your edit. Press Shift+Enter to start a new
+line. Press Escape to discard your changes."
+
+The rules that produce the second:
+
+- **Never make a key, button, or control the subject of a verb.** Keys
+  do not keep, abandon, or break anything. The reader presses them and
+  something happens. "Enter keeps the change" reads as a fact about
+  Enter; "Press Enter to save your edit" reads as something to do.
+- **Lead with the action, follow with the result.** "Press X to Y", not
+  "Y happens on X".
+- **Name the outcome in the reader's words.** "Discard your changes",
+  not "abandon the block". The reader knows what their changes are.
+  They have never heard of the block.
+- **Address the reader as you, and only for their own actions.** The
+  system stays in the third person for what it does on its own.
+- **One action per sentence.** An action worth documenting is worth its
+  own sentence, and a list of three keys is three sentences.
+- **Say what it does, not what it is for.** "Press Escape to discard
+  your changes", not "Escape is available if you want to discard".
+
+Keep the declarative where the reader is not acting: constraints,
+behaviour they do not trigger, and anything the system decides on its
+own. A paragraph often needs both, the instruction first and the
+mechanism behind it second.
+
 ## The prose never narrates
 
 This is the rule most often broken, so it gets its own section.
