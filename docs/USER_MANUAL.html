@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 2444eea -->
+<!-- manual-base: 2dde2ca -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
-     2207defa2a0b8a140f1220c287179a37257fe5be skills/
-     2b7216ae8e11dcf724fd64846b70b7e18dae3175 scripts/
-     e936f7db76d25c953b68edacfefd090889d78ca8 templates/
+     a21607205c6f9b36d4c4a6d7175b1bbf97030b4b skills/
+     32bd78521ebe1fafbea5e305b0bd049366092ec8 scripts/
+     3d95da59ea617d1a537a8a59a8d85f7140470aa4 templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -59,6 +59,41 @@
   nav.toc a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
   nav.toc a:hover { color: var(--accent); }
   nav.toc a.sub { padding-left: 14px; color: var(--muted); font-size: 0.8rem; }
+  /* ---- reorder mode: the TOC becomes a drag list. Styled with its own
+     classes (not .btn) because reordering survives in exports and the
+     .btn styles do not. ---- */
+  .ro-toggle { display: block; width: 100%; margin: 0 0 10px; border: 1px solid var(--line);
+    background: transparent; color: var(--muted); border-radius: 999px;
+    padding: 4px 12px; font-size: 0.74rem; font-family: inherit; cursor: pointer;
+    transition: border-color 0.25s ease, color 0.25s ease; }
+  .ro-toggle:hover, nav.toc.reordering .ro-toggle { border-color: var(--accent); color: var(--accent); }
+  nav.toc.reordering > a { display: none; }
+  .ro-list, .ro-actions { display: none; }
+  nav.toc.reordering .ro-list, nav.toc.reordering .ro-actions { display: block; }
+  .ro-item { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line);
+    border-radius: 10px; padding: 6px 10px; margin-bottom: 6px; font-size: 0.8rem;
+    background: var(--surface); cursor: grab; user-select: none; -webkit-user-select: none; }
+  .ro-item.dragging { opacity: 0.45; }
+  .ro-handle { color: var(--muted); font-size: 0.9rem; }
+  .ro-label { flex: 1; }
+  .ro-arrows { display: flex; flex-direction: column; gap: 2px; }
+  .ro-arrow { border: 1px solid var(--line); background: transparent; color: var(--muted);
+    border-radius: 6px; font-size: 0.55rem; line-height: 1; padding: 2px 5px;
+    cursor: pointer; font-family: inherit; }
+  .ro-arrow:hover { color: var(--accent); border-color: var(--accent); }
+  .ro-btn { display: block; width: 100%; border: 1px solid var(--line); background: transparent;
+    color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 0.74rem;
+    font-family: inherit; cursor: pointer; margin-top: 8px;
+    transition: border-color 0.25s ease, color 0.25s ease; }
+  .ro-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ro-btn.primary { border-color: var(--accent); color: var(--accent); }
+  .ro-btn:disabled { opacity: 0.45; cursor: default; pointer-events: none; }
+  .ro-note { font-size: 0.7rem; color: var(--muted); margin-top: 8px; }
+  .ro-pre { font-family: ui-monospace, Menlo, monospace; font-size: 0.62rem;
+    line-height: 1.5; background: color-mix(in srgb, var(--ink) 6%, transparent);
+    border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px;
+    margin-top: 8px; max-height: 160px; overflow: auto; white-space: pre-wrap;
+    user-select: text; -webkit-user-select: text; }
   main { flex: 1; min-width: 0; padding-bottom: 96px; }
   section { margin-bottom: 64px; }
   h2 { font-weight: 300; font-size: 1.9rem; margin-bottom: 18px; scroll-margin-top: 24px; }
@@ -241,8 +276,20 @@
 
 <nav class="toc">
   <div class="toc-title">Contents</div>
+  <button type="button" class="ro-toggle" id="ro-toggle"
+    title="Drag the sections into a new order; the manual follows as you go.">⇅ Reorder sections</button>
+  <div class="ro-list" id="ro-list"></div>
+  <div class="ro-actions">
+    <button type="button" class="ro-btn" id="ro-reset" disabled>Restore authored order</button>
+<!--@EXPORT-DROP-->
+    <button type="button" class="ro-btn primary" id="ro-copy" disabled>Copy new order for Claude Code</button>
+    <pre class="ro-pre" id="ro-payload" hidden></pre>
+<!--@/EXPORT-DROP-->
+    <div class="ro-note" id="ro-note"></div>
+  </div>
   <a href="#get-the-plugin">Get the plugin</a>
   <a href="#the-manual">One file that stays true</a>
+  <a class="sub" href="#reorder">Arrange it your way</a>
   <a class="sub" href="#export">Handing it out</a>
   <a href="#notes">Notes become tickets</a>
   <a class="sub" href="#make-a-note">Making a note</a>
@@ -269,7 +316,9 @@
     bug against that section. A ▶ icon marks a feature with roadmapped
     changes; click it to preview the planned state. Terms with a dotted
     underline show a short definition on hover, once, before the manual
-    explains them in full.</p>
+    explains them in full. <span class="pill">⇅ Reorder sections</span> in
+    the contents panel rearranges the manual live; copy the result to make
+    it the committed order.</p>
     <p class="small" style="margin-bottom:0">Notes copy as a payload for a
     Claude Code session, which writes the developer ticket. Nothing leaves
     this file until you paste.</p>
@@ -310,6 +359,24 @@ claude --plugin-dir /path/to/living-manual</pre>
     so feedback lands on the plan instead of the past. A queue check shows
     what's already filed, so duplicates become additions. The rest of this
     manual walks each of those surfaces.</p>
+
+    <h3 id="reorder">Arrange it your way.</h3>
+    <p>The order a manual is written in is one author's best guess at how it
+    should be read. Reorder mode lets a reader test a better one. Click
+    <span class="pill">⇅ Reorder sections</span> in the contents panel and
+    every top-level section becomes a card in one list, the whole index
+    visible at once. Drag a card, or step it with the arrows, and the manual
+    follows as you move: the sections travel, the contents follow, and
+    nothing waits for a save.</p>
+    <p>The file itself never changes from the browser. When the new order
+    reads better than the authored one, copy it: the payload names the
+    manual and the section order, and a Claude Code session applies it to
+    the committed file with <code>scripts/reorder.py</code>, which moves
+    whole sections and their contents entries and touches nothing else.
+    Restore authored order abandons the experiment.</p>
+    <p class="small muted">Exports keep reorder mode without the copy
+    button. An outside reader has no repo to write to, so their arrangement
+    lasts for the reading session.</p>
 
     <h3 id="export">Handing it out.</h3>
     <p>Everything above is built for the people who maintain the code. To
@@ -679,6 +746,10 @@ claude --plugin-dir /path/to/living-manual</pre>
         drift. <code>--no-tracker</code> skips the query.</td></tr>
       <tr><td><code>next-ticket.sh</code></td>
         <td>The next free ticket number.</td></tr>
+      <tr><td><code>reorder.py</code></td>
+        <td>Applies a reader's section order to the manual file: moves the
+        section blocks and their contents entries, touches nothing else,
+        refuses an id set that does not match.</td></tr>
       <tr><td><code>export.py</code></td>
         <td>A static copy for distribution: note filing, queue, and roadmap
         previews removed; glossary and prose kept.</td></tr>
@@ -712,6 +783,22 @@ claude --plugin-dir /path/to/living-manual</pre>
   <section id="whats-new">
     <h2>What's new.</h2>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
+    <div class="release">
+      <div class="date">v0.4.0 · July 27, 2026</div>
+      <p>The manual's section order is now the reader's to challenge.
+      Reorder mode turns the contents panel into a drag list: every
+      top-level section as a card, the whole index in view at once, so an
+      ordering can be judged as a whole rather than one move at a time.
+      Drag a card and the real sections move with it, live, contents
+      included. Nothing waits for a save and nothing changes on disk.</p>
+      <p>An order worth keeping gets written back the way notes become
+      tickets: copy it, paste it into a Claude Code session, and the
+      session moves the sections in the committed file mechanically. Whole
+      blocks travel; prose is untouched; an order naming the wrong
+      sections is refused rather than guessed at. Exports keep the drag
+      and lose the copy button, since an outside reader has no repo to
+      write to.</p>
+    </div>
     <div class="release">
       <div class="date">v0.3.1 · July 27, 2026</div>
       <p>The first run now ends the way setup says it does: with a manual
@@ -926,7 +1013,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 27, 2026";
-  var MANUAL_BASE = "2444eea";
+  var MANUAL_BASE = "2dde2ca";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -941,7 +1028,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 02:06 UTC",
+  "at": "2026-07-28 02:37 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
@@ -1367,6 +1454,199 @@ claude --plugin-dir /path/to/living-manual</pre>
       var anchors = [h.id, section && section.id].filter(Boolean);
       openRev(title, anchor, scope.locked, scope.scoped, anchors);
     });
+  });
+/*@/EXPORT-DROP*/
+
+  /* ================= Reorder sections =================
+     The TOC becomes the drag surface: one card per top-level section,
+     the whole index visible at once. Moving a card moves the real
+     section as you drag, and the TOC links follow, so the result is
+     always live. The file itself never changes from the browser; the
+     copy button hands the order to a session that rewrites the file. */
+  var roNav = document.querySelector("nav.toc");
+  var roToggle = document.getElementById("ro-toggle");
+  var roListEl = document.getElementById("ro-list");
+  var roResetBtn = document.getElementById("ro-reset");
+  var roNoteEl = document.getElementById("ro-note");
+  var roMain = document.querySelector("main");
+
+  function roSections() {
+    return Array.prototype.filter.call(roMain.children, function (el) {
+      return el.tagName === "SECTION" && el.id;
+    });
+  }
+  var RO_AUTHORED = roSections().map(function (s) { return s.id; });
+
+  function roLabel(sec) {
+    var h = sec.querySelector("h2");
+    if (!h) return sec.id;
+    var t = h.childNodes[0] ? h.childNodes[0].textContent : h.textContent;
+    return t.trim().replace(/\.\s*$/, "");
+  }
+
+  /* TOC links group as: one top-level <a> plus its following .sub links. */
+  function roTocGroups() {
+    var groups = {}, current = null;
+    Array.prototype.forEach.call(roNav.querySelectorAll("a"), function (a) {
+      if (a.classList.contains("sub")) {
+        if (current) current.els.push(a);
+        return;
+      }
+      var id = (a.getAttribute("href") || "").replace(/^#/, "");
+      current = { id: id, els: [a] };
+      groups[id] = current;
+    });
+    return groups;
+  }
+
+  function roOrder() { return roSections().map(function (s) { return s.id; }); }
+
+  function roApply(order) {
+    var by = {};
+    roSections().forEach(function (s) { by[s.id] = s; });
+    order.forEach(function (id) { if (by[id]) roMain.appendChild(by[id]); });
+    var groups = roTocGroups();
+    order.forEach(function (id) {
+      var g = groups[id];
+      if (g) g.els.forEach(function (a) { roNav.appendChild(a); });
+    });
+    roUpdateActions();
+  }
+
+  function roChanged() {
+    var now = roOrder();
+    if (now.length !== RO_AUTHORED.length) return true;
+    for (var i = 0; i < now.length; i++) {
+      if (now[i] !== RO_AUTHORED[i]) return true;
+    }
+    return false;
+  }
+
+  function roUpdateActions() {
+    var changed = roChanged();
+    roResetBtn.disabled = !changed;
+    var copyBtn = document.getElementById("ro-copy");
+    if (copyBtn) copyBtn.disabled = !changed;
+    if (!changed) {
+      roNoteEl.textContent = "";
+      var pre = document.getElementById("ro-payload");
+      if (pre) pre.hidden = true;
+    }
+  }
+
+  function roBuildList() {
+    roListEl.textContent = "";
+    roSections().forEach(function (sec) {
+      var item = document.createElement("div");
+      item.className = "ro-item";
+      item.draggable = true;
+      item.dataset.sec = sec.id;
+      var handle = document.createElement("span");
+      handle.className = "ro-handle";
+      handle.textContent = "≡";
+      var label = document.createElement("span");
+      label.className = "ro-label";
+      label.textContent = roLabel(sec);
+      var arrows = document.createElement("span");
+      arrows.className = "ro-arrows";
+      [["▲", -1], ["▼", 1]].forEach(function (def) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "ro-arrow";
+        b.textContent = def[0];
+        b.addEventListener("click", function () {
+          var sib = def[1] < 0 ? item.previousElementSibling : item.nextElementSibling;
+          if (!sib) return;
+          roListEl.insertBefore(item, def[1] < 0 ? sib : sib.nextElementSibling);
+          roApply(roListOrder());
+        });
+        arrows.appendChild(b);
+      });
+      item.appendChild(handle);
+      item.appendChild(label);
+      item.appendChild(arrows);
+      roListEl.appendChild(item);
+    });
+  }
+
+  function roListOrder() {
+    return Array.prototype.map.call(roListEl.children, function (el) {
+      return el.dataset.sec;
+    });
+  }
+
+  var roDragged = null;
+  roListEl.addEventListener("dragstart", function (e) {
+    var item = e.target.closest(".ro-item");
+    if (!item) return;
+    roDragged = item;
+    item.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+    try { e.dataTransfer.setData("text/plain", item.dataset.sec); } catch (err) {}
+  });
+  roListEl.addEventListener("dragover", function (e) {
+    if (!roDragged) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    var over = e.target.closest(".ro-item");
+    if (!over || over === roDragged) return;
+    var r = over.getBoundingClientRect();
+    var after = e.clientY > r.top + r.height / 2;
+    roListEl.insertBefore(roDragged, after ? over.nextElementSibling : over);
+    /* The document follows the drag, not the drop: results are live. */
+    roApply(roListOrder());
+  });
+  roListEl.addEventListener("drop", function (e) { e.preventDefault(); });
+  roListEl.addEventListener("dragend", function () {
+    if (roDragged) roDragged.classList.remove("dragging");
+    roDragged = null;
+  });
+
+  roResetBtn.addEventListener("click", function () {
+    roApply(RO_AUTHORED);
+    roBuildList();
+  });
+
+  roToggle.addEventListener("click", function () {
+    var on = roNav.classList.toggle("reordering");
+    if (on) roBuildList();
+    roToggle.textContent = on ? "✓ Done reordering" : "⇅ Reorder sections";
+    roUpdateActions();
+  });
+
+/*@EXPORT-DROP*/
+  /* Write-back: the new order becomes a payload for a Claude Code
+     session, which moves the sections in the committed file. Dropped
+     from exports along with the button: an outside reader has no repo
+     to write to, so their arrangement lives for the reading session. */
+  var roCopyBtn = document.getElementById("ro-copy");
+  var roPayloadEl = document.getElementById("ro-payload");
+  roCopyBtn.addEventListener("click", function () {
+    var payload = [
+      "/living-manual:manual reorder", "",
+      "<reorder>",
+      "manual: " + MANUAL_PATH,
+      "order: " + roOrder().join(", "),
+      "</reorder>", "",
+      "The reader rearranged the manual's sections in reorder mode.",
+      "Apply this order to the committed manual with scripts/reorder.py,",
+      "which moves the sections and their TOC entries. Prose is untouched;",
+      "verify must print OK."
+    ].join("\n");
+    roPayloadEl.textContent = payload;
+    roPayloadEl.hidden = false;
+    roNoteEl.textContent = "Copied. Paste it into your Claude Code session to make this the committed order.";
+    function roFallback() {
+      var range = document.createRange();
+      range.selectNodeContents(roPayloadEl);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      try { document.execCommand("copy"); } catch (e) { /* stays selectable */ }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).catch(roFallback);
+    } else { roFallback(); }
   });
 /*@/EXPORT-DROP*/
 
