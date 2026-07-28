@@ -157,5 +157,4 @@ from it, is this project's own.
 ---
 
 Built by [Doug Stanford](https://dougstanford.com) ·
-[dougstanford.com](https://dougstanford.com) ·
 [LinkedIn](https://www.linkedin.com/in/dougstanford/)
