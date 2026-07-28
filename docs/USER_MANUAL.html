@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 68f4fa8 -->
+<!-- manual-base: 08dad04 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      060c8a411815129bbcecf5e38788484071db165b skills/
      32bd78521ebe1fafbea5e305b0bd049366092ec8 scripts/
-     705c9742d5f390c3cae459193b853730ce0f676e templates/
+     f7c262f6dd7252ecbd7bce2b965b6977e807bd28 templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -51,9 +51,12 @@
   .hero .asof { margin-top: 30px; font-size: 0.8rem; opacity: 0.75; }
   .frame { max-width: 1020px; margin: 0 auto; padding: 0 48px; }
   .layout { display: flex; gap: 56px; align-items: flex-start; padding-top: 56px; }
-  nav.toc { position: sticky; top: 28px; width: 218px; flex-shrink: 0;
+  /* Rides along in flow until scrolling would carry it past a fifth of
+     the way down the frame, then holds there. The height allows for the
+     offset so a long contents list still ends on screen. */
+  nav.toc { position: sticky; top: 20vh; width: 218px; flex-shrink: 0;
     font-size: 0.84rem; border: 1px solid var(--line); border-radius: 16px;
-    padding: 18px 20px; max-height: calc(100vh - 56px); overflow-y: auto; }
+    padding: 18px 20px; max-height: calc(80vh - 28px); overflow-y: auto; }
   nav.toc .toc-title { font-size: 0.68rem; text-transform: uppercase;
     letter-spacing: 0.09em; color: var(--muted); margin-bottom: 10px; }
   nav.toc a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
@@ -1056,7 +1059,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 27, 2026";
-  var MANUAL_BASE = "68f4fa8";
+  var MANUAL_BASE = "08dad04";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1071,7 +1074,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 03:26 UTC",
+  "at": "2026-07-28 03:33 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
