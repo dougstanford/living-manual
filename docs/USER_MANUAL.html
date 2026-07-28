@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 0834053 -->
+<!-- manual-base: fbb8700 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      abf496ee590dd12da5acddb8b5fc0ad8ca6039d7 skills/
      f174534cd1a13cf493fc3f6092cae0c14edacfcf scripts/
-     7d0886ff458a7448b7d018065384523b3a58fdac templates/
+     52fcd3d5cd780eb570f0aba8e9a5f8ba0f4b5141 templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -98,6 +98,9 @@
     color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 0.74rem;
     font-family: inherit; cursor: pointer; margin-top: 8px;
     transition: border-color 0.25s ease, color 0.25s ease; }
+  /* An author display wins over the hidden attribute, so a button
+     marked hidden kept rendering and both were showing at once. */
+  .ro-btn[hidden] { display: none; }
   .ro-btn:hover { border-color: var(--accent); color: var(--accent); }
   .ro-btn.primary { border-color: var(--accent); color: var(--accent); }
   .ro-slot { transition: opacity 0.2s ease; }
@@ -1239,7 +1242,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 28, 2026";
-  var MANUAL_BASE = "0834053";
+  var MANUAL_BASE = "fbb8700";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1254,7 +1257,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 05:17 UTC",
+  "at": "2026-07-28 05:22 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
