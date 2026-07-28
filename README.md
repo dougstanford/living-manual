@@ -24,12 +24,13 @@ The manual is one self-contained HTML file:
   on every open; an optional payload makes it the committed order for
   everyone.
 - **Edit the copy where you read it**: click into any paragraph,
-  heading, or the title and correct it. Enter keeps the change,
-  Shift+Enter breaks a line, Escape puts it back. Edits persist in the
-  browser and change no file until a payload commits them.
+  heading, or the title to correct it. Press Enter to save your edit,
+  Shift+Enter to start a new line, Escape to discard your changes.
+  Renaming a heading renames its contents entry with it. Edits persist
+  in the browser and change no file until a payload commits them.
 - **A menu on small screens**: when a frame is too short or too narrow
-  to show the contents whole, they give way to a three-line button that
-  opens them centred over a frozen page.
+  to show the contents whole, they collapse to a menu button that opens
+  them centred over a frozen page.
 
 **See it demonstrate itself:** [docs/USER_MANUAL.html](docs/USER_MANUAL.html)
 is this plugin's own manual, built and maintained by the plugin. Open it
@@ -88,13 +89,21 @@ python3 scripts/export.py docs/USER_MANUAL.html
 
 That writes `docs/USER_MANUAL_prod.html` with the note-filing path gone,
 along with the affordances that advertise it, and the roadmap previews,
-which describe work that has not shipped. The glossary and all prose
-stay — they generate nothing and only make the document easier to read.
+which describe work that has not shipped. Editing and reordering go too:
+both end at a payload for a session with the repo checked out, which an
+outside reader does not have. The glossary, all prose, and the
+responsive layout stay, so a distributed copy still reads on whatever it
+is opened on.
 
 The queue matters most here. `TICKETS` and `QUEUE_SYNC` live *inside*
 the file, so a distributed manual that kept them would publish your
 backlog and name your issue tracker to anyone who views source. The
 export carries neither, and verification fails if one survives.
+
+Add a second argument to write the copy somewhere else. Inside the repo
+it picks up a git rule when the repo has none; outside the repo
+`.gitignore` is left alone, because git never sees a file outside the
+working tree.
 
 Exports are build artifacts: `.gitignore`d and regenerated at release,
 so there is only ever one document to keep current.
@@ -118,7 +127,7 @@ The action reads `.living-manual.json` for the paths it needs; pass
 `manual-path` or `tickets-dir` only if this workflow guards a repo
 whose manual moved. A failing check names the offending commits and
 the command that fixes them. It stays advisory until an admin adds it
-to the branch's required checks — the plugin supplies the signal, the
+to the branch's required checks. The plugin supplies the signal; the
 repo owner decides its force.
 
 ## Layout
@@ -153,6 +162,26 @@ travels with the adapted text, at the end of that file.
 
 The rest of the guide, covering who reads a manual and what they need
 from it, is this project's own.
+
+## Contributing
+
+`main` is protected: every change lands through a pull request that
+passes the **Manual reflects the code** check. See
+[docs/WORKFLOW.md](docs/WORKFLOW.md) for the full contract and
+[CLAUDE.md](CLAUDE.md) for what an agent session is expected to do.
+
+The short version: branch from `origin/main`, keep one concern per
+branch, run `/living-manual:manual update` before pushing so the manual
+matches what you changed, and open the PR against `main`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+The catalogue of words and patterns to cut in
+`reference/writing-style.md` is adapted from the `no-ai-slop` skill by
+Peter Yang, reused under the MIT License. Its notice travels with the
+adapted text.
 
 ---
 
