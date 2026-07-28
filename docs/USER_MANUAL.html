@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: bb7fc27 -->
+<!-- manual-base: e013913 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      26f8f05298901415174839f2febe816332964e63 skills/
      3fdad69d05c0846ff70d41fc5a003ed9f8d9fb18 scripts/
-     df25b49111d92e4147cbca11ac62fe23e25a0890 templates/
+     0ddb708d71a1d7c18cbae58e50455f15fcbb7941 templates/
      6a945b46d05e7ac42793f3af05be002d4cc0b333 reference/
 -->
 <!--
@@ -43,8 +43,11 @@
   .hero-inner { max-width: 1020px; margin: 0 auto; }
   .hero .lockup { display: flex; align-items: center; gap: 12px;
     font-weight: 600; font-size: 1.3rem; margin-bottom: 48px; }
+  /* Measured in ch so the cap scales with the clamped font size: the
+     title keeps the same line length at every width rather than
+     wrapping earlier as the type shrinks. */
   .hero h1 { font-weight: 200; font-size: clamp(2.2rem, 5vw, 3.6rem);
-    line-height: 1.12; max-width: 16ch; }
+    line-height: 1.12; max-width: 22ch; }
   .hero .tagpill { display: inline-block; margin-top: 24px;
     border: 1px solid rgba(255,255,255,0.75); border-radius: 999px;
     padding: 6px 18px; font-size: 0.82rem; }
@@ -1284,7 +1287,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "2026-07-28";
-  var MANUAL_BASE = "bb7fc27";
+  var MANUAL_BASE = "e013913";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
