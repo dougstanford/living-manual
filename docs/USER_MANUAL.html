@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: 0dd7152 -->
+<!-- manual-base: 2b37cce -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      abf496ee590dd12da5acddb8b5fc0ad8ca6039d7 skills/
      f174534cd1a13cf493fc3f6092cae0c14edacfcf scripts/
-     3c6ef70aa29bc07e6a3db806139d85aa68943468 templates/
+     0a7e6f80ab04d8e8fb81bb137b32b67e5e13578c templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -229,7 +229,13 @@
   .note-pill:hover { color: var(--accent); border-color: var(--accent); }
   /* No frame around the block being edited. The blinking caret is the
      signal; a border would only fence off the words being read. The
-     hint sits under the contents in plain body type, no box. */
+     browser draws its own focus ring on an editable block, which is
+     the blue box, and it only shows while the window has focus, so it
+     has to be turned off explicitly rather than merely not added. */
+  [contenteditable="true"], [contenteditable="true"]:focus,
+  [contenteditable="true"]:focus-visible {
+    outline: none; box-shadow: none; }
+  /* The hint sits under the contents in plain body type, no box. */
   .edit-hint { position: fixed; bottom: 5vh; z-index: 45;
     font-size: 0.84rem; line-height: 1.5; color: var(--muted);
     pointer-events: none; opacity: 0; transition: opacity 0.16s ease; }
@@ -1218,7 +1224,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 28, 2026";
-  var MANUAL_BASE = "0dd7152";
+  var MANUAL_BASE = "2b37cce";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1233,7 +1239,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 05:01 UTC",
+  "at": "2026-07-28 05:05 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
