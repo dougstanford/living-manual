@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: dea46fa -->
+<!-- manual-base: d89ec45 -->
 <!-- manual-fingerprint (content hash per user-facing path, at that commit)
      060c8a411815129bbcecf5e38788484071db165b skills/
      32bd78521ebe1fafbea5e305b0bd049366092ec8 scripts/
-     65832454a095299ff86359fb0eb6541f432c79eb templates/
+     c7e2758eb9d4dc9efd8ab5acb431e8f6a9183f76 templates/
      453f77e7b6b05bd13c5380f54d07d3e9582d9901 reference/
 -->
 <!--
@@ -338,7 +338,7 @@
     changes; click it to preview the planned state. Terms with a dotted
     underline show a short definition on hover, once, before the manual
     explains them in full. Every entry in the contents panel has a handle
-    in its left margin, which appears when your cursor reaches it; drag
+    in its left margin, which appears as your cursor comes near it; drag
     the handle to rearrange the manual, and your browser keeps that order
     for every visit.</p>
     <p class="small" style="margin-bottom:0">Notes copy as a payload for a
@@ -386,8 +386,10 @@ claude --plugin-dir /path/to/living-manual</pre>
     <p>The order a manual is written in is one author's best guess at how it
     should be read. The contents panel lets you test a better one. Each
     entry has a handle in its left margin, three short lines that fade in
-    when your cursor reaches them and stay out of the way the rest of the
-    time. Drag the handle and the entry moves with its subsections; the
+    as your cursor comes near and stay out of the way the rest of the
+    time. They answer to proximity rather than contact, so a handle is
+    already showing by the time you reach it instead of hiding under the
+    cursor. Drag the handle and the entry moves with its subsections; the
     contents show where it will land while the page holds still, and the
     manual glides into the new arrangement when you let go. Change your
     mind mid-drag and press Escape: everything slides back.</p>
@@ -815,8 +817,9 @@ claude --plugin-dir /path/to/living-manual</pre>
       <div class="date">v0.4.0 · July 27, 2026</div>
       <p>The manual's section order is now the reader's to change. Each
       entry in the contents panel has a handle in its left margin, which
-      fades in when the cursor reaches it; drag it and the entry moves
-      with its subsections. While you hold it the contents preview where
+      fades in as the cursor comes near rather than waiting to be
+      touched, so it is visible before the pointer covers it; drag it and
+      the entry moves with its subsections. While you hold it the contents preview where
       it will land and the page stays still, so nothing shifts under you
       mid-decision. Release, and the sections glide into the new
       arrangement. Movement is softened throughout:
@@ -1049,7 +1052,7 @@ claude --plugin-dir /path/to/living-manual</pre>
 (function () {
   "use strict";
   var MANUAL_VERSION = "July 27, 2026";
-  var MANUAL_BASE = "dea46fa";
+  var MANUAL_BASE = "d89ec45";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
   var MANUAL_PATH = "docs/USER_MANUAL.html";
@@ -1064,7 +1067,7 @@ claude --plugin-dir /path/to/living-manual</pre>
      rebuild. Showing its age is what keeps that honest. */
   /*@QUEUESYNC*/
   var QUEUE_SYNC = {
-  "at": "2026-07-28 03:15 UTC",
+  "at": "2026-07-28 03:22 UTC",
   "provider": "github"
 };
   /*@/QUEUESYNC*/
@@ -1657,12 +1660,16 @@ claude --plugin-dir /path/to/living-manual</pre>
   var roDrag = null;
   var RO_THRESHOLD = 4;
 
-  /* The handle's visibility is driven here rather than by :hover. A
-     group that moves under a resting cursor keeps a stale hover state
-     until the pointer moves again, which left the entry just dropped
-     still showing its handle. Tracking movement instead has no such
-     gap: the drop darkens every handle, and the next movement lights
-     whichever one the cursor is genuinely over. */
+  /* The handle's visibility is driven here rather than by :hover, for
+     two reasons. A group that moves under a resting cursor keeps a
+     stale hover state until the pointer moves again, which left the
+     entry just dropped still showing its handle. And a handle small
+     enough to stay out of the way disappears under the grab cursor
+     that hovering it summons, so it has to answer to proximity rather
+     than contact: it lights as the pointer comes near, while there is
+     still clear space between them, and the nearest one wins so only
+     ever one is lit. */
+  var RO_NEAR = 52;
   var roLit = null;
   function roLightHandle(h) {
     if (roLit === h) return;
@@ -1670,9 +1677,22 @@ claude --plugin-dir /path/to/living-manual</pre>
     if (h) h.classList.add("on");
     roLit = h;
   }
+  function roNearestHandle(x, y) {
+    var best = null, bestD = RO_NEAR;
+    roGroups().forEach(function (g) {
+      var h = g.querySelector(".toc-handle");
+      if (!h) return;
+      var r = h.getBoundingClientRect();
+      var dx = x < r.left ? r.left - x : (x > r.right ? x - r.right : 0);
+      var dy = y < r.top ? r.top - y : (y > r.bottom ? y - r.bottom : 0);
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < bestD) { bestD = d; best = h; }
+    });
+    return best;
+  }
   roNav.addEventListener("pointermove", function (e) {
     if (roDrag && roDrag.held) return;
-    roLightHandle(e.target.closest(".toc-handle"));
+    roLightHandle(roNearestHandle(e.clientX, e.clientY));
   });
   roNav.addEventListener("pointerleave", function () {
     if (!(roDrag && roDrag.held)) roLightHandle(null);
