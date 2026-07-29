@@ -32,7 +32,7 @@ The manual is one self-contained HTML file:
   to show the contents whole, they collapse to a menu button that opens
   them centred over a frozen page.
 
-**See it demonstrate itself:** [docs/USER_MANUAL.html](docs/USER_MANUAL.html)
+**See it demonstrate itself:** [dougstanford.com/living-manual/]([docs/USER_MANUAL.html](https://dougstanford.com/living-manual/))
 is this plugin's own manual, built and maintained by the plugin. Open it
 in a browser: the clickable headings, roadmap previews, glossary, and
 queue check are all live, and its What's new tracks this repo's releases.
