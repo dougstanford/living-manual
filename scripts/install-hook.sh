@@ -25,10 +25,10 @@ cat >> "$HOOK" <<'HOOKEOF'
 # releases. Bypass once with --no-verify; the next dev inherits the gap.
 #
 # Two checks, two different powers. Staleness blocks: it is computed
-# locally, and a broken base marker disables the guard for everyone.
-# Queue drift only warns: proving it needs the tracker, which can be
-# down for reasons the pusher did not cause, and a stale queue leaves
-# the mechanism working. See reference/maintenance.md.
+# locally from the tree at HEAD alone. Queue drift only warns: proving it
+# needs the tracker, which can be down for reasons the pusher did not
+# cause, and a stale queue leaves the mechanism working. See
+# reference/maintenance.md.
 LOCAL="$(git rev-parse --git-path hooks)/pre-push.local"
 [ -x "$LOCAL" ] && { "$LOCAL" "$@" || exit 1; }
 cd "$(git rev-parse --show-toplevel)" || exit 0
@@ -43,35 +43,33 @@ try:
         head = open(manual).read(8000)
     except FileNotFoundError:
         print("MISSING-MANUAL"); sys.exit(0)
-    m = re.search(r"manual-base: ([0-9a-f]+)", head)
+    m = re.search(r"<!-- manual-surfaces.*?-->", head, re.S)
     if not m:
-        print("CURRENT"); sys.exit(0)
-    base = m.group(1)
-    if subprocess.run("git cat-file -e %s^{commit}" % base, shell=True,
-                      capture_output=True).returncode != 0:
-        # History was rewritten after stamping, so there is no commit
-        # range. The content fingerprints outlive the commit and can
-        # still say whether anything user-facing actually moved.
-        fp = re.search(r"<!-- manual-fingerprint.*?-->", head, re.S)
-        fps = re.findall(r"^\s*([0-9a-f]{40})\s+(\S.*?)\s*$", fp.group(0), re.M) if fp else []
-        if not fps:
-            print("BAD-BASE " + base); sys.exit(0)
-        moved = []
-        for want, path in fps:
-            got = subprocess.run(["git", "rev-parse", "HEAD:" + path.rstrip("/")],
-                                 capture_output=True, text=True)
-            if got.returncode != 0 or got.stdout.strip() != want:
-                moved.append(path)
-        if not moved:
-            print("RESTAMP " + base); sys.exit(0)
+        # A legacy manual carries only a manual-base sha and cannot be
+        # checked until one update run migrates it. Anything else with no
+        # marker is treated as current, the same as before.
+        print("LEGACY" if re.search(r"manual-base: [0-9a-f]+", head) else "CURRENT")
+        sys.exit(0)
+    stored = dict((p, h) for h, p in
+                  re.findall(r"^\s*([0-9a-f]{40})\s+(\S.*?)\s*$", m.group(0), re.M))
+    moved = []
+    for path in cfg.get("user_facing_paths", ["src/"]):
+        r = subprocess.run(["git", "rev-parse", "--verify", "--quiet",
+                            "HEAD:" + path.rstrip("/")],
+                           capture_output=True, text=True)
+        got = r.stdout.strip()
+        now = got if r.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", got) else None
+        was = stored.get(path.rstrip("/")) or stored.get(path)
+        if now is None and was is None:
+            continue
+        if now != was:
+            moved.append(path)
+    if moved:
         print("MOVED")
         for p in moved:
             print("  " + p)
-        sys.exit(0)
-    globs = " ".join("'%s'" % g for g in cfg.get("user_facing_paths", ["src/"]))
-    out = subprocess.run("git log --oneline %s..HEAD -- %s" % (base, globs),
-                         shell=True, capture_output=True, text=True).stdout.strip()
-    print(out if out else "CURRENT")
+    else:
+        print("CURRENT")
 except Exception:
     print("CURRENT")
 PYEOF
@@ -113,29 +111,24 @@ case "$OUT" in
     echo "Rebuild it:   claude -p \"/living-manual:manual\""
     echo "Bypass once:  git push --no-verify"
     exit 1 ;;
-  BAD-BASE*)
-    echo "living-manual: the manual's base commit (${OUT#BAD-BASE }) is not in this clone."
-    echo "Re-stamp it:  claude -p \"/living-manual:manual update\""
-    echo "Bypass once:  git push --no-verify"
-    exit 1 ;;
-  RESTAMP*)
-    echo "living-manual: the manual's base commit (${OUT#RESTAMP }) is gone, but every"
-    echo "user-facing path still hashes the same. The manual's content is current."
+  LEGACY)
+    echo "living-manual: this manual predates the manual-surfaces block and"
+    echo "carries only a legacy base sha, so staleness cannot be checked yet."
     echo ""
-    echo "Re-stamping the marker is the whole fix. Nothing needs rewriting:"
-    echo "Re-stamp it:  claude -p \"/living-manual:manual update\""
+    echo "Migrate it (one update run rewrites the marker):"
+    echo "Update it:    claude -p \"/living-manual:manual update\""
     echo "Bypass once:  git push --no-verify"
     exit 1 ;;
   MOVED*)
-    echo "living-manual: the manual's base commit is gone, so there is no commit"
-    echo "range to read. These user-facing paths changed since it was stamped:"
+    echo "living-manual: these user-facing surfaces changed since the manual"
+    echo "last described them:"
     echo "$OUT" | tail -n +2
     echo ""
     echo "Update it before pushing:  claude -p \"/living-manual:manual update\""
     echo "Or bypass once:            git push --no-verify"
     exit 1 ;;
   *)
-    echo "living-manual: the manual predates these user-facing commits:"
+    echo "living-manual: the manual does not reflect the current code."
     echo "$OUT" | head -10
     echo ""
     echo "Update it before pushing:  claude -p \"/living-manual:manual update\""

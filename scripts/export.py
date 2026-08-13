@@ -21,8 +21,8 @@ What comes out:
   - the glossary intact, because it generates nothing and only makes
     the document easier to read
   - one manual-export comment naming the version and source commit,
-    in place of the base marker and fingerprints, which are guard
-    machinery this file is not maintained by
+    in place of the manual-surfaces block, which is guard machinery
+    this file is not maintained by
 
 Removal is driven by /*@EXPORT-DROP*/ ... /*@/EXPORT-DROP*/ markers
 (and their <!--@EXPORT-DROP--> form in markup), so the shell declares
@@ -41,7 +41,7 @@ DROP_PAIRS = [("/*@EXPORT-DROP*/", "/*@/EXPORT-DROP*/"),
 # glossary is a reading aid that generates nothing.
 DROP_BLOCKS = ("TICKETS", "QUEUESYNC", "PREVIEWS")
 # Declared for the note payload only; nothing that survives reads them.
-DROP_VARS = ("MANUAL_VERSION", "MANUAL_BASE", "TICKET_SKILL",
+DROP_VARS = ("MANUAL_VERSION", "TICKET_SKILL",
              "TICKETS_DIR", "MANUAL_PATH")
 EXPORT_MARK = "manual-export:"
 
@@ -109,12 +109,11 @@ def stamp_provenance(src, version, commit):
     the file declares its own kind. A flag would have to be remembered
     by every later caller; the file outlives the command that made it.
     """
-    src = re.sub(r"[ \t]*<!-- manual-fingerprint.*?-->\n?", "", src, flags=re.S)
     mark = "<!-- %s static copy, living-manual %s, built from %s -->" % (
         EXPORT_MARK, version, commit)
-    src, n = re.subn(r"<!-- manual-base: [0-9a-f]+ -->", mark, src, count=1)
+    src, n = re.subn(r"<!-- manual-surfaces.*?-->", mark, src, count=1, flags=re.S)
     if not n:
-        die("no manual-base marker found; is this a living manual?")
+        die("no manual-surfaces block found; is this a living manual?")
     return src
 
 def notice(src):

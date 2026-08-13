@@ -28,12 +28,12 @@ request that passes **Manual reflects the code**.
   share — stage explicit paths.
 - Push the branch the same day it exists; open the MR with
   `gh pr create --base main`.
-- Rebase onto trunk; never merge trunk into your branch.
-- **Merge with a merge commit. Squash and rebase merging are disabled at
-  the repository, deliberately.** Both replay work under new SHAs, which
-  orphans the manual's base marker the moment the MR lands — the exact
-  failure the guard exists to catch. Full reasoning in
-  `docs/WORKFLOW.md` §3.
+- Rebase onto trunk when you want a clean history; you no longer need to,
+  since branches merge in any order without conflicting on the manual.
+- **Merge with any method — merge commit, squash, or rebase.** The manual
+  records a content hash per user-facing surface, not a commit sha, so no
+  merge method can orphan it (this reversed the old merge-commit-only
+  rule; see TICKET-0006 and `docs/WORKFLOW.md` §3).
 - Required approvals are 0 by design (agent sessions act as the owner,
   and GitHub forbids self-approval), so the enforced gate is *MR + green
   check*. The merge click is the human judgment.
@@ -48,10 +48,10 @@ guide: `docs/WORKFLOW.md`.
 This project's user manual is docs/USER_MANUAL.html, maintained by the
 living-manual plugin. It must reflect the app as released.
 
-- Before any push: run `/living-manual:manual update`. It reads the
-  commits since the manual's base marker and revises only what changed.
-  The pre-push hook blocks pushes when the manual is stale; fix the
-  manual rather than bypassing.
+- Before any push: run `/living-manual:manual update`. It compares each
+  user-facing surface's content to what the manual records and revises
+  only what changed. The pre-push hook blocks pushes when the manual is
+  stale; fix the manual rather than bypassing.
 - The manual describes the end state of the collective commits being
   pushed, so the next dev opens a manual that matches the release.
 - Notes filed from the manual become tickets via `/living-manual:ticket`
@@ -78,7 +78,8 @@ tagged is a release nobody can pin. Every version bump ends the same way:
 
 The release point is the first commit on `main` at which the manual is
 current — never the code commit before the manual was stamped against
-it. Landing through a PR, that is the merge commit; landing directly,
+it. Landing through a PR, that is the merge commit (or the single
+squashed/rebased commit that carried the manual stamp); landing directly,
 it is the manual-stamp commit. Test it the same way either way: check
 out the candidate and run `sh scripts/ci-check.sh`. If it does not
 print CURRENT, it is not the release point.

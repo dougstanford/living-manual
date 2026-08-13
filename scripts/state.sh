@@ -13,7 +13,7 @@ def sh(cmd):
         return ""
 
 state = {"configured": False, "config": None, "manual_exists": False,
-         "hook_installed": False, "ci_installed": False, "manual_base": None,
+         "hook_installed": False, "ci_installed": False, "manual_surfaces": 0,
          "head": sh("git rev-parse --short HEAD"),
          "tickets": 0, "claude_md_wired": False}
 
@@ -27,8 +27,10 @@ if os.path.exists(".living-manual.json"):
             state["manual_exists"] = True
             head = open(manual).read(4000)
             import re
-            m = re.search(r"manual-base: ([0-9a-f]+)", head)
-            if m: state["manual_base"] = m.group(1)
+            surf = re.search(r"<!-- manual-surfaces.*?-->", head, re.S)
+            if surf:
+                state["manual_surfaces"] = len(
+                    re.findall(r"^\s*[0-9a-f]{40}\s+\S", surf.group(0), re.M))
         tdir = cfg.get("tickets_dir", "docs/tickets")
         if os.path.isdir(tdir):
             state["tickets"] = len([f for f in os.listdir(tdir) if f.startswith("TICKET-")])

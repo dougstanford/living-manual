@@ -12,18 +12,22 @@ Payload keys (all optional; present keys replace the whole block):
                summary; "s" accepted as a legacy alias for summary)
   defined   -> var DEFINED_IN = {...};
   asof      -> the hero "as of" date string
-  base      -> the manual-base commit sha (short); stamped into both the
-               HTML comment and the MANUAL_BASE payload variable so a note's
-               ticket names the commit the manual reflected
+  surfaces  -> truthy: re-stamp the manual-surfaces block, one content
+               hash per user_facing_paths entry, taken at HEAD
 
-Stamping the base also records a content fingerprint: one git hash per
-user_facing_paths entry, taken at the stamped commit. The sha alone is
-fragile, because it is frozen in a file while history is not: an amend,
-a rebase, or a squash merge orphans it, and with the commit gone there
-is no range left to diff, so the update flow cannot say what changed.
-The fingerprints answer that question without the commit. Identical
-hashes mean nothing user-facing moved and only the marker needs
-re-stamping; a differing hash names the surface that moved.
+The surfaces block is the whole staleness mechanism: a git hash per
+user-facing path (a directory's tree hash, a file's blob hash), so a
+hash changes exactly when that surface's content does. stale.sh answers
+"is the manual current?" by comparing each path's hash at HEAD to the
+one stored here — no commit sha, no commit range, no history walk. That
+is what makes merges order-independent: a branch only rewrites the line
+for a surface it actually changed, so two branches touching different
+surfaces edit different lines and merge cleanly in any order, while two
+branches touching the same surface collide on that one line, which is
+the reconciliation a human owes anyway.
+
+Stamp only after the prose is reconciled to HEAD: this marks those
+surfaces "described", so stamping unreconciled code would lie.
 
 Glossary regexes travel as {"pattern": "...", "flags": "gi"} and are
 emitted as literals.
@@ -47,7 +51,7 @@ def glossary_js(entries):
                pattern, e.get("flags", "gi"), json.dumps(summary, ensure_ascii=False)))
     return "[\n" + ",\n".join(out) + "\n  ]"
 
-FP_OPEN = "<!-- manual-fingerprint"
+SURF_OPEN = "<!-- manual-surfaces"
 
 def find_config(start):
     """Nearest .living-manual.json at or above the manual."""
@@ -61,19 +65,19 @@ def find_config(start):
             return None
         d = parent
 
-def tree_hashes(base, paths, warn):
-    """-> [(git hash, path)] for each path that resolves at `base`.
+def tree_hashes(ref, paths, warn):
+    """-> [(git hash, path)] for each path that resolves at `ref`.
 
     A directory yields its tree hash, a file its blob hash; either way the
     hash changes exactly when that path's content does. An entry that is
     not a tracked path at all (a glob, a directory that exists only
     untracked) is skipped with a warning rather than failing the stamp:
     a config naming an as-yet-empty directory should keep working, and
-    the remaining entries still fingerprint fine.
+    the remaining entries still hash fine.
     """
     out = []
     for p in paths:
-        spec = "%s:%s" % (base, p.rstrip("/"))
+        spec = "%s:%s" % (ref, p.rstrip("/"))
         r = subprocess.run(["git", "rev-parse", "--verify", "--quiet", spec],
                            capture_output=True, text=True)
         got = r.stdout.strip()
@@ -83,28 +87,41 @@ def tree_hashes(base, paths, warn):
         # of a hash. Only a 40-char sha is a fingerprint.
         if r.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40}", got):
             warn("user_facing_paths entry %r is not a tracked path at %s: "
-                 "skipping its fingerprint" % (p, base))
+                 "skipping its surface hash" % (p, ref))
             continue
         out.append((got, p))
     return out
 
-def stamp_fingerprints(src, entries):
-    """Write the fingerprint comment, replacing any previous one.
+def stamp_surfaces(src, entries):
+    """Write the manual-surfaces comment, replacing any previous one.
 
-    It sits directly under the base marker because that is the region
-    stale.sh and verify.py already read; keeping both in the first few
-    hundred bytes means neither has to parse the whole document to
-    answer a question about staleness.
+    It lives in the document head so stale.sh and verify.py read only the
+    first few thousand bytes to answer a staleness question rather than
+    parsing the whole file. A new manual ships the block already; on an
+    update the existing block is replaced in place, which keeps unchanged
+    lines byte-for-byte stable so a 3-way merge keeps whichever side moved.
     """
-    body = (FP_OPEN + " (content hash per user-facing path, at that commit)\n"
-            + "".join("     %s %s\n" % (h, p) for h, p in entries) + "-->")
-    old = re.search(re.escape(FP_OPEN) + r".*?-->", src, re.S)
+    # One blank line between entries is load-bearing, not cosmetic. Each
+    # branch rewrites only the hash line for a surface it changed; a blank
+    # line between two entries keeps those changes in separate merge hunks,
+    # so git combines edits to different surfaces without a conflict.
+    # Adjacent changed lines, with no unchanged line between them, would
+    # conflict on every parallel merge — the very failure this replaced.
+    body = (SURF_OPEN + " (content hash per user-facing path the manual reflects)\n\n"
+            + "\n\n".join("     %s %s" % (h, p) for h, p in entries) + "\n-->")
+    old = re.search(re.escape(SURF_OPEN) + r".*?-->", src, re.S)
     if old:
         return src[:old.start()] + body + src[old.end():]
-    anchor = re.search(r"<!-- manual-base: [0-9a-f]+ -->", src)
+    # No block yet. This may be a legacy manual carrying the old base-sha
+    # markers; strip them so the migration is one clean swap rather than a
+    # file that briefly holds both schemes.
+    src = re.sub(r"[ \t]*<!-- manual-fingerprint.*?-->\n?", "", src, flags=re.S)
+    src = re.sub(r"[ \t]*<!-- manual-base: [0-9a-f]+ -->\n?", "", src, count=1)
+    # Anchor right after the <title>, the one stable line every manual head
+    # carries. verify.py reports a truly place-less manual on its own; do
+    # not invent a placement beyond this.
+    anchor = re.search(r"</title>", src)
     if not anchor:
-        # No marker to anchor to. verify.py reports that on its own; do
-        # not invent a placement.
         return src
     return src[:anchor.end()] + "\n" + body + src[anchor.end():]
 
@@ -148,33 +165,29 @@ def main():
         src = re.sub(r'(MANUAL_VERSION = ")[^"]*(")',
                      lambda m: m.group(1) + p["asof"] + m.group(2), src, count=1)
     warnings = []
-    if "base" in p:
-        src = re.sub(r"(manual-base: )[0-9a-f]+",
-                     lambda m: m.group(1) + p["base"], src, count=1)
-        src = re.sub(r'(MANUAL_BASE = ")[0-9a-f]+(")',
-                     lambda m: m.group(1) + p["base"] + m.group(2), src, count=1)
+    if p.get("surfaces"):
         cfg_path = find_config(manual)
         cfg = {}
         if cfg_path:
             try:
                 cfg = json.load(open(cfg_path))
             except Exception as e:
-                warnings.append("could not read %s (%s): no fingerprints stamped"
+                warnings.append("could not read %s (%s): surfaces not stamped"
                                 % (cfg_path, e))
         else:
-            warnings.append("no .living-manual.json found: no fingerprints stamped")
+            warnings.append("no .living-manual.json found: surfaces not stamped")
         paths = cfg.get("user_facing_paths") or []
         if paths:
-            entries = tree_hashes(p["base"], paths, warnings.append)
+            entries = tree_hashes("HEAD", paths, warnings.append)
             if entries:
-                src = stamp_fingerprints(src, entries)
+                src = stamp_surfaces(src, entries)
             else:
-                warnings.append("no user_facing_paths entry resolved at %s: "
-                                "no fingerprints stamped" % p["base"])
+                warnings.append("no user_facing_paths entry resolved at HEAD: "
+                                "surfaces not stamped")
     open(manual, "w").write(src)
     for w in warnings:
         print("warning:", w, file=sys.stderr)
-    print("synced:", ", ".join(k for k in ("tickets","previews","glossary","defined","asof","base") if k in p))
+    print("synced:", ", ".join(k for k in ("tickets","previews","glossary","defined","asof","surfaces") if k in p))
 
 if __name__ == "__main__":
     main()

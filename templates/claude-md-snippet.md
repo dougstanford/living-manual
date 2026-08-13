@@ -4,10 +4,10 @@
 This project's user manual is MANUAL_PATH, maintained by the
 living-manual plugin. It must reflect the app as released.
 
-- Before any push: run `/living-manual:manual update`. It reads the
-  commits since the manual's base marker and revises only what changed.
-  The pre-push hook blocks pushes when the manual is stale; fix the
-  manual rather than bypassing.
+- Before any push: run `/living-manual:manual update`. It compares each
+  user-facing surface's content to what the manual records and revises
+  only what changed. The pre-push hook blocks pushes when the manual is
+  stale; fix the manual rather than bypassing.
 - The manual describes the end state of the collective commits being
   pushed, so the next dev opens a manual that matches the release.
 - Notes filed from the manual become tickets via `/living-manual:ticket`

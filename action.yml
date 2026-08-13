@@ -1,7 +1,8 @@
 name: Living manual guard
 description: >-
   Fail the check when the user manual is stale against the code it
-  documents, or when its base marker no longer resolves to a commit.
+  documents — when a user-facing surface no longer matches the content
+  hash the manual records for it.
 author: Doug Stanford
 branding:
   icon: book-open

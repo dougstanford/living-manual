@@ -3,7 +3,7 @@
 The update flow in skills/manual/SKILL.md is the procedure. This is the
 checklist form, for review before reporting done.
 
-1. `stale.sh` output consumed: every listed commit's user-facing effect
+1. `stale.sh` output consumed: every named surface's user-facing change
    is either reflected in a section or explicitly irrelevant.
 2. Sections revised where behavior changed. No planned work described
    as shipped.
@@ -21,7 +21,8 @@ checklist form, for review before reporting done.
    the one readers file notes against, and it should be true as of the
    release, not as of whenever the tracker was last consulted. The flag
    exists for offline work, not for a release.
-7. `asof` and `base` stamped via sync-index.py.
+7. `asof` stamped and surfaces re-stamped (`"surfaces": true`) via
+   sync-index.py, from committed state — commit the code first.
 8. `python3 $LM/scripts/verify.py <manual_path>` prints OK. Browser
    check when machinery or slots changed: headings clickable, one
    glossary alert max per concept and none after its definition,
@@ -46,25 +47,27 @@ requires an external service.**
 
 Two halves, both load-bearing:
 
-- *The guard itself is disabled.* A broken base marker means every later
-  staleness check returns a meaningless answer, for every clone, until
-  someone re-stamps. The mechanism is down, not the content. Content
-  that is merely out of date is what the manual already tolerates
-  between updates, and it self-corrects on the next run.
+- *The guard itself is disabled.* A missing or malformed manual-surfaces
+  block — or a legacy manual carrying only an old base sha — means the
+  staleness check cannot give an answer at all, for every clone, until
+  someone rebuilds or migrates it. The mechanism is down, not just the
+  content. (A stale surface, by contrast, is the mechanism working: it
+  names exactly what to revise, and it blocks a push because the manual
+  must reflect what that push releases.)
 - *Provable locally.* A check that must reach a third party can fail for
   reasons the pusher did not cause and cannot fix. Blocking on it trades
   a real outage for a theoretical correctness gain, and it teaches
   people to reach for `--no-verify`, which costs more than the check was
   worth.
 
-Do not decide by who caused the problem. The tool cannot tell: a marker
-is as often orphaned by someone else's squash merge as by your own
-rebase, and a stale queue is as often your own doing as a colleague's.
-Blame is unmeasurable, so it makes a poor rule.
+Do not decide by who caused the problem. The tool cannot tell: a stale
+surface is as often the merge of someone else's branch as your own edit,
+and a stale queue is as often your own doing as a colleague's. Blame is
+unmeasurable, so it makes a poor rule.
 
-Applied: an orphaned or re-stamp-only base marker blocks
-(TICKET-0002 D2). Queue drift against the tracker warns
-(TICKET-0003 D1). Both follow from the one rule above.
+Applied: a stale surface, and a surfaces block that is absent or
+unparseable, both block (TICKET-0006). Queue drift against the tracker
+warns (TICKET-0003 D1). Both follow from the one rule above.
 
 Warning well is the other half of this. A warning nobody can act on is
 noise, and noise is what teaches people to stop reading. So the drift
