@@ -4,12 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>living-manual — User's Manual</title>
-<!-- manual-base: b4a5ff8 -->
-<!-- manual-fingerprint (content hash per user-facing path, at that commit)
-     26f8f05298901415174839f2febe816332964e63 skills/
-     7280c560ffd537db453f9d994a64c9b4b4f3ff22 scripts/
-     0ddb708d71a1d7c18cbae58e50455f15fcbb7941 templates/
-     6a945b46d05e7ac42793f3af05be002d4cc0b333 reference/
+<!-- manual-surfaces (content hash per user-facing path the manual reflects)
+
+     c5fe758766b5488456ea4c86f24b09b6d845be72 skills/
+
+     0a4d3e967cb6c15a8e3aca970ac655f761946bfd scripts/
+
+     13751128187a5563c9148e33343763a725d24b2a templates/
+
+     96d8f5b7d206741e12bb72be1f4927f4430f833d reference/
 -->
 <!--
   Maintained by the living-manual plugin. Do not hand-edit the script's
@@ -401,7 +404,7 @@
     <div class="lockup"><span>living-manual</span></div>
     <h1>A user's manual and product oriented design plugin.</h1>
     <span class="tagpill">One file · Interactive · Never stale</span>
-    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">2026-07-28</span></div>
+    <div class="asof">User's manual · Reflects the app as of <span id="asof-date">2026-08-12</span></div>
   </div>
 </header>
 
@@ -483,11 +486,11 @@ claude --plugin-dir /path/to/living-manual</pre>
     no external assets: it opens in any browser and travels with the repo.
     This copy lives at <code>docs/USER_MANUAL.html</code> and documents the
     plugin itself, built by the plugin.</p>
-    <p>Three components ground the manual in the code. A base marker records the
-    commit the manual last matched. A pre-push guard blocks releases that
-    would leave the manual behind. An update flow reads only what changed
-    since the marker and revises only the sections those changes
-    touched.</p>
+    <p>Three components ground the manual in the code. A content hash per
+    user-facing surface records what the manual last matched. A pre-push
+    guard blocks releases that would leave the manual behind. An update flow
+    reads only the surfaces that changed and revises only the sections those
+    changes touched.</p>
     <p>The manual is also a product-oriented development surface. The notes system generates actionable work tickets. Features with planned changes include roadmap
     previews to provide the reader context. A ticket queue
     check shows what's filed and awaiting work.</p>
@@ -559,7 +562,7 @@ claude --plugin-dir /path/to/living-manual</pre>
     production:</p>
     <pre class="cmd">python3 scripts/export.py docs/USER_MANUAL.html</pre>
     <p>This creates a second file, <code>USER_MANUAL_prod.html</code>, with note-filing and TOC reordering removed.
-The glossary, roadmap, and responsive design are preserved in the exported manual. In place of the base marker, an export contains a version line.</p>
+The glossary, roadmap, and responsive design are preserved in the exported manual. In place of the manual-surfaces block, an export contains a version line.</p>
     <p>Add a second argument to write the copy somewhere else:</p>
     <pre class="cmd">python3 scripts/export.py docs/USER_MANUAL.html /tmp/manual.html</pre>
     <p class="small muted">Exports are build artifacts. Git ignores them
@@ -601,10 +604,10 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
 
     <h3 id="update-flow">Every run after.</h3>
     <p><code>/living-manual:manual update</code> diffs reality against the
-    manual: it lists the user-facing commits since the base marker, revises
-    only the sections those changes touch, appends a dated entry to What's
-    new, and re-stamps the marker. A manual already matching the code says so
-    and stops.</p>
+    manual: it names the user-facing surfaces whose content has changed,
+    revises only the sections those changes touch, appends a dated entry to
+    What's new, and re-stamps those surfaces. A manual already matching the
+    code says so and stops.</p>
     <p>Shipped roadmap items lose their previews; the content moves into the
     section and What's new. New concepts enter the glossary with their
     defining passage recorded.</p>
@@ -778,15 +781,18 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
 
   <section id="guard">
     <h2>The staleness guard.</h2>
-    <p>The manual records the commit it last matched: the base marker,
-    stamped in a comment near the top of this file and read by the scripts.
-    The manual is stale when user-facing commits postdate that marker.</p>
+    <p>The manual records a content hash for every user-facing surface it
+    describes: one line per <code>user_facing_paths</code> entry in a
+    <code>manual-surfaces</code> comment near the top of this file, read by
+    the scripts. A surface's hash changes exactly when that surface's
+    content does, so the manual is stale when any surface no longer matches
+    the hash recorded for it.</p>
     <p>Enforcement is layered. CLAUDE.md instructs every session in the
     repo to run the update flow before any push, so freshness is part of the
-    normal workflow. The pre-push hook is the backstop: a push with
-    user-facing commits past the marker is blocked, with a message naming the
-    fix. On GitHub, a workflow repeats both checks on the server, where
-    merges land without passing through any hook.</p>
+    normal workflow. The pre-push hook is the backstop: a push that leaves a
+    surface no longer matching its recorded hash is blocked, with a message
+    naming the surface. On GitHub, a workflow repeats the checks on the
+    server, where merges land without passing through any hook.</p>
     <div class="callout">
       <b>The escape hatch costs the next reader.</b>
       <code>git push --no-verify</code> bypasses the guard once. The push
@@ -794,22 +800,20 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
       longer exists. Fix the manual instead; the update flow only revises
       what changed.
     </div>
-    <p>The marker is a sha frozen in this file, so it can outlive its commit.
-    Amending or rebasing after an update run orphans the marker: the commit it
-    names stops existing while the manual still points there. An orphaned
-    marker counts as stale rather than current, and verification flags it,
-    since the usual cause is a history rewrite after stamping.</p>
-    <p>Stamping the marker also records a content hash for each user-facing
-    path, and those outlive the commit, so a rewrite still leaves the guard
-    an answer. If every hash still matches, nothing user-facing moved: the
-    manual's content is current and re-stamping the marker is the whole fix.
-    If a hash differs, the guard names the paths that changed, which is the
-    part a missing commit would otherwise have taken with it.</p>
-    <p>Both cases stop a push, because an orphaned marker leaves every later
-    staleness check meaningless until someone re-stamps. They stop it with
-    different messages, since re-stamping a marker and rewriting a section
-    are not the same amount of work. A manual stamped before this existed
-    carries only a sha and behaves exactly as it always did.</p>
+    <p>Recording a content hash rather than a commit sha is what lets
+    branches merge in any order. A commit sha frozen in the file could be
+    orphaned by a squash, a rebase, or an amend, which is why this repo once
+    allowed merge commits only. A content hash cannot: the tree still hashes
+    the same however history was replayed. An update rewrites only the hash
+    line for a surface it actually changed, so two branches touching
+    different surfaces edit different lines and merge cleanly whichever lands
+    first. Two branches touching the same surface collide on that one line,
+    which is the reconciliation someone owes anyway.</p>
+    <p>If the <code>manual-surfaces</code> block is missing or unreadable,
+    or the manual still carries only a legacy base sha from before this
+    mechanism, the guard cannot answer and blocks the push until the manual
+    is rebuilt or migrated. One update run rewrites an old marker to the new
+    block.</p>
     <p class="small muted">The guard reads <code>user_facing_paths</code> from
     the config, so documentation-only and tooling-only pushes pass
     untouched.</p>
@@ -818,20 +822,16 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
     <p>A hook lives in a clone, so it only ever sees a push. A merge
     performed on GitHub never reaches it: a squash, or an "Update branch"
     click, rewrites history on the server and can land a manual that is
-    stale or whose marker no longer resolves. Setup offers a workflow that
-    runs the same checks where merges actually happen. It asks only on
-    GitHub-hosted repos, and records your answer either way.</p>
+    stale. Setup offers a workflow that runs the same checks where merges
+    actually happen. It asks only on GitHub-hosted repos, and records your
+    answer either way.</p>
     <p>The workflow is one step, because the plugin publishes itself as an
     action:</p>
     <pre class="cmd">- uses: actions/checkout@v4
-  with:
-    fetch-depth: 0
-- uses: dougstanford/living-manual@v0.5.0</pre>
-    <p>Set <code>fetch-depth: 0</code>. The base commit is usually far
-    behind HEAD, and a shallow checkout reports a good marker as broken.
-    The check recognises that case and says so rather than sending you to
-    re-stamp a marker that was fine.</p>
-    <p>A failure identifies the offending commits and the command that fixes
+- uses: dougstanford/living-manual@v0.6.0</pre>
+    <p>The check reads only the tree at the current commit, so the default
+    shallow checkout is enough and no <code>fetch-depth</code> is needed.</p>
+    <p>A failure names the surfaces that moved and the command that fixes
     them. The scripts need no model, so the server can find the problem;
     writing the manual still happens in a session.</p>
     <div class="callout">
@@ -856,7 +856,7 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
       <tr><td><code>ticket_skill</code></td>
         <td>The command the note payload invokes.</td></tr>
       <tr><td><code>user_facing_paths</code></td>
-        <td>Path prefixes whose commits make the manual stale.</td></tr>
+        <td>Path prefixes whose content changes make the manual stale.</td></tr>
       <tr><td><code>brand</code></td>
         <td>ink, surface, deep, accent, warn, caution, font stack, hero
         gradient, logo data URI. Missing keys fall back to a neutral
@@ -878,26 +878,27 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
     <table>
       <tr><th>Script</th><th>Does</th></tr>
       <tr><td><code>state.sh</code></td>
-        <td>One JSON line: configured or not, manual base, HEAD, wiring.</td></tr>
+        <td>One JSON line: configured or not, surfaces recorded, HEAD, wiring.</td></tr>
       <tr><td><code>inventory.sh</code></td>
         <td>Codebase orientation for setup: framework signals, surfaces,
         docs, brand candidates.</td></tr>
       <tr><td><code>stale.sh</code></td>
-        <td><code>CURRENT</code>, or the commits and user-facing files since
-        the base marker. After a history rewrite, compares content hashes
-        instead. Exits 0 current, 1 needs work, 2 could not check, 3 needs
-        only a re-stamp.</td></tr>
+        <td><code>CURRENT</code>, or the user-facing surfaces whose content
+        no longer matches the hash the manual records. Exits 0 current, 1
+        needs work, 2 could not check (no config, no manual, or no surfaces
+        block).</td></tr>
       <tr><td><code>ci-check.sh</code></td>
         <td>Both checks in one command, for the CI workflow: verification
         and staleness, each reported even when the other fails.</td></tr>
       <tr><td><code>install-hook.sh</code></td>
         <td>Installs the pre-push guard.</td></tr>
       <tr><td><code>scaffold.py</code></td>
-        <td>Instantiates the manual shell from the brand config, base
-        marker and content hashes included.</td></tr>
+        <td>Instantiates the manual shell from the brand config, user-facing
+        surfaces stamped.</td></tr>
       <tr><td><code>sync-index.py</code></td>
-        <td>Rewrites the manual's data blocks from a JSON payload. Stamping
-        the base also records one content hash per user-facing path.</td></tr>
+        <td>Rewrites the manual's data blocks from a JSON payload. With
+        <code>"surfaces": true</code>, re-stamps one content hash per
+        user-facing path from HEAD.</td></tr>
       <tr><td><code>tickets-index.py</code></td>
         <td>Rebuilds the queue index from the ticket files, then folds in
         open tracker issues no ticket file references, so the queue can't
@@ -918,10 +919,9 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
         <td>A static copy for distribution: note filing, queue, and roadmap
         previews removed; glossary and prose kept.</td></tr>
       <tr><td><code>verify.py</code></td>
-        <td>Static integrity checks, including that the base marker resolves
-        to a commit in the repo and that its content hashes are readable;
-        prints OK or findings. Judges a static export by the rules that fit
-        it.</td></tr>
+        <td>Static integrity checks, including that the manual-surfaces
+        block is present and well-formed; prints OK or findings. Judges a
+        static export by the rules that fit it.</td></tr>
     </table>
 
     <h3 id="statuses">Ticket statuses.</h3>
@@ -971,6 +971,27 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
   <section id="whats-new">
     <h2>What's new.</h2>
     <p class="muted small">Newest first. Each entry lands with its release.</p>
+    <div class="release">
+      <div class="date">v0.6.0 · August 12, 2026</div>
+      <p>The staleness guard now records a content hash for each
+      user-facing surface, in a <code>manual-surfaces</code> comment near
+      the top of the file, in place of the single commit sha it stamped
+      before. A surface's hash changes exactly when that surface's content
+      does, so the guard compares hashes at the current commit rather than
+      counting commits since a base.</p>
+      <p>Because the marker is content, not a commit sha, branches now merge
+      in any order and by any method. An update rewrites only the hash line
+      for a surface it actually changed, so two branches touching different
+      surfaces edit different lines and merge without conflict whichever
+      lands first. Two branches touching the same surface still collide on
+      that one line, which is the reconciliation the manual needs. Squash
+      and rebase merges are safe again, and the repo no longer requires
+      merge commits.</p>
+      <p>The check reads only the tree at the current commit, so a CI
+      workflow no longer needs <code>fetch-depth: 0</code>; the default
+      shallow checkout is enough. A manual carrying only the old base sha
+      is migrated to the new block by one update run.</p>
+    </div>
     <div class="release">
       <div class="date">v0.5.0 · July 28, 2026</div>
       <p>The manual's words are now editable where you read them. Click
@@ -1267,7 +1288,7 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
 <script>
 (function () {
   "use strict";
-  var MANUAL_VERSION = "2026-07-28";
+  var MANUAL_VERSION = "2026-08-12";
   var MANUAL_BASE = "b4a5ff8";
   var TICKET_SKILL = "/living-manual:ticket";
   var TICKETS_DIR = "docs/tickets";
@@ -1303,8 +1324,8 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
   /*@/PREVIEWS*/
   /*@GLOSSARY*/
   var GLOSSARY = [
-    { id: "base-marker", label: "Base marker", re: /base marker/gi,
-      s: "The commit this manual last matched, stamped in the file. User-facing commits after it make the manual stale and block a push." },
+    { id: "content-hash", label: "Content hash", re: /content hash(es)?/gi,
+      s: "A git hash of one user-facing surface's current content, recorded in the manual. A hash changes exactly when that surface's content does, so the manual is stale when a surface no longer matches the hash recorded for it." },
     { id: "roadmap-preview", label: "Roadmap preview", re: /roadmap previews?/gi,
       s: "The planned future state of a feature, drawn from the project's roadmap and opened from a ▶ icon. Notes on a previewed item file against the plan, not today's behavior." },
     { id: "queue-check", label: "Queue check", re: /queue check/gi,
@@ -1317,7 +1338,7 @@ The glossary, roadmap, and responsive design are preserved in the exported manua
   /*@/GLOSSARY*/
   /*@DEFINED*/
   var DEFINED_IN = {
-  "base-marker": [
+  "content-hash": [
     "sec:guard"
   ],
   "roadmap-preview": [
