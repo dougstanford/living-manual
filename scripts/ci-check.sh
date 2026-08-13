@@ -42,21 +42,8 @@ if [ ! -f "$MANUAL" ]; then
   exit 1
 fi
 
-# A shallow clone is missing the base commit for reasons that have
-# nothing to do with the manual. Both checks below would report that as a
-# broken marker and send someone to re-stamp one that was fine, so rule
-# it out before either runs.
-if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
-  echo "FAIL: this is a shallow clone, so the manual's base commit is"
-  echo "probably absent for reasons unrelated to the manual. Neither"
-  echo "check can give a meaningful answer here."
-  echo ""
-  echo "Check out full history:"
-  echo "  - uses: actions/checkout@v4"
-  echo "    with:"
-  echo "      fetch-depth: 0"
-  exit 1
-fi
+# Staleness is answered from the tree at HEAD alone — no commit range, no
+# history walk — so a shallow clone is fine and needs no fetch-depth: 0.
 
 FAILED=0
 

@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{PRODUCT}} — User's Manual</title>
-<!-- manual-base: {{BASE_SHA}} -->
 <!--
   Maintained by the living-manual plugin. Do not hand-edit the script's
   data blocks; run scripts/sync-index.py with a JSON payload instead.
@@ -500,7 +499,6 @@
 (function () {
   "use strict";
   var MANUAL_VERSION = "(unset)";
-  var MANUAL_BASE = "{{BASE_SHA}}";
   var TICKET_SKILL = "{{TICKET_SKILL}}";
   var TICKETS_DIR = "{{TICKETS_DIR}}";
   var MANUAL_PATH = "{{MANUAL_PATH}}";
@@ -759,7 +757,7 @@
     var lines = [
       TICKET_SKILL, "",
       "<submission>",
-      "source: " + document.title + " (" + MANUAL_PATH + ") — version " + MANUAL_VERSION + ", code at commit " + MANUAL_BASE,
+      "source: " + document.title + " (" + MANUAL_PATH + ") — version " + MANUAL_VERSION,
       "section: " + revSection.title + (revSection.anchor ? " (#" + revSection.anchor + ")" : "")
     ];
     if (revTarget) {

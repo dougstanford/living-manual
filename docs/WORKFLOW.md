@@ -3,12 +3,10 @@
 *Adopted 2026-07-27. Applies to every contributor and every Claude
 session. Part I is the technical contract; Part II is the plain-language
 guide for reviewing without reading code; Part III is the setup record.
-Modelled on the Musiva workflow, with one rule deliberately inverted —
-see §3.*
+Modelled on the Musiva workflow.*
 
 The rule in one sentence: **nothing reaches `main` except through a
-green-checked merge request from a single-concern branch, merged with a
-merge commit.**
+green-checked merge request from a single-concern branch.**
 
 ---
 
@@ -58,26 +56,29 @@ promotion step protecting nothing. Ticket branches read
 
 ## 3. Review and merge rules
 
-- **Merge method: merge commit. Squash and rebase merging are disabled
-  at the repository, not merely discouraged.**
+- **Merge method: any of the three. Merge commit, squash, and rebase
+  are all permitted.**
 
-  This is the one place this workflow inverts Musiva's, and the reason
-  is the guard this plugin ships. The manual stamps `manual-base: <sha>`
-  and content fingerprints into the document. Squash-merge and
-  rebase-merge both replay work under new SHAs, so the commit the marker
-  names never lands on `main` — the marker is orphaned the moment the MR
-  is merged, and every later staleness check returns a meaningless
-  answer until someone re-stamps.
+  Until TICKET-0006 this repo disabled squash and rebase, because the
+  manual stamped `manual-base: <sha>` into the document and those merge
+  methods replay work under new SHAs — the commit the marker named never
+  landed on `main`, orphaning the marker at merge time. That constraint
+  is gone. The manual now records a **content hash per user-facing
+  surface** (`manual-surfaces`), not a commit sha, and a content hash is
+  independent of how history was rewritten: squash it, rebase it, replay
+  it under any SHA, and `skills/`'s tree still hashes the same. There is
+  nothing left for a merge method to orphan.
 
-  That is the exact failure `verify.py` and `stale.sh` exist to catch,
-  and it would be self-inflicted at merge time. Since v0.2.7 it degrades
-  gracefully rather than losing information (`RESTAMP` when nothing
-  user-facing moved, `MOVED` naming the paths that did), but degrading
-  gracefully is not a reason to spend it.
+  The same property is what makes branches merge in **any order** with no
+  manual conflict: a branch only rewrites the hash line for a surface it
+  actually changed, so two branches touching different surfaces edit
+  different lines and merge cleanly whichever lands first. Two branches
+  touching the *same* surface still collide on that one line — which is
+  the reconciliation a human owes anyway.
 
-  Each repo allows exactly the one merge method its integrity model
-  survives. Musiva has no marker to orphan, so it takes squash and gets
-  a linear trunk. This repo takes merge commits and keeps its markers.
+  Pick the merge method you like. Merge commits keep each branch's manual
+  reconciliation as a distinct commit; squash gives a linear trunk. The
+  guard is indifferent.
 
 - **Green CI is a precondition, not a suggestion.** `Manual reflects the
   code` must pass. A red X means the author fixes and re-pushes.
@@ -91,8 +92,9 @@ promotion step protecting nothing. Ticket branches read
 to `main`, executing `scripts/ci-check.sh`:
 
 1. `verify.py` — the manual's markers, data blocks, and script are
-   intact, and its base marker resolves to a commit in this repo;
-2. `stale.sh` — no user-facing commit postdates the manual's base;
+   intact, and its `manual-surfaces` block is present and well-formed;
+2. `stale.sh` — every user-facing surface's content still matches the
+   hash the manual records for it;
 3. the queue drift check — **advisory**, reported and never failing the
    build.
 
@@ -106,8 +108,9 @@ or when proving it requires an external service.
 The routine lives in `CLAUDE.md` and ends in a tag. Two things the
 protection does not change: tags are a separate ruleset target, so
 tagging still works normally, and the release point is still the first
-commit on `main` where `sh scripts/ci-check.sh` prints CURRENT — which,
-landing through an MR, is the merge commit.
+commit on `main` where `sh scripts/ci-check.sh` prints CURRENT — the
+merge commit when the MR merged with one, otherwise the squashed or
+rebased commit that landed the manual stamp.
 
 ---
 
@@ -155,7 +158,7 @@ owner does not bypass it either:
 
 | Rule | Effect |
 |---|---|
-| `pull_request` | No direct pushes. **Merge commit is the only allowed merge method.** Review threads must be resolved. |
+| `pull_request` | No direct pushes. **All three merge methods allowed** (merge, squash, rebase — see the TICKET-0006 note below). Review threads must be resolved. |
 | `required_status_checks` | The MR cannot merge until **Manual reflects the code** passes. |
 | `non_fast_forward` | Force-pushes to `main` are refused. |
 | `deletion` | `main` cannot be deleted. |
@@ -177,7 +180,8 @@ applying and the workflow falls back to discipline alone.
 
 ## Repository settings — done
 
-- **Merge commits only** (squash and rebase merging both disabled).
+- **All three merge methods enabled** (merge, squash, rebase — relaxed
+  by TICKET-0006; see below).
 - "Automatically delete head branches" on.
 - Actions enabled (CI needs it).
 
@@ -187,3 +191,28 @@ To inspect or recreate:
 gh api repos/dougstanford/living-manual/rulesets --jq '.[].name'
 gh api repos/dougstanford/living-manual/rulesets/19856830
 ```
+
+## TICKET-0006 — merge methods relaxed (owner action)
+
+The staleness marker became content-based (`manual-surfaces`), so no
+merge method can orphan it and squash/rebase are safe again. The code
+and docs in that ticket ship the relaxation, but the two server-side
+toggles are not something the plugin can change — the repo owner applies
+them once, with their own access:
+
+```
+# 1. Repository merge settings: enable squash and rebase.
+gh api -X PATCH repos/dougstanford/living-manual \
+  -F allow_merge_commit=true -F allow_squash_merge=true -F allow_rebase_merge=true
+
+# 2. The protect-trunk ruleset's pull_request rule: allow all three
+#    methods. Fetch the ruleset, set the pull_request rule's
+#    allowed_merge_methods to ["merge","squash","rebase"], and PATCH:
+gh api repos/dougstanford/living-manual/rulesets/19856830 > ruleset.json
+#    (edit allowed_merge_methods in ruleset.json, then)
+gh api -X PUT repos/dougstanford/living-manual/rulesets/19856830 --input ruleset.json
+```
+
+Until both are applied, the repo still enforces merge-commit-only at the
+server regardless of what this record says; the record describes the
+intended end state.

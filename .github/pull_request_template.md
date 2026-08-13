@@ -20,5 +20,6 @@
       `reference/maintenance.md`
 - [ ] Version bumped and README pin updated, or N/A — see the release
       routine in `CLAUDE.md`
-- [ ] Merging with a **merge commit** (squash and rebase are disabled;
-      they would orphan the manual's base marker)
+- [ ] Merge strategy is your call — merge commit, squash, or rebase are
+      all safe. The manual's staleness marker is content-based, so no
+      merge strategy can orphan it.

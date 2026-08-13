@@ -15,9 +15,7 @@ jobs:
     name: Manual reflects the code
     runs-on: ubuntu-latest
     steps:
+      # The staleness check reads only the tree at HEAD, so the default
+      # shallow checkout is enough — no fetch-depth: 0 needed.
       - uses: actions/checkout@v4
-        with:
-          # stale.sh resolves the manual's base commit, which is usually
-          # far behind HEAD. A shallow clone would not have it.
-          fetch-depth: 0
       - uses: ./

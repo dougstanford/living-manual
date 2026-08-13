@@ -12,12 +12,11 @@ Config keys used (from .living-manual.json):
            font_stack, hero_gradient_css, logo_data_uri }
 Missing brand keys fall back to a neutral slate palette.
 
-The scaffolded manual is fingerprinted at its base commit, the same way
-an update run stamps it, so a brand new manual survives a history
-rewrite. Setup is exactly when one is likely: the commits that introduce
-a manual are the ones most often amended or squashed before they land.
+The scaffolded manual's surfaces are stamped from HEAD, the same way an
+update run stamps them, so a brand new manual is guard-ready from its
+first commit and needs no separate update pass to become checkable.
 """
-import importlib.util, json, os, re, subprocess, sys
+import importlib.util, json, os, re, sys
 
 DEFAULTS = {
     "ink": "#26282b", "surface": "#fafaf7", "deep": "#22303a",
@@ -28,7 +27,7 @@ DEFAULTS = {
 }
 
 def load_sync(scripts_dir):
-    """sync-index.py owns the fingerprint format; import it rather than
+    """sync-index.py owns the surfaces format; import it rather than
     growing a second copy that can disagree about the marker."""
     spec = importlib.util.spec_from_file_location(
         "sync_index", os.path.join(scripts_dir, "sync-index.py"))
@@ -40,8 +39,6 @@ def main():
     tpl_path, cfg_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
     cfg = json.load(open(cfg_path))
     brand = {**DEFAULTS, **cfg.get("brand", {})}
-    head = subprocess.run("git rev-parse --short HEAD", shell=True,
-                          capture_output=True, text=True).stdout.strip() or "0000000"
     logo = ('<img src="%s" alt="" style="height:30px;width:auto;display:block">'
             % brand["logo_data_uri"]) if brand["logo_data_uri"] else ""
     subs = {
@@ -51,7 +48,6 @@ def main():
         "{{TICKET_SKILL}}": cfg.get("ticket_skill", "/living-manual:ticket"),
         "{{TICKETS_DIR}}": cfg.get("tickets_dir", "docs/tickets"),
         "{{MANUAL_PATH}}": cfg.get("manual_path", "docs/USER_MANUAL.html"),
-        "{{BASE_SHA}}": head,
         "{{INK}}": brand["ink"], "{{SURFACE}}": brand["surface"],
         "{{DEEP}}": brand["deep"], "{{ACCENT}}": brand["accent"],
         "{{WARN}}": brand["warn"], "{{CAUTION}}": brand["caution"],
@@ -68,13 +64,13 @@ def main():
     paths = cfg.get("user_facing_paths") or []
     if paths:
         si = load_sync(os.path.dirname(os.path.abspath(__file__)))
-        entries = si.tree_hashes(head, paths, warnings.append)
+        entries = si.tree_hashes("HEAD", paths, warnings.append)
         if entries:
-            src = si.stamp_fingerprints(src, entries)
+            src = si.stamp_surfaces(src, entries)
     open(out_path, "w").write(src)
     for w in warnings:
         print("warning:", w, file=sys.stderr)
-    print("scaffolded", out_path, "base", head)
+    print("scaffolded", out_path)
 
 if __name__ == "__main__":
     main()

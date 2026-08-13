@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """verify.py MANUAL — static integrity checks for a living manual.
 
-Checks: base marker present and resolving to a commit in the containing
-repo, the content fingerprints beside it well-formed when present, data
-markers intact, script parses (when node is available), no duplicate
-element ids, every preview icon names a PREVIEWS entry,
-PREVIEWS/TICKETS/DEFINED_IN blocks well-formed, every DEFINED_IN key
-has a glossary entry. Exit 0 clean; exit 1 with findings.
+Checks: manual-surfaces block present and well-formed (one 40-char hash
+per user-facing path), data markers intact, script parses (when node is
+available), no duplicate element ids, every preview icon names a PREVIEWS
+entry, PREVIEWS/TICKETS/DEFINED_IN blocks well-formed, every DEFINED_IN
+key has a glossary entry. Exit 0 clean; exit 1 with findings.
 """
 import json, os, re, shutil, subprocess, sys, tempfile
 
@@ -14,7 +13,7 @@ REQUIRED_TICKET_KEYS = ("id", "title", "type", "status", "summary")
 
 # How far into the file the marker region is expected to reach. The
 # other readers open only this much rather than the whole manual, and
-# the fingerprint comment grows with user_facing_paths, so there is
+# the surfaces comment grows with user_facing_paths, so there is
 # headroom here for far more entries than a repo is likely to list.
 MARKER_BYTES = 8000
 
@@ -45,42 +44,31 @@ def main():
     # copy verified a year from now should still be judged correctly.
     export = re.search(r"<!-- manual-export:[^>]*-->", src[:MARKER_BYTES])
 
-    base = re.search(r"manual-base: ([0-9a-f]{6,})", src[:MARKER_BYTES])
-    if not base and not export:
-        f.append("no manual-base marker in the first %d bytes" % MARKER_BYTES)
-    elif base and export:
-        f.append("carries both a manual-export and a manual-base marker; an "
-                 "export must not keep the guard's marker")
-    elif base and shutil.which("git"):
-        # The marker is a sha frozen in the file; amending or rebasing
-        # after stamping orphans it and the guard breaks silently.
-        repo_dir = os.path.dirname(os.path.abspath(sys.argv[1]))
-        in_repo = subprocess.run(
-            ["git", "-C", repo_dir, "rev-parse", "--is-inside-work-tree"],
-            capture_output=True)
-        if in_repo.returncode == 0:
-            r = subprocess.run(
-                ["git", "-C", repo_dir, "cat-file", "-e",
-                 base.group(1) + "^{commit}"], capture_output=True)
-            if r.returncode != 0:
-                f.append("manual-base %s does not resolve to a commit in "
-                         "this repo (history rewritten after stamping?)"
-                         % base.group(1))
-
-    # The fingerprint comment is optional: a manual stamped before it
-    # existed carries only a sha and is not faulted for it. But a
-    # malformed one is worth a finding, because it is only ever read
-    # after a rewrite has already orphaned the sha, and a garbled line
-    # would fail exactly when it is the last thing left to recover from.
-    fp = re.search(r"<!-- manual-fingerprint.*?-->", src[:MARKER_BYTES], re.S)
-    if fp:
-        lines = [l.strip() for l in fp.group(0).splitlines()[1:-1]]
+    # The manual-surfaces block is the whole staleness mechanism: one
+    # content hash per user-facing path, no commit sha. It carries no
+    # frozen commit, so there is nothing a history rewrite can orphan;
+    # verification is purely that the block is present and well-formed.
+    surf = re.search(r"<!-- manual-surfaces.*?-->", src[:MARKER_BYTES], re.S)
+    legacy = re.search(r"manual-base: [0-9a-f]{6,}", src[:MARKER_BYTES])
+    if surf and export:
+        f.append("carries both a manual-export and a manual-surfaces marker; "
+                 "an export must not keep the guard's marker")
+    elif not surf and not export:
+        if legacy:
+            f.append("carries only a legacy manual-base sha and no "
+                     "manual-surfaces block; run the update flow once to "
+                     "migrate it")
+        else:
+            f.append("no manual-surfaces block in the first %d bytes"
+                     % MARKER_BYTES)
+    if surf:
+        lines = [l.strip() for l in surf.group(0).splitlines()[1:-1]]
         bad = [l for l in lines if l and not re.match(r"[0-9a-f]{40}\s+\S", l)]
         for l in bad:
-            f.append("manual-fingerprint: unparseable entry %r "
+            f.append("manual-surfaces: unparseable entry %r "
                      "(want a 40-char hash, a space, then a path)" % l[:60])
         if not [l for l in lines if l]:
-            f.append("manual-fingerprint block is present but empty")
+            f.append("manual-surfaces block is present but empty")
 
     ids = re.findall(r'\bid="([^"]+)"', src)
     dupes = sorted({i for i in ids if ids.count(i) > 1})

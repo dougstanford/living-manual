@@ -1,6 +1,6 @@
 ---
 name: manual
-description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the code since its base commit. Use for "/manual", "build the manual", "update the manual", when the pre-push guard reports the manual is stale, or when a <reorder> or <recopy> payload from the manual needs applying.
+description: Build and maintain a branded, interactive user's manual for this codebase. First run walks a setup flow (brand assets, codebase orientation, optional issue-tracker link to Jira or GitHub Issues, push-time guard); later runs update the manual to match the user-facing surfaces that have changed. Use for "/manual", "build the manual", "update the manual", when the pre-push guard reports the manual is stale, or when a <reorder> or <recopy> payload from the manual needs applying.
 ---
 
 # The living manual
@@ -135,7 +135,8 @@ Choose them from the inventory; confirm with the user.
 
 **5. Wire the project.**
 - `sh $LM/scripts/install-hook.sh` installs the pre-push guard: pushes
-  block when user-facing commits postdate the manual's base marker.
+  block when a user-facing surface no longer matches the content hash the
+  manual records for it.
 - Append `templates/claude-md-snippet.md` to the repo's CLAUDE.md
   (create it if absent) so every future session, by any dev, updates
   the manual as part of a push. This is the durable half; the hook is
@@ -174,7 +175,7 @@ Choose them from the inventory; confirm with the user.
 **6. Build the manual.**
 - `python3 $LM/scripts/scaffold.py $LM/templates/manual-shell.html .living-manual.json <manual_path>`
   (run from the repo root) produces the shell: full interactive
-  machinery, brand applied, base commit stamped. You never write
+  machinery, brand applied, user-facing surfaces stamped. You never write
   modal/glossary/preview code.
 - Fill the content slots (`<!-- SLOT: ... -->`): TOC, an intro callout
   (with `manual-meta` class) explaining the note and preview
@@ -200,14 +201,19 @@ Choose them from the inventory; confirm with the user.
 sh $LM/scripts/stale.sh
 ```
 
-`CURRENT`: say so, stop. Otherwise the output lists the commits and
-user-facing files since the manual's base. It exits nonzero in that
-case, which is the signal that work is needed, not a script failure;
-read the output and carry on. Then:
+`CURRENT`: say so, stop. Otherwise the output names the user-facing
+surfaces (the `user_facing_paths` entries) whose content no longer
+matches what the manual records. It exits nonzero in that case, which is
+the signal that work is needed, not a script failure; read the output
+and carry on. Then:
 
-1. Read the diffs that matter (`git show` per commit, or the changed
-   files). Derive what changed in the user's experience, not in the
-   code.
+1. Read what changed in each named surface. On a feature branch the
+   natural reference is the trunk you will merge into:
+   `git diff origin/main...HEAD -- <surface>` shows what your branch did
+   to it. There is no single base commit and you do not need one — the
+   manual describes the current end state, so when in doubt read the
+   surface as it now stands and make the prose match. Derive what changed
+   in the user's experience, not in the code.
 2. Revise the affected sections. New concept → glossary + defined
    entry. Shipped roadmap item → delete its preview and icon; the
    content moves into the section and "What's new".
@@ -217,10 +223,12 @@ read the output and carry on. Then:
    `python3 $LM/scripts/tickets-index.py <tickets_dir> <manual_path>`.
    Never with `--no-tracker` on a release: the queue a reader files
    notes against should be true as of the release.
-5. Sync data + stamps in one call:
+5. Sync data + re-stamp surfaces in one call:
    `python3 $LM/scripts/sync-index.py <manual_path> payload.json` with
-   the changed blocks plus `asof` (today) and `base` (current short
-   HEAD).
+   the changed blocks plus `asof` (today) and `"surfaces": true`. The
+   surfaces stamp is taken from committed state (HEAD), so commit the
+   code before this step; it rewrites only the hash lines for surfaces
+   that actually moved, which is what lets branches merge in any order.
 6. `python3 $LM/scripts/verify.py <manual_path>` must print OK.
    Browser-check only when slots or machinery changed.
 
@@ -273,8 +281,8 @@ It replaces each passage by exact match and writes nothing unless every
 entry checks out, so a payload lands whole or not at all. Never retype
 the prose by hand; the script exists so the edit that lands is the one
 the reader made. Then `verify.py` must print OK. Do not re-stamp the
-base and do not add a What's new entry: the reader changed wording, not
-behaviour.
+surfaces and do not add a What's new entry: the reader changed wording,
+not behaviour.
 
 An edit that renamed a heading carries a `toc` field naming the anchor,
 the label the file holds, and the label it should read. The script
@@ -303,8 +311,8 @@ python3 $LM/scripts/reorder.py <manual_path> <id ...>
 
 The script moves the section blocks and their TOC link groups and
 touches nothing else. Then `verify.py` must print OK. Do not re-stamp
-the base and do not add a What's new entry: no code moved and no prose
-changed, only the order of whole sections. The script refuses an id
+the surfaces and do not add a What's new entry: no code moved and no
+prose changed, only the order of whole sections. The script refuses an id
 set that does not match the manual's sections; surface its message
 rather than guessing.
 

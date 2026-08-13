@@ -1,16 +1,20 @@
 #!/bin/sh
-# stale.sh [repo-root] [manual-path] — what changed since the manual's
-# base commit. Prints "CURRENT" when nothing user-facing changed;
-# otherwise prints the commit list and the changed user-facing files,
-# which is exactly the input the update flow needs.
+# stale.sh [repo-root] [manual-path] — is the manual current with the code?
+#
+# For each user_facing_paths entry it compares the path's content hash at
+# HEAD to the hash the manual records in its manual-surfaces block. Prints
+# "CURRENT" when every surface matches; otherwise names the surfaces that
+# moved, which is exactly the input the update flow needs. No commit sha,
+# no commit range, no history walk: the answer depends only on the tree at
+# HEAD, so it is the same in a shallow clone and independent of how or in
+# what order branches merged.
 #
 # Exit contract, so an unattended caller can act on it without parsing:
 #   0  the manual is current
-#   1  the manual needs work: user-facing commits postdate its base, or
-#      the base does not resolve and its content has moved with it
-#   2  the check could not run: no config, no manual, no marker
-#   3  the base does not resolve but nothing user-facing moved: the
-#      content is current and only the marker needs re-stamping
+#   1  the manual needs work: named user-facing surfaces have moved
+#   2  the check could not run: no config, no manual, or no surfaces block
+#      (a legacy manual carrying only a manual-base sha lands here — run
+#      the update flow once to migrate it)
 #
 # manual-path overrides manual_path in the config, for a repo that moved
 # its manual. Omit it and the config decides, as it always has.
@@ -28,62 +32,47 @@ try:
     head = open(manual).read(8000)
 except FileNotFoundError:
     print("NO-MANUAL"); sys.exit(2)
-m = re.search(r"manual-base: ([0-9a-f]+)", head)
+
+m = re.search(r"<!-- manual-surfaces.*?-->", head, re.S)
 if not m:
+    # A manual from before this mechanism carried only a manual-base sha.
+    # It cannot be checked as-is; one update run rewrites it to surfaces.
+    if re.search(r"manual-base: [0-9a-f]+", head):
+        print("LEGACY-MARKER")
+        print("This manual predates the manual-surfaces block and carries "
+              "only a manual-base sha.")
+        print("Run the update flow once to migrate it:  /living-manual:manual update")
+        sys.exit(2)
     print("NO-MARKER"); sys.exit(2)
-base = m.group(1)
 
-def sh(cmd):
-    return subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout
+stored = dict((p, h) for h, p in
+              re.findall(r"^\s*([0-9a-f]{40})\s+(\S.*?)\s*$", m.group(0), re.M))
 
-def fingerprints(text):
-    """[(hash, path)] from the manual's fingerprint comment, if it has one."""
-    m = re.search(r"<!-- manual-fingerprint.*?-->", text, re.S)
-    if not m:
-        return []
-    return re.findall(r"^\s*([0-9a-f]{40})\s+(\S.*?)\s*$", m.group(0), re.M)
+def head_hash(path):
+    r = subprocess.run(["git", "rev-parse", "--verify", "--quiet",
+                        "HEAD:" + path.rstrip("/")],
+                       capture_output=True, text=True)
+    got = r.stdout.strip()
+    # rev-parse can exit 0 echoing an unparseable arg back; only a real
+    # sha counts, matching how sync-index.py decides what to stamp.
+    return got if r.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", got) else None
 
-if subprocess.run(f"git cat-file -e {base}^{{commit}}", shell=True,
-                  capture_output=True).returncode != 0:
-    # The marker points at a commit this clone doesn't have: history was
-    # rewritten after stamping. There is no commit range left, so fall
-    # back to comparing content hashes, which survive the rewrite.
-    fps = fingerprints(head)
-    if not fps:
-        # A manual stamped before fingerprints existed. Unverifiable
-        # means stale, not current, exactly as it always did.
-        print(f"BAD-BASE {base}"); sys.exit(1)
-    moved = []
-    for want, path in fps:
-        got = subprocess.run(["git", "rev-parse", "HEAD:" + path.rstrip("/")],
-                             capture_output=True, text=True)
-        if got.returncode != 0 or got.stdout.strip() != want:
-            moved.append(path)
-    if not moved:
-        print(f"RESTAMP {base}")
-        print("The base commit is gone, but every user-facing path still "
-              "hashes the same.")
-        print("The manual's content is current; only the marker needs "
-              "re-stamping.")
-        sys.exit(3)
-    print(f"MOVED {base}")
-    print("The base commit is gone, so there is no commit range. These "
-          "user-facing paths")
-    print("changed since the manual was stamped:")
-    for p in moved:
-        print(" ", p)
-    sys.exit(1)
+moved = []
+for path in cfg.get("user_facing_paths", ["src/", "app/"]):
+    now = head_hash(path)
+    was = stored.get(path.rstrip("/")) or stored.get(path)
+    if now is None and was is None:
+        # Not a tracked path and never recorded (an empty dir or a glob):
+        # sync-index.py skips it too, so it is not a surface that moved.
+        continue
+    if now != was:
+        moved.append(path)
 
-globs = cfg.get("user_facing_paths", ["src/", "app/"])
-paths = " ".join(f"'{g}'" for g in globs)
-commits = sh(f"git log --oneline {base}..HEAD -- {paths}").strip()
-if not commits:
+if not moved:
     print("CURRENT"); sys.exit(0)
-files = sh(f"git diff --name-only {base}..HEAD -- {paths}").strip()
-print(f"BASE {base}")
-print("== commits touching user-facing paths ==")
-print(commits)
-print("== files ==")
-print(files)
+print("MOVED")
+print("These user-facing surfaces changed since the manual last described them:")
+for p in moved:
+    print(" ", p)
 sys.exit(1)
 EOF
